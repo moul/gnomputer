@@ -1,0 +1,37 @@
+{
+  "name": "@gnomputer/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && npm run postbuild",
+    "postbuild": "node scripts/spa-fallback.mjs",
+    "test": "vitest run",
+    "lint": "eslint src",
+    "typecheck": "tsc -b --noEmit",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@gnomputer/app-sdk": "workspace:*",
+    "@gnomputer/lenses": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@tanstack/react-router": "^1.95.0",
+    "@tanstack/react-query": "^5.62.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "vite": "^6.0.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite-plugin-pwa": "^0.21.1",
+    "@playwright/test": "^1.49.1",
+    "@testing-library/react": "^16.1.0",
+    "fake-indexeddb": "^6.0.0",
+    "vitest": "^2.1.8",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.0",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5"
+  }
+}
