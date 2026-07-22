@@ -17,7 +17,7 @@
     "@gnolang/tm2-rpc": "^1.0.0"
   },
   "devDependencies": {
-    "vitest": "^2.1.8",
+    "vitest": "^3.2.7",
     "typescript": "^5.7.0"
   }
 }

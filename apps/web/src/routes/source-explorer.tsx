@@ -22,7 +22,10 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
     sdk.rpc
       .queryFile(packagePath, new Date().toISOString())
       .then((env) => {
-        const names = env.data.split("\n").map((line) => line.trim()).filter(Boolean);
+        const names = env.data
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
         setFiles(names);
         if (names[0]) setSelectedFile(names[0]);
       })
@@ -31,29 +34,56 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
 
   useEffect(() => {
     if (!selectedFile) return;
+    setSource(null);
     sdk.rpc
       .queryFile(`${packagePath}/${selectedFile}`, new Date().toISOString())
       .then((env) => setSource(env.data))
       .catch((err: Error) => setError(err.message));
   }, [packagePath, selectedFile, sdk]);
 
-  if (error) return <div role="alert">Could not load source: {error}</div>;
-  if (!files) return <div aria-busy="true">Loading source…</div>;
-
   return (
-    <section aria-label={`Source for ${packagePath}`}>
-      <nav aria-label="File tree">
-        <ul>
-          {files.map((file) => (
-            <li key={file}>
-              <button type="button" onClick={() => setSelectedFile(file)}>
-                {file}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {source ? <pre>{source}</pre> : <div aria-busy="true">Loading file…</div>}
+    <section className="panel panel--source" aria-label={`Source for ${packagePath}`}>
+      <header className="panel__header">
+        <span>Source · {packagePath}</span>
+      </header>
+      <div className="panel__body">
+        {error ? (
+          <p className="state-line" role="alert">
+            Could not load source: {error}
+          </p>
+        ) : !files ? (
+          <p className="state-line" aria-busy="true">
+            Loading source…
+          </p>
+        ) : (
+          <>
+            <nav aria-label="File tree" className="file-tree">
+              <ul>
+                {files.map((file) => (
+                  <li key={file}>
+                    <button
+                      type="button"
+                      aria-current={file === selectedFile}
+                      onClick={() => setSelectedFile(file)}
+                    >
+                      {file}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="source-viewer">
+              {source ? (
+                <pre>{source}</pre>
+              ) : (
+                <p className="state-line" aria-busy="true">
+                  Loading file…
+                </p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </section>
   );
 }

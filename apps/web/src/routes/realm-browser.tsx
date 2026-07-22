@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import type { RenderNode } from "@gnomputer/lenses";
@@ -22,15 +23,29 @@ export function RealmBrowser({ packagePath }: { packagePath: string }) {
       .catch((err: Error) => setError(err.message));
   }, [packagePath, sdk]);
 
-  if (error) return <div role="alert">Could not load this realm: {error}</div>;
-  if (!nodes) return <div aria-busy="true">Loading realm…</div>;
-
   return (
-    <article aria-label={`Realm ${packagePath}`}>
-      {nodes.map((node, i) => (
-        <RenderNodeView key={i} node={node} />
-      ))}
-    </article>
+    <section className="panel panel--realm">
+      <header className="panel__header">
+        <span>Experience · {packagePath}</span>
+      </header>
+      <div className="panel__body">
+        {error ? (
+          <p className="state-line" role="alert">
+            Could not load this realm: {error}
+          </p>
+        ) : !nodes ? (
+          <p className="state-line" aria-busy="true">
+            Loading realm…
+          </p>
+        ) : (
+          <article aria-label={`Realm ${packagePath}`}>
+            {nodes.map((node, i) => (
+              <RenderNodeView key={i} node={node} />
+            ))}
+          </article>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -41,7 +56,7 @@ function RenderNodeView({ node }: { node: RenderNode }) {
     case "code":
       return <pre>{node.content}</pre>;
     case "link":
-      return <a href={node.href}>{node.content}</a>;
+      return <GnoLink node={node} />;
     case "paragraph":
       return (
         <p>
@@ -51,4 +66,29 @@ function RenderNodeView({ node }: { node: RenderNode }) {
     default:
       return <span>{node.content}</span>;
   }
+}
+
+function GnoLink({ node }: { node: RenderNode }) {
+  const navigate = useNavigate();
+
+  if (node.ref?.packagePath) {
+    const packagePath = node.ref.packagePath;
+    return (
+      <a
+        href={`/?pkg=${encodeURIComponent(packagePath)}`}
+        onClick={(e) => {
+          e.preventDefault();
+          void navigate({ to: "/", search: { pkg: packagePath } });
+        }}
+      >
+        {node.content}
+      </a>
+    );
+  }
+
+  return (
+    <a href={node.href} target="_blank" rel="noopener noreferrer">
+      {node.content}
+    </a>
+  );
 }

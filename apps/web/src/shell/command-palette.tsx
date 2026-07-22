@@ -20,13 +20,23 @@ export function CommandPalette() {
   if (!commandPaletteOpen) return null;
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Command palette" className="command-palette">
-      <input
-        autoFocus
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Open realm, address, transaction…"
-      />
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+      className="command-palette"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) setCommandPaletteOpen(false);
+      }}
+    >
+      <div className="command-palette__panel">
+        <input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Open realm, address, transaction…"
+        />
+      </div>
     </div>
   );
 }

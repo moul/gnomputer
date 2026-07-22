@@ -1,0 +1,122 @@
+:root {
+  --bg: #0b0f14;
+  --bg-elevated: #121821;
+  --bg-inset: #0e131a;
+  --border: #232b36;
+  --border-strong: #34404f;
+  --text: #e6edf3;
+  --text-dim: #8b96a5;
+  --text-faint: #5b6572;
+  --accent: #4fd1c5;
+  --accent-dim: #2c6e69;
+  --danger: #e5534b;
+  --danger-bg: #2a1414;
+  --warning: #d4a72c;
+  --warning-bg: #2a2312;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f7f9;
+    --bg-elevated: #ffffff;
+    --bg-inset: #eef0f3;
+    --border: #dde1e6;
+    --border-strong: #c4cad2;
+    --text: #1a2027;
+    --text-dim: #5b6572;
+    --text-faint: #8b96a5;
+    --accent: #1a8f83;
+    --accent-dim: #d3f0ec;
+    --danger: #b3261e;
+    --danger-bg: #fbeceb;
+    --warning: #8a6d1c;
+    --warning-bg: #fbf3dd;
+    --shadow-modal: 0 16px 48px rgba(20, 30, 40, 0.18);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--accent);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+button {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+button:hover {
+  border-color: var(--accent-dim);
+  background: var(--bg-inset);
+}
+
+input,
+select {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -29,7 +29,7 @@ export function TrailBreadcrumb() {
     <nav aria-label="Trail" className="trail-breadcrumb">
       {steps.map((step, i) => (
         <span key={`${step.refUri}-${i}`}>
-          {i > 0 ? " › " : ""}
+          {i > 0 ? <span className="trail-breadcrumb__sep">›</span> : null}
           {step.label}
         </span>
       ))}

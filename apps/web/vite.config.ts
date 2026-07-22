@@ -15,7 +15,14 @@ export default defineConfig({
         theme_color: "#0b0f14",
         background_color: "#0b0f14",
         display: "standalone",
-        icons: [],
+        icons: [
+          {
+            src: "favicon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
+          },
+        ],
       },
     }),
   ],

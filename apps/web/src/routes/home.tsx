@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
 import { SourceExplorer } from "./source-explorer";
@@ -12,12 +12,19 @@ export function Home() {
   const packagePath = search.pkg ?? FEATURED_PACKAGE;
   const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
 
+  useEffect(() => {
+    setDraftPackagePath(packagePath);
+  }, [packagePath]);
+
   return (
     <div className="home-layout">
-      <p>You are browsing the shared computer.</p>
-      <p>Open any program, user, function or transaction to follow it through the world.</p>
+      <p className="home-lede home-lede--primary">You are browsing the shared computer.</p>
+      <p className="home-lede">
+        Open any program, user, function or transaction to follow it through the world.
+      </p>
       <TrailBreadcrumb />
       <form
+        className="open-package-form"
         onSubmit={(e) => {
           e.preventDefault();
           void navigate({ to: "/", search: { pkg: draftPackagePath } });
