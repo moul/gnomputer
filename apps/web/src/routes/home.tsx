@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
 import { SourceExplorer } from "./source-explorer";
+import { RecentActivity } from "./recent-activity";
 import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 
 const FEATURED_PACKAGE = "gno.land/r/sys/users";
@@ -44,6 +45,7 @@ export function Home() {
         <RealmBrowser packagePath={packagePath} />
         <SourceExplorer packagePath={packagePath} />
       </div>
+      <RecentActivity />
     </div>
   );
 }

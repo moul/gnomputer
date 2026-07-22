@@ -3,10 +3,17 @@ import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 import { connectTm2Client, abciQueryString } from "./queries";
 
+export interface BlockSummary {
+  height: number;
+  time: string;
+  numTxs: number;
+}
+
 export interface RpcClient {
   getStatus(): Promise<DataEnvelope<{ latestHeight: number; chainId: string }>>;
   queryRender(packagePath: string, path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   queryFile(path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
 }
 
 export function createRpcClient(network: NetworkConfig): RpcClient {
@@ -71,6 +78,27 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.file.v1",
+      });
+    },
+
+    async getBlockSummary(height) {
+      const client = await getClient();
+      const result = await client.block(height);
+      const summary: BlockSummary = {
+        height,
+        time: result.block.header.time.toISOString(),
+        numTxs: Number(result.block.header.numTxs),
+      };
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "block", objectId: String(height) },
+        data: summary,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        height,
+        fetchedAt: new Date().toISOString(),
+        freshness: "live",
+        schema: "gnomputer.rpc.block-summary.v1",
       });
     },
   };

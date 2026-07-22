@@ -22,7 +22,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
       {
         code: "indexed-history-unavailable",
         message:
-          "No public transaction indexer is configured for this network yet; recent activity is derived from live block/transaction subscription only.",
+          "No public transaction indexer is configured for this network yet; recent activity is derived by polling block headers, and transaction contents are not decoded.",
       },
     ],
   },
