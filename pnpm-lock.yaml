@@ -104,6 +104,22 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9
 
+  packages/trails:
+    dependencies:
+      '@gnomputer/storage':
+        specifier: workspace:*
+        version: link:../storage
+    devDependencies:
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.2.5
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9
+
 packages:
 
   '@cosmjs/crypto@0.38.1':
