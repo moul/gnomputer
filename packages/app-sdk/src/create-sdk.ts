@@ -1,5 +1,7 @@
 import { parseGnoUri, formatGnoUri } from "@gnomputer/entities";
 import { DEFAULT_NETWORKS, DEFAULT_NETWORK_ID, type NetworkConfig } from "@gnomputer/networks";
+
+export { DEFAULT_NETWORK_ID };
 import {
   createRpcClient,
   type RpcClient,

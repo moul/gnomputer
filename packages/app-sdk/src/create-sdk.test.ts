@@ -7,9 +7,9 @@ describe("createGnomputerSDK", () => {
     indexedDB.deleteDatabase("gnomputer-sdk-test");
   });
 
-  it("defaults to the test13 network", () => {
+  it("defaults to the topaz network", () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
-    expect(sdk.networks.getActive().id).toBe("test13");
+    expect(sdk.networks.getActive().id).toBe("topaz");
   });
 
   it("switches active network", () => {

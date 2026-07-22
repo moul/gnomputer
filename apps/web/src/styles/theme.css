@@ -13,6 +13,8 @@
   --accent-amber: #f5b942;
   --accent-magenta: #e879f9;
   --accent-green: #3ddc84;
+  --accent-blue: #60a5fa;
+  --accent-red: #fb7185;
   --danger: #ff6b6b;
   --danger-bg: #2a1414;
   --warning: #f5b942;
@@ -50,6 +52,8 @@
     --accent-amber: #92650f;
     --accent-magenta: #9c2fa8;
     --accent-green: #1a8f4e;
+    --accent-blue: #2f5fb3;
+    --accent-red: #c23a52;
     --danger: #b3261e;
     --danger-bg: #fbeceb;
     --warning: #92650f;

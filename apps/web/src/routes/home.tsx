@@ -8,13 +8,25 @@ import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
 import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 import { Window } from "../shell/window";
-import { WindowDock } from "../shell/window-dock";
+import { Taskbar } from "../shell/taskbar";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const FEATURED_PACKAGE = "gno.land/r/sys/users";
 
+const WINDOW_ACCENTS: Record<string, string> = {
+  realm: "cyan",
+  source: "amber",
+  activity: "magenta",
+  "network-monitor": "green",
+  "validator-monitor": "blue",
+  "block-explorer": "red",
+};
+
 export function Home() {
-  useWindowPersistence("window-layout:home");
+  // Bumped to v2 when the default layout moved from a tall single-column stack
+  // to a compact 3x2 grid — a v1 persisted layout would otherwise silently
+  // restore the old cramped positions for anyone who'd already opened the app.
+  useWindowPersistence("window-layout:home:v2");
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
   const navigate = useNavigate();
   const packagePath = search.pkg ?? FEATURED_PACKAGE;
@@ -56,57 +68,59 @@ export function Home() {
         </form>
       </div>
 
-      <div className="desktop">
-        <Window
-          id="realm"
-          title={realmTitle}
-          accent="cyan"
-          defaultGeometry={{ x: 24, y: 24, width: 520, height: 480 }}
-        >
-          <RealmBrowser packagePath={packagePath} renderPath={renderPath} />
-        </Window>
-        <Window
-          id="source"
-          title={`Source · ${packagePath}`}
-          accent="amber"
-          defaultGeometry={{ x: 568, y: 24, width: 560, height: 480 }}
-        >
-          <SourceExplorer packagePath={packagePath} />
-        </Window>
-        <Window
-          id="activity"
-          title="Recent activity"
-          accent="magenta"
-          defaultGeometry={{ x: 24, y: 528, width: 1104, height: 220 }}
-        >
-          <RecentActivity />
-        </Window>
-        <Window
-          id="network-monitor"
-          title="Network Monitor"
-          accent="green"
-          defaultGeometry={{ x: 24, y: 772, width: 340, height: 260 }}
-        >
-          <NetworkMonitor />
-        </Window>
-        <Window
-          id="validator-monitor"
-          title="Validator Monitor"
-          accent="cyan"
-          defaultGeometry={{ x: 380, y: 772, width: 748, height: 260 }}
-        >
-          <ValidatorMonitor />
-        </Window>
-        <Window
-          id="block-explorer"
-          title="Block Explorer"
-          accent="amber"
-          defaultGeometry={{ x: 24, y: 1048, width: 560, height: 320 }}
-        >
-          <BlockExplorer />
-        </Window>
+      <div className="desktop-shell">
+        <div className="desktop">
+          <Window
+            id="realm"
+            title={realmTitle}
+            accent="cyan"
+            defaultGeometry={{ x: 0, y: 0, width: 380, height: 300 }}
+          >
+            <RealmBrowser packagePath={packagePath} renderPath={renderPath} />
+          </Window>
+          <Window
+            id="source"
+            title={`Source · ${packagePath}`}
+            accent="amber"
+            defaultGeometry={{ x: 396, y: 0, width: 380, height: 300 }}
+          >
+            <SourceExplorer packagePath={packagePath} />
+          </Window>
+          <Window
+            id="activity"
+            title="Recent activity"
+            accent="magenta"
+            defaultGeometry={{ x: 792, y: 0, width: 380, height: 300 }}
+          >
+            <RecentActivity />
+          </Window>
+          <Window
+            id="network-monitor"
+            title="Network Monitor"
+            accent="green"
+            defaultGeometry={{ x: 0, y: 316, width: 380, height: 300 }}
+          >
+            <NetworkMonitor />
+          </Window>
+          <Window
+            id="validator-monitor"
+            title="Validator Monitor"
+            accent="blue"
+            defaultGeometry={{ x: 396, y: 316, width: 380, height: 300 }}
+          >
+            <ValidatorMonitor />
+          </Window>
+          <Window
+            id="block-explorer"
+            title="Block Explorer"
+            accent="red"
+            defaultGeometry={{ x: 792, y: 316, width: 380, height: 300 }}
+          >
+            <BlockExplorer />
+          </Window>
+        </div>
+        <Taskbar accents={WINDOW_ACCENTS} />
       </div>
-      <WindowDock />
     </div>
   );
 }

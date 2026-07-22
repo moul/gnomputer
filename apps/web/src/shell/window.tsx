@@ -1,7 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useWindowStore, type WindowGeometry } from "./window-store";
 
-export type WindowAccent = "cyan" | "amber" | "magenta" | "green";
+export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
 
 export function Window({
   id,
@@ -80,6 +80,7 @@ export function Window({
 
   return (
     <div
+      id={`window-${id}`}
       className={`window${isTopmost ? " window--focused" : ""}`}
       role="region"
       aria-label={title}

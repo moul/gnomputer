@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { DEFAULT_NETWORK_ID } from "@gnomputer/app-sdk";
 
 interface ShellState {
   activeNetworkId: string;
@@ -11,7 +12,7 @@ interface ShellState {
 }
 
 export const useShellStore = create<ShellState>((set) => ({
-  activeNetworkId: "test13",
+  activeNetworkId: DEFAULT_NETWORK_ID,
   commandPaletteOpen: false,
   guestLabel: "Browsing as guest",
   trailVersion: 0,
