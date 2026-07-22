@@ -75,6 +75,12 @@ describe("createRpcClient", () => {
     expect(env.data.height).toBe(985592);
     expect(env.data.numTxs).toBe(1);
     expect(env.data.time).toBe("2026-07-22T13:43:17.729Z");
+    expect(env.data.totalTxs).toBe(1591491);
+    expect(env.data.proposerAddress).toBe("g1vcsg3ek69yxvq6f65avw7zl572982r2z9z2r33");
+    expect(env.data.version).toBe("v1.0.0-rc.0");
+    expect(env.data.dataHashHex).toBe(
+      "a1de8562618552b890bd0aead1f2b8d4cea13830619a4e18536e5520d46ee700"
+    );
   });
 
   it("wraps getAccountInfo for a funded, initialized account", async () => {

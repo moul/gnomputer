@@ -4,10 +4,22 @@ import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 import { connectTm2Client, connectProvider, abciQueryString, fetchValidatorsRaw } from "./queries";
 
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export interface BlockSummary {
   height: number;
   time: string;
   numTxs: number;
+  totalTxs: number;
+  proposerAddress: string;
+  version: string;
+  appVersion: string;
+  dataHashHex: string;
+  validatorsHashHex: string;
 }
 
 export interface ValidatorInfo {
@@ -114,10 +126,17 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     async getBlockSummary(height) {
       const client = await getClient();
       const result = await client.block(height);
+      const header = result.block.header;
       const summary: BlockSummary = {
         height,
-        time: result.block.header.time.toISOString(),
-        numTxs: Number(result.block.header.numTxs),
+        time: header.time.toISOString(),
+        numTxs: Number(header.numTxs),
+        totalTxs: Number(header.totalTxs),
+        proposerAddress: header.proposerAddress,
+        version: header.version,
+        appVersion: header.appVersion,
+        dataHashHex: toHex(header.dataHash),
+        validatorsHashHex: toHex(header.validatorsHash),
       };
       return wrapEnvelope({
         ref: { ...baseRef, kind: "block", objectId: String(height) },

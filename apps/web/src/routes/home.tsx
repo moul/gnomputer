@@ -5,6 +5,7 @@ import { SourceExplorer } from "./source-explorer";
 import { RecentActivity } from "./recent-activity";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
+import { BlockExplorer } from "./block-explorer";
 import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 import { Window } from "../shell/window";
 import { WindowDock } from "../shell/window-dock";
@@ -95,6 +96,14 @@ export function Home() {
           defaultGeometry={{ x: 380, y: 772, width: 748, height: 260 }}
         >
           <ValidatorMonitor />
+        </Window>
+        <Window
+          id="block-explorer"
+          title="Block Explorer"
+          accent="amber"
+          defaultGeometry={{ x: 24, y: 1048, width: 560, height: 320 }}
+        >
+          <BlockExplorer />
         </Window>
       </div>
       <WindowDock />

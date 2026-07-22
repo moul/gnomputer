@@ -187,7 +187,7 @@ main {
 
 .desktop {
   position: relative;
-  min-height: 1060px;
+  min-height: 1400px;
   overflow-x: auto;
 }
 
@@ -614,4 +614,14 @@ main {
 .validator-list__priority {
   color: var(--text-dim);
   flex: 0 0 auto;
+}
+
+.block-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.block-explorer .account-fields dd {
+  word-break: break-all;
 }
