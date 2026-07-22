@@ -33,4 +33,18 @@ describe("createGnomputerSDK", () => {
     await sdk.favorites.toggle("gno://test13/realm/gno.land/r/demo/foo", "Foo");
     expect(await sdk.favorites.list()).toHaveLength(0);
   });
+
+  it("persists and restores arbitrary UI state by key", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    expect(await sdk.uiState.get("window-layout:home")).toBeNull();
+    await sdk.uiState.set("window-layout:home", '{"realm":{"x":10}}');
+    expect(await sdk.uiState.get("window-layout:home")).toBe('{"realm":{"x":10}}');
+  });
+
+  it("does not let uiState collide with the internal Trail active-id key", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    await sdk.uiState.set("activeTrailId", "not-a-real-trail-id");
+    const trailId = await sdk.trails.start("Untitled Trail");
+    expect(await sdk.trails.getActiveTrailId()).toBe(trailId);
+  });
 });

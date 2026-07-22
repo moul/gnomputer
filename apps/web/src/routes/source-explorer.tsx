@@ -49,49 +49,47 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
 
   const error = filesError ?? sourceError;
 
+  if (error) {
+    return (
+      <p className="state-line" role="alert">
+        Could not load source: {error.message}
+      </p>
+    );
+  }
+  if (filesPending || !files) {
+    return (
+      <p className="state-line" aria-busy="true">
+        Loading source…
+      </p>
+    );
+  }
+
   return (
-    <section className="panel panel--source" aria-label={`Source for ${packagePath}`}>
-      <header className="panel__header">
-        <span>Source · {packagePath}</span>
-      </header>
-      <div className="panel__body">
-        {error ? (
-          <p className="state-line" role="alert">
-            Could not load source: {error.message}
-          </p>
-        ) : filesPending || !files ? (
+    <div className="source-explorer">
+      <nav aria-label="File tree" className="file-tree">
+        <ul>
+          {files.map((file) => (
+            <li key={file}>
+              <button
+                type="button"
+                aria-current={file === activeFile}
+                onClick={() => setSelectedFile(file)}
+              >
+                {file}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="source-viewer">
+        {sourcePending ? (
           <p className="state-line" aria-busy="true">
-            Loading source…
+            Loading file…
           </p>
         ) : (
-          <>
-            <nav aria-label="File tree" className="file-tree">
-              <ul>
-                {files.map((file) => (
-                  <li key={file}>
-                    <button
-                      type="button"
-                      aria-current={file === activeFile}
-                      onClick={() => setSelectedFile(file)}
-                    >
-                      {file}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div className="source-viewer">
-              {sourcePending ? (
-                <p className="state-line" aria-busy="true">
-                  Loading file…
-                </p>
-              ) : (
-                <pre>{source}</pre>
-              )}
-            </div>
-          </>
+          <pre>{source}</pre>
         )}
       </div>
-    </section>
+    </div>
   );
 }

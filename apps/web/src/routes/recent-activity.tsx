@@ -21,32 +21,27 @@ export function RecentActivity() {
   }, []);
 
   return (
-    <section className="panel" aria-label="Recent activity">
-      <header className="panel__header">
-        <span>Recent activity</span>
-      </header>
+    <div className="recent-activity">
       {warnings.length > 0 && (
         <p className="panel__notice">{warnings.map((w) => w.message).join(" ")}</p>
       )}
-      <div className="panel__body panel__body--activity">
-        {blocks.length === 0 ? (
-          <p className="state-line" aria-busy="true">
-            Watching the chain for new blocks…
-          </p>
-        ) : (
-          <ul className="activity-list">
-            {blocks.map((block) => (
-              <li key={block.height} className="activity-list__row">
-                <span className="activity-list__height">#{block.height}</span>
-                <span className="activity-list__txs">
-                  {block.numTxs} {block.numTxs === 1 ? "transaction" : "transactions"}
-                </span>
-                <span className="activity-list__time">{relativeTime(block.time, now)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </section>
+      {blocks.length === 0 ? (
+        <p className="state-line" aria-busy="true">
+          Watching the chain for new blocks…
+        </p>
+      ) : (
+        <ul className="activity-list">
+          {blocks.map((block) => (
+            <li key={block.height} className="activity-list__row">
+              <span className="activity-list__height">#{block.height}</span>
+              <span className="activity-list__txs">
+                {block.numTxs} {block.numTxs === 1 ? "transaction" : "transactions"}
+              </span>
+              <span className="activity-list__time">{relativeTime(block.time, now)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

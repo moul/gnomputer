@@ -26,6 +26,10 @@ export interface GnomputerSDK {
     list(): Promise<FavoriteRecord[]>;
     toggle(refUri: string, label: string): Promise<void>;
   };
+  uiState: {
+    get(key: string): Promise<string | null>;
+    set(key: string, value: string): Promise<void>;
+  };
 }
 
 export function createGnomputerSDK(
@@ -70,6 +74,18 @@ export function createGnomputerSDK(
         } else {
           await db.favorites.put({ refUri, label, createdAt: new Date().toISOString() });
         }
+      },
+    },
+    uiState: {
+      // Shares the `meta` Dexie table with internal SDK state (e.g. Trails'
+      // activeTrailId) — namespaced so an app-chosen key can never collide
+      // with one of those.
+      get: async (key) => {
+        const record = await db.meta.get(`uiState:${key}`);
+        return record?.value ?? null;
+      },
+      set: async (key, value) => {
+        await db.meta.put({ key: `uiState:${key}`, value });
       },
     },
   };

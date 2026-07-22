@@ -32,32 +32,26 @@ export function RealmBrowser({
     },
   });
 
+  if (error) {
+    return (
+      <p className="state-line" role="alert">
+        Could not load this realm: {error.message}
+      </p>
+    );
+  }
+  if (isPending) {
+    return (
+      <p className="state-line" aria-busy="true">
+        Loading realm…
+      </p>
+    );
+  }
   return (
-    <section className="panel panel--realm">
-      <header className="panel__header">
-        <span>
-          Experience · {packagePath}
-          {renderPath ? ` · ${renderPath}` : ""}
-        </span>
-      </header>
-      <div className="panel__body">
-        {error ? (
-          <p className="state-line" role="alert">
-            Could not load this realm: {error.message}
-          </p>
-        ) : isPending ? (
-          <p className="state-line" aria-busy="true">
-            Loading realm…
-          </p>
-        ) : (
-          <article aria-label={`Realm ${packagePath}`}>
-            {nodes.map((node, i) => (
-              <RenderNodeView key={i} node={node} />
-            ))}
-          </article>
-        )}
-      </div>
-    </section>
+    <article aria-label={`Realm ${packagePath}`}>
+      {nodes.map((node, i) => (
+        <RenderNodeView key={i} node={node} />
+      ))}
+    </article>
   );
 }
 
