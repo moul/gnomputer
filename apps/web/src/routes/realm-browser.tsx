@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import type { RenderNode } from "@gnomputer/lenses";
@@ -12,23 +12,25 @@ export function RealmBrowser({
   renderPath?: string;
 }) {
   const sdk = useSdk();
-  const [nodes, setNodes] = useState<RenderNode[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const networkId = sdk.networks.getActive().id;
 
   const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
   useTrailRecorder({
-    uri: `gno://${sdk.networks.getActive().id}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
+    uri: `gno://${networkId}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
     label: trailLabel,
   });
 
-  useEffect(() => {
-    setNodes(null);
-    setError(null);
-    sdk.rpc
-      .queryRender(packagePath, renderPath, new Date().toISOString())
-      .then((env) => setNodes(sdk.lenses.parseRender(env.data, packagePath)))
-      .catch((err: Error) => setError(err.message));
-  }, [packagePath, renderPath, sdk]);
+  const {
+    data: nodes,
+    error,
+    isPending,
+  } = useQuery({
+    queryKey: ["realm-render", networkId, packagePath, renderPath],
+    queryFn: async () => {
+      const env = await sdk.rpc.queryRender(packagePath, renderPath, new Date().toISOString());
+      return sdk.lenses.parseRender(env.data, packagePath);
+    },
+  });
 
   return (
     <section className="panel panel--realm">
@@ -41,9 +43,9 @@ export function RealmBrowser({
       <div className="panel__body">
         {error ? (
           <p className="state-line" role="alert">
-            Could not load this realm: {error}
+            Could not load this realm: {error.message}
           </p>
-        ) : !nodes ? (
+        ) : isPending ? (
           <p className="state-line" aria-busy="true">
             Loading realm…
           </p>

@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
-import type { AccountInfo } from "@gnomputer/app-sdk";
 
 function formatBalance(coins: string): string {
   const match = /^(\d+)ugnot$/.exec(coins);
@@ -13,22 +12,24 @@ function formatBalance(coins: string): string {
 
 export function AccountExplorer({ address }: { address: string }) {
   const sdk = useSdk();
-  const [info, setInfo] = useState<AccountInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const networkId = sdk.networks.getActive().id;
 
   useTrailRecorder({
-    uri: `gno://${sdk.networks.getActive().id}/address/${address}`,
+    uri: `gno://${networkId}/address/${address}`,
     label: address,
   });
 
-  useEffect(() => {
-    setInfo(null);
-    setError(null);
-    sdk.rpc
-      .getAccountInfo(address, new Date().toISOString())
-      .then((env) => setInfo(env.data))
-      .catch((err: Error) => setError(err.message));
-  }, [address, sdk]);
+  const {
+    data: info,
+    error,
+    isPending,
+  } = useQuery({
+    queryKey: ["account", networkId, address],
+    queryFn: async () => {
+      const env = await sdk.rpc.getAccountInfo(address, new Date().toISOString());
+      return env.data;
+    },
+  });
 
   return (
     <section className="panel" aria-label={`Account ${address}`}>
@@ -38,9 +39,9 @@ export function AccountExplorer({ address }: { address: string }) {
       <div className="panel__body">
         {error ? (
           <p className="state-line" role="alert">
-            Could not load this account: {error}
+            Could not load this account: {error.message}
           </p>
-        ) : !info ? (
+        ) : isPending ? (
           <p className="state-line" aria-busy="true">
             Loading account…
           </p>

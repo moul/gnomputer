@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 
 export function WorldExplorer() {
   const sdk = useSdk();
-  const [favorites, setFavorites] = useState<{ refUri: string; label: string }[]>([]);
-
-  useEffect(() => {
-    sdk.favorites.list().then(setFavorites);
-  }, [sdk]);
+  const { data: favorites = [] } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: () => sdk.favorites.list(),
+  });
 
   return (
     <section className="panel" aria-label="World Explorer">
