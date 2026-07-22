@@ -8,9 +8,10 @@ import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 const FEATURED_PACKAGE = "gno.land/r/sys/users";
 
 export function Home() {
-  const search = useSearch({ strict: false }) as { pkg?: string };
+  const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
   const navigate = useNavigate();
   const packagePath = search.pkg ?? FEATURED_PACKAGE;
+  const renderPath = search.path ?? "";
   const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export function Home() {
         <button type="submit">Open</button>
       </form>
       <div className="home-layout__panes">
-        <RealmBrowser packagePath={packagePath} />
+        <RealmBrowser packagePath={packagePath} renderPath={renderPath} />
         <SourceExplorer packagePath={packagePath} />
       </div>
       <RecentActivity />

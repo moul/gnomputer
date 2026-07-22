@@ -5,15 +5,16 @@ export interface RenderNode {
   content?: string;
   href?: string;
   ref?: EntityRef;
+  renderPath?: string;
   children?: RenderNode[];
 }
 
-function resolveLink(href: string, currentPackagePath: string): EntityRef | undefined {
-  if (/^https?:\/\//.test(href)) return undefined;
-  if (!href.startsWith("/r/") && !href.startsWith("/p/")) return undefined;
+interface ResolvedLink {
+  ref?: EntityRef;
+  renderPath?: string;
+}
 
-  const domain = currentPackagePath.split("/")[0]!;
-  const packagePath = `${domain}${href}`;
+function realmRef(packagePath: string): EntityRef {
   return {
     uri: `gno://local/realm/${packagePath}`,
     kind: "realm",
@@ -22,7 +23,37 @@ function resolveLink(href: string, currentPackagePath: string): EntityRef | unde
   };
 }
 
+function resolveLink(href: string, currentPackagePath: string): ResolvedLink {
+  if (/^https?:\/\//.test(href)) return {};
+
+  // Gno's Render() supports its own sub-routing: a link can point at a render
+  // sub-path within the SAME realm, either as "?query=string" or as
+  // "/r/<realm>:<subpath>" — neither is a different package, just a different
+  // argument to Render(path). Cross-realm links are plain "/r/<other>" with no
+  // colon suffix.
+  if (href.startsWith("?")) {
+    return { ref: realmRef(currentPackagePath), renderPath: href };
+  }
+
+  if (!href.startsWith("/r/") && !href.startsWith("/p/")) return {};
+
+  const domain = currentPackagePath.split("/")[0]!;
+  const colonIndex = href.indexOf(":");
+  const pathPart = colonIndex >= 0 ? href.slice(0, colonIndex) : href;
+  const renderPath = colonIndex >= 0 ? href.slice(colonIndex + 1) : "";
+  const packagePath = `${domain}${pathPart}`;
+  return { ref: realmRef(packagePath), renderPath };
+}
+
 const LINK_RE = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+// Gno's Render() output escapes markdown-special characters that appear in
+// literal content (e.g. "Add 11 validator\(s\)") so they don't get misread as
+// markdown syntax. We don't implement a full markdown parser, so without this
+// the escapes leak straight into the rendered text as visible backslashes.
+function unescapeMarkdown(text: string): string {
+  return text.replace(/\\([\\`*_{}[\]()#+.!>-])/g, "$1");
+}
 
 function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[] {
   const nodes: RenderNode[] = [];
@@ -31,15 +62,22 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
     const [full, label, href] = match;
     const index = match.index ?? 0;
     if (index > lastIndex) {
-      nodes.push({ type: "text", content: text.slice(lastIndex, index) });
+      nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex, index)) });
     }
-    nodes.push({ type: "link", content: label, href, ref: resolveLink(href!, currentPackagePath) });
+    const resolved = resolveLink(href!, currentPackagePath);
+    nodes.push({
+      type: "link",
+      content: unescapeMarkdown(label!),
+      href,
+      ref: resolved.ref,
+      renderPath: resolved.renderPath,
+    });
     lastIndex = index + full!.length;
   }
   if (lastIndex < text.length) {
-    nodes.push({ type: "text", content: text.slice(lastIndex) });
+    nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex)) });
   }
-  return nodes.length > 0 ? nodes : [{ type: "text", content: text }];
+  return nodes.length > 0 ? nodes : [{ type: "text", content: unescapeMarkdown(text) }];
 }
 
 export function parseRenderMarkup(markup: string, currentPackagePath: string): RenderNode[] {
@@ -52,7 +90,7 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
 
     const headingMatch = /^(#{1,6})\s+(.*)$/.exec(trimmed);
     if (headingMatch) {
-      nodes.push({ type: "heading", content: headingMatch[2] });
+      nodes.push({ type: "heading", content: unescapeMarkdown(headingMatch[2]!) });
       continue;
     }
 
@@ -68,7 +106,7 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
       continue;
     }
 
-    nodes.push({ type: "paragraph", content: trimmed });
+    nodes.push({ type: "paragraph", content: unescapeMarkdown(trimmed) });
   }
 
   return nodes;

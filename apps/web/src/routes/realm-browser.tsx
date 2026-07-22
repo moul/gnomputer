@@ -4,29 +4,39 @@ import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import type { RenderNode } from "@gnomputer/lenses";
 
-export function RealmBrowser({ packagePath }: { packagePath: string }) {
+export function RealmBrowser({
+  packagePath,
+  renderPath = "",
+}: {
+  packagePath: string;
+  renderPath?: string;
+}) {
   const sdk = useSdk();
   const [nodes, setNodes] = useState<RenderNode[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
   useTrailRecorder({
-    uri: `gno://${sdk.networks.getActive().id}/realm/${packagePath}`,
-    label: packagePath,
+    uri: `gno://${sdk.networks.getActive().id}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
+    label: trailLabel,
   });
 
   useEffect(() => {
     setNodes(null);
     setError(null);
     sdk.rpc
-      .queryRender(packagePath, "", new Date().toISOString())
+      .queryRender(packagePath, renderPath, new Date().toISOString())
       .then((env) => setNodes(sdk.lenses.parseRender(env.data, packagePath)))
       .catch((err: Error) => setError(err.message));
-  }, [packagePath, sdk]);
+  }, [packagePath, renderPath, sdk]);
 
   return (
     <section className="panel panel--realm">
       <header className="panel__header">
-        <span>Experience · {packagePath}</span>
+        <span>
+          Experience · {packagePath}
+          {renderPath ? ` · ${renderPath}` : ""}
+        </span>
       </header>
       <div className="panel__body">
         {error ? (
@@ -73,12 +83,14 @@ function GnoLink({ node }: { node: RenderNode }) {
 
   if (node.ref?.packagePath) {
     const packagePath = node.ref.packagePath;
+    const renderPath = node.renderPath ?? "";
+    const search = renderPath ? { pkg: packagePath, path: renderPath } : { pkg: packagePath };
     return (
       <a
-        href={`/?pkg=${encodeURIComponent(packagePath)}`}
+        href={`/?pkg=${encodeURIComponent(packagePath)}${renderPath ? `&path=${encodeURIComponent(renderPath)}` : ""}`}
         onClick={(e) => {
           e.preventDefault();
-          void navigate({ to: "/", search: { pkg: packagePath } });
+          void navigate({ to: "/", search });
         }}
       >
         {node.content}
