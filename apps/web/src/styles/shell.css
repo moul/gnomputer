@@ -16,6 +16,27 @@
   color: var(--text);
 }
 
+.top-bar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.top-bar__nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.top-bar__nav a:hover {
+  color: var(--text);
+}
+
+.top-bar__nav a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .top-bar__network {
   display: flex;
   align-items: center;
@@ -345,4 +366,23 @@ main {
 .activity-list__time {
   color: var(--text-faint);
   font-variant-numeric: tabular-nums;
+}
+
+.account-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.account-fields dt {
+  color: var(--text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.account-fields dd {
+  margin: 0;
+  font-family: var(--font-mono);
 }

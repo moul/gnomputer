@@ -1,8 +1,8 @@
 import { parseGnoUri, formatGnoUri } from "@gnomputer/entities";
 import { DEFAULT_NETWORKS, DEFAULT_NETWORK_ID, type NetworkConfig } from "@gnomputer/networks";
-import { createRpcClient, type RpcClient, type BlockSummary } from "@gnomputer/rpc";
+import { createRpcClient, type RpcClient, type BlockSummary, type AccountInfo } from "@gnomputer/rpc";
 
-export type { RpcClient, BlockSummary };
+export type { RpcClient, BlockSummary, AccountInfo };
 import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
 import { createTrailApi, type TrailAPI } from "@gnomputer/trails";
 import { availableLenses, parseRenderMarkup } from "@gnomputer/lenses";

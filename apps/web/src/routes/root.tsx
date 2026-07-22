@@ -7,8 +7,23 @@ import {
 } from "@tanstack/react-router";
 import { Home } from "./home";
 import { WorldExplorer } from "./world-explorer";
+import { AccountPage } from "./account-page";
+import { TopBar } from "../shell/top-bar";
+import { CommandPalette } from "../shell/command-palette";
 
-const rootRoute = createRootRoute({ component: () => <Outlet /> });
+function RootLayout() {
+  return (
+    <>
+      <TopBar />
+      <CommandPalette />
+      <main>
+        <Outlet />
+      </main>
+    </>
+  );
+}
+
+const rootRoute = createRootRoute({ component: RootLayout });
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
@@ -22,8 +37,16 @@ const worldRoute = createRoute({
   path: "/world",
   component: WorldExplorer,
 });
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/account",
+  component: AccountPage,
+  validateSearch: (search: Record<string, unknown>): { addr?: string } => ({
+    addr: typeof search.addr === "string" ? search.addr : undefined,
+  }),
+});
 
-const routeTree = rootRoute.addChildren([homeRoute, worldRoute]);
+const routeTree = rootRoute.addChildren([homeRoute, worldRoute, accountRoute]);
 export const router = createRouter({ routeTree, basepath: import.meta.env.BASE_URL });
 
 declare module "@tanstack/react-router" {

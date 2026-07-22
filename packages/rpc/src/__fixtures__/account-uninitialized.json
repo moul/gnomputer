@@ -1,0 +1,21 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "response": {
+      "ResponseBase": {
+        "Error": {
+          "@type": "/std.InvalidAddressError"
+        },
+        "Data": null,
+        "Events": null,
+        "Log": "--= Error =--\nData: std.InvalidAddressError{abciError:std.abciError{}}\nMsg Traces:\n    0  /gnoroot/tm2/pkg/std/errors.go:93 - invalid query address g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzp0nh0\nStack Trace:\n    0  /gnoroot/tm2/pkg/errors/errors.go:93\n    1  /gnoroot/tm2/pkg/std/errors.go:93\n    2  /gnoroot/tm2/pkg/sdk/auth/handler.go:185\n    3  /gnoroot/tm2/pkg/sdk/auth/handler.go:166\n    4  /gnoroot/tm2/pkg/sdk/baseapp.go:521\n    5  /gnoroot/tm2/pkg/sdk/baseapp.go:421\n    6  /gnoroot/tm2/pkg/bft/abci/client/local_client.go:180\n    7  /gnoroot/tm2/pkg/bft/appconn/app_conn.go:144\n    8  /gnoroot/tm2/pkg/bft/rpc/core/abci.go:14\n    9  /usr/local/go/src/reflect/value.go:581\n   10  /usr/local/go/src/reflect/value.go:365\n... 15 more lines elided",
+        "Info": ""
+      },
+      "Key": null,
+      "Value": null,
+      "Proof": null,
+      "Height": "0"
+    }
+  }
+}

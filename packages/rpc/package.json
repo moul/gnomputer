@@ -14,7 +14,8 @@
   "dependencies": {
     "@gnomputer/core": "workspace:*",
     "@gnomputer/networks": "workspace:*",
-    "@gnolang/tm2-rpc": "^1.0.0"
+    "@gnolang/tm2-rpc": "^1.0.0",
+    "@gnolang/tm2-js-client": "^2.0.4"
   },
   "devDependencies": {
     "vitest": "^3.2.7",

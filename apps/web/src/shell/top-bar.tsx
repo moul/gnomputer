@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 
@@ -8,6 +9,11 @@ export function TopBar() {
   return (
     <header className="top-bar" role="banner">
       <span className="top-bar__brand">Gnomputer</span>
+      <nav className="top-bar__nav" aria-label="Primary">
+        <Link to="/">Explore</Link>
+        <Link to="/world">World</Link>
+        <Link to="/account">Account</Link>
+      </nav>
       <label className="top-bar__network">
         Network
         <select
@@ -26,6 +32,7 @@ export function TopBar() {
       </label>
       <button
         type="button"
+        className="top-bar__search"
         onClick={() => setCommandPaletteOpen(true)}
         aria-label="Open command palette (Cmd+K)"
       >
