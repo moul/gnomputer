@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../entities" },
+    { "path": "../core" },
+    { "path": "../networks" },
+    { "path": "../rpc" },
+    { "path": "../storage" },
+    { "path": "../trails" },
+    { "path": "../lenses" }
+  ]
+}

@@ -27,6 +27,40 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/app-sdk:
+    dependencies:
+      '@gnomputer/core':
+        specifier: workspace:*
+        version: link:../core
+      '@gnomputer/entities':
+        specifier: workspace:*
+        version: link:../entities
+      '@gnomputer/lenses':
+        specifier: workspace:*
+        version: link:../lenses
+      '@gnomputer/networks':
+        specifier: workspace:*
+        version: link:../networks
+      '@gnomputer/rpc':
+        specifier: workspace:*
+        version: link:../rpc
+      '@gnomputer/storage':
+        specifier: workspace:*
+        version: link:../storage
+      '@gnomputer/trails':
+        specifier: workspace:*
+        version: link:../trails
+    devDependencies:
+      fake-indexeddb:
+        specifier: ^6.0.0
+        version: 6.2.5
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9
+
   packages/core:
     dependencies:
       '@gnomputer/entities':
