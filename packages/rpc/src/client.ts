@@ -2,12 +2,23 @@ import type { Tm2Client } from "@gnolang/tm2-rpc";
 import type { JSONRPCProvider } from "@gnolang/tm2-js-client";
 import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
-import { connectTm2Client, connectProvider, abciQueryString } from "./queries";
+import { connectTm2Client, connectProvider, abciQueryString, fetchValidatorsRaw } from "./queries";
 
 export interface BlockSummary {
   height: number;
   time: string;
   numTxs: number;
+}
+
+export interface ValidatorInfo {
+  address: string;
+  votingPower: string;
+  proposerPriority: string;
+}
+
+export interface ValidatorSet {
+  height: number;
+  validators: ValidatorInfo[];
 }
 
 export interface AccountInfo {
@@ -24,6 +35,7 @@ export interface RpcClient {
   queryFile(path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
   getAccountInfo(address: string, fetchedAt: string): Promise<DataEnvelope<AccountInfo>>;
+  getValidatorSet(fetchedAt: string): Promise<DataEnvelope<ValidatorSet>>;
 }
 
 export function createRpcClient(network: NetworkConfig): RpcClient {
@@ -153,6 +165,36 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.account.v1",
+      });
+    },
+
+    async getValidatorSet(fetchedAt) {
+      const client = await getClient();
+      const status = await client.status();
+      // Querying the exact latest height sometimes races the chain producing
+      // the next block between this call and the one above (observed live),
+      // so back off by a few heights the same way getBlockSummary's callers
+      // already have to.
+      const height = Number(status.syncInfo.latestBlockHeight) - 2;
+      const raw = await fetchValidatorsRaw(network.rpcUrl, height);
+      const validatorSet: ValidatorSet = {
+        height: raw.blockHeight,
+        validators: raw.validators.map((v) => ({
+          address: v.address,
+          votingPower: v.voting_power,
+          proposerPriority: v.proposer_priority,
+        })),
+      };
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "validator", objectId: "set" },
+        data: validatorSet,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        height: validatorSet.height,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.validator-set.v1",
       });
     },
   };

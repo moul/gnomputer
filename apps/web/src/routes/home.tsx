@@ -3,6 +3,8 @@ import { useSearch, useNavigate } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
 import { SourceExplorer } from "./source-explorer";
 import { RecentActivity } from "./recent-activity";
+import { NetworkMonitor } from "./network-monitor";
+import { ValidatorMonitor } from "./validator-monitor";
 import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 import { Window } from "../shell/window";
 import { WindowDock } from "../shell/window-dock";
@@ -77,6 +79,22 @@ export function Home() {
           defaultGeometry={{ x: 24, y: 528, width: 1104, height: 220 }}
         >
           <RecentActivity />
+        </Window>
+        <Window
+          id="network-monitor"
+          title="Network Monitor"
+          accent="green"
+          defaultGeometry={{ x: 24, y: 772, width: 340, height: 260 }}
+        >
+          <NetworkMonitor />
+        </Window>
+        <Window
+          id="validator-monitor"
+          title="Validator Monitor"
+          accent="cyan"
+          defaultGeometry={{ x: 380, y: 772, width: 748, height: 260 }}
+        >
+          <ValidatorMonitor />
         </Window>
       </div>
       <WindowDock />

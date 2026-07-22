@@ -7,6 +7,7 @@ import qfileFixture from "./__fixtures__/qfile.json";
 import blockFixture from "./__fixtures__/block.json";
 import accountFixture from "./__fixtures__/account.json";
 import accountUninitializedFixture from "./__fixtures__/account-uninitialized.json";
+import validatorsFixture from "./__fixtures__/validators.json";
 
 const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -32,7 +33,9 @@ function mockFetchWithFixtures() {
           ? abciQueryFixture(init)
           : body.method === "block"
             ? blockFixture
-            : {};
+            : body.method === "validators"
+              ? validatorsFixture
+              : {};
     return new Response(JSON.stringify(fixture), { headers: { "content-type": "application/json" } });
   }) as unknown as typeof fetch;
 }
@@ -88,5 +91,14 @@ describe("createRpcClient", () => {
     const client = createRpcClient(test13);
     const env = await client.getAccountInfo(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.data.initialized).toBe(false);
+  });
+
+  it("wraps getValidatorSet with real bech32 addresses, not raw bytes", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.getValidatorSet("2026-07-22T00:00:00.000Z");
+    expect(env.source).toBe("rpc");
+    expect(env.data.validators.length).toBeGreaterThan(0);
+    expect(env.data.validators[0]!.address).toMatch(/^g1[a-z0-9]+$/);
+    expect(typeof env.data.validators[0]!.votingPower).toBe("string");
   });
 });

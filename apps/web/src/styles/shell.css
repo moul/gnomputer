@@ -171,7 +171,7 @@ main {
 
 .desktop {
   position: relative;
-  min-height: 780px;
+  min-height: 1060px;
 }
 
 .window {
@@ -291,8 +291,13 @@ main {
   font-family: var(--font-sans);
 }
 
-.window__body:has(.source-explorer) {
+.window__body:has(.source-explorer),
+.window__body:has(.validator-monitor) {
   padding: 0;
+}
+
+.window__body:has(.validator-monitor) .state-line {
+  padding: var(--space-4) var(--space-4) var(--space-2);
 }
 
 .window__resize-handle {
@@ -540,4 +545,49 @@ main {
 .account-fields dd {
   margin: 0;
   font-family: var(--font-mono);
+}
+
+.validator-monitor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.validator-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-4);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.validator-list__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.validator-list__row:hover {
+  background: var(--bg-inset);
+}
+
+.validator-list__address {
+  color: var(--text);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.validator-list__power,
+.validator-list__priority {
+  color: var(--text-dim);
+  flex: 0 0 auto;
 }
