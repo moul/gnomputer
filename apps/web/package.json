@@ -9,7 +9,7 @@
     "postbuild": "node scripts/spa-fallback.mjs",
     "test": "vitest run",
     "lint": "eslint src",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -b",
     "e2e": "playwright test"
   },
   "dependencies": {
