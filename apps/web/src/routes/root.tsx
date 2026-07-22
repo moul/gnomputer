@@ -9,7 +9,14 @@ import { Home } from "./home";
 import { WorldExplorer } from "./world-explorer";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
-const homeRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: Home });
+const homeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  component: Home,
+  validateSearch: (search: Record<string, unknown>): { pkg?: string } => ({
+    pkg: typeof search.pkg === "string" ? search.pkg : undefined,
+  }),
+});
 const worldRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/world",

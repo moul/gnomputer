@@ -30,11 +30,17 @@ export interface FavoriteRecord {
   createdAt: string;
 }
 
+export interface MetaRecord {
+  key: string;
+  value: string;
+}
+
 export class GnomputerDB extends Dexie {
   workspaces!: EntityTable<WorkspaceRecord, "id">;
   trails!: EntityTable<TrailRecord, "id">;
   trailSteps!: EntityTable<TrailStepRecord, "refUri">;
   favorites!: EntityTable<FavoriteRecord, "refUri">;
+  meta!: EntityTable<MetaRecord, "key">;
 
   constructor(name: string) {
     super(name);
@@ -43,6 +49,7 @@ export class GnomputerDB extends Dexie {
       trails: "id",
       trailSteps: "[trailId+order], trailId",
       favorites: "refUri",
+      meta: "key",
     });
   }
 }
