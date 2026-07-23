@@ -954,6 +954,10 @@ main {
   border-color: var(--accent-green);
 }
 
+.block-explorer__txs {
+  margin-top: var(--space-3);
+}
+
 .settings-window {
   display: flex;
   flex-direction: column;

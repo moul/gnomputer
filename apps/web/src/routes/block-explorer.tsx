@@ -55,6 +55,15 @@ export function BlockExplorer() {
     enabled: height !== null,
   });
 
+  const { data: blockEvents } = useQuery({
+    queryKey: ["block-events", networkId, height],
+    queryFn: async () => {
+      const env = await sdk.rpc.getBlockEvents(height!, new Date().toISOString());
+      return env.data;
+    },
+    enabled: height !== null && !!block && block.numTxs > 0,
+  });
+
   return (
     <div className="block-explorer">
       <form
@@ -134,6 +143,38 @@ export function BlockExplorer() {
             <dt>Validators hash</dt>
             <dd>{block.validatorsHashHex || "(empty)"}</dd>
           </dl>
+          {block.numTxs > 0 && (
+            <ul className="event-list block-explorer__txs">
+              {blockEvents
+                ? blockEvents.txs.map((tx) => (
+                    <li key={tx.txIndex} className="event-list__row">
+                      <div className="event-list__head">
+                        <span className="event-list__type">
+                          Tx #{tx.txIndex} · {tx.success ? "success" : "failed"}
+                        </span>
+                        <span className="event-list__pkg">
+                          gas {tx.gasUsed.toLocaleString()} / {tx.gasWanted.toLocaleString()}
+                        </span>
+                      </div>
+                      {tx.events.length > 0 && (
+                        <dl className="event-list__attrs">
+                          <span className="event-list__attr">
+                            <dt>events</dt>
+                            <dd>
+                              {tx.events.length} ({tx.events.map((e) => e.type).join(", ")})
+                            </dd>
+                          </span>
+                        </dl>
+                      )}
+                    </li>
+                  ))
+                : (
+                    <li className="state-line" aria-busy="true">
+                      Loading transactions…
+                    </li>
+                  )}
+            </ul>
+          )}
         </>
       )}
     </div>
