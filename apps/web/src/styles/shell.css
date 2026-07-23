@@ -339,6 +339,22 @@ main {
   color: var(--accent);
 }
 
+.gnockpit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gnockpit__link {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.gnockpit__link:hover {
+  color: var(--accent);
+}
+
 .desktop-shell {
   flex: 1;
   min-height: 0;

@@ -5,6 +5,7 @@ import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
 import { EventExplorer } from "./event-explorer";
+import { Gnockpit } from "./gnockpit";
 import { Window } from "../shell/window";
 import { Taskbar } from "../shell/taskbar";
 import { SettingsWindow } from "../shell/settings-window";
@@ -23,6 +24,7 @@ const WINDOW_ACCENTS: Record<string, string> = {
   history: "green",
   address: "amber",
   "event-explorer": "blue",
+  gnockpit: "green",
 };
 
 export function Home() {
@@ -93,6 +95,15 @@ export function Home() {
             defaultGeometry={{ x: 120, y: 100, width: 480, height: 400 }}
           >
             <EventExplorer />
+          </Window>
+          <Window
+            id="gnockpit"
+            title="Gnockpit"
+            accent="green"
+            startClosed
+            defaultGeometry={{ x: 160, y: 130, width: 380, height: 320 }}
+          >
+            <Gnockpit />
           </Window>
           <SettingsWindow />
           <HistoryWindow />
