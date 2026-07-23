@@ -2,6 +2,7 @@ import { router } from "../routes/root";
 import { useWindowStore } from "./window-store";
 import { usePendingRefsStore } from "./pending-refs-store";
 import { openSettings } from "./open-settings";
+import type { EntityKind } from "./entity-patterns";
 
 function focusOrReopen(id: string) {
   const win = useWindowStore.getState().windows[id];
@@ -45,5 +46,29 @@ export function openRef(uri: string): boolean {
     }
     default:
       return false;
+  }
+}
+
+/** Opens a single entity match — text matched wholesale by matchWholeEntity
+ * (search bar) or one span found inline by matchEntityAt (Linkify). */
+export function openEntityMatch(kind: EntityKind, text: string): void {
+  switch (kind) {
+    case "address":
+      openRef(`gno://_/address/${text}`);
+      return;
+    case "block":
+      openRef(`gno://_/block/${text.replace(/^#/, "")}`);
+      return;
+    case "realm": {
+      const packagePath = text.startsWith("r/") ? `gno.land/${text}` : text;
+      openRef(`gno://_/realm/${packagePath}`);
+      return;
+    }
+    case "username":
+      // r/sys/users doesn't expose a confirmed per-user render path, so the
+      // best honest click-through today is the users realm itself rather
+      // than guessing a URL that might 404.
+      void router.navigate({ to: "/", search: { pkg: "gno.land/r/sys/users" } });
+      return;
   }
 }

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useShellStore } from "../store";
+import { matchWholeEntity } from "./entity-patterns";
+import { openEntityMatch } from "./open-ref";
 
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen } = useShellStore();
   const [query, setQuery] = useState("");
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -19,6 +22,18 @@ export function CommandPalette() {
 
   if (!commandPaletteOpen) return null;
 
+  function submit() {
+    const match = matchWholeEntity(query);
+    if (!match) {
+      setNotFound(true);
+      return;
+    }
+    openEntityMatch(match.kind, match.text);
+    setQuery("");
+    setNotFound(false);
+    setCommandPaletteOpen(false);
+  }
+
   return (
     <div
       role="dialog"
@@ -30,12 +45,27 @@ export function CommandPalette() {
       }}
     >
       <div className="command-palette__panel">
-        <input
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Open realm, address, transaction…"
-        />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submit();
+          }}
+        >
+          <input
+            autoFocus
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setNotFound(false);
+            }}
+            placeholder="g1 address, #block, r/realm/path…"
+          />
+        </form>
+        {notFound && (
+          <p className="command-palette__hint">
+            That doesn't look like an address, block number, or realm path yet — keep typing.
+          </p>
+        )}
       </div>
     </div>
   );
