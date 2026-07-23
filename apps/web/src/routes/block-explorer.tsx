@@ -5,6 +5,7 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { usePendingRefsStore } from "../shell/pending-refs-store";
 import { useNetworkStatus } from "../shell/use-network-status";
 import { Linkified } from "../shell/linkify";
+import { Freshness } from "../shell/freshness";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
@@ -43,6 +44,7 @@ export function BlockExplorer() {
     data: block,
     error,
     isPending,
+    dataUpdatedAt,
   } = useQuery({
     queryKey: ["block-detail", networkId, height],
     queryFn: async () => {
@@ -96,29 +98,32 @@ export function BlockExplorer() {
           Loading block…
         </p>
       ) : (
-        <dl className="account-fields">
-          <dt>Height</dt>
-          <dd>#{block.height}</dd>
-          <dt>Time</dt>
-          <dd>{block.time}</dd>
-          <dt>Transactions</dt>
-          <dd>
-            {block.numTxs} (chain total: {block.totalTxs.toLocaleString()})
-          </dd>
-          <dt>Proposer</dt>
-          <dd>
-            <Linkified text={block.proposerAddress} />
-          </dd>
-          <dt>Version</dt>
-          <dd>
-            {block.version}
-            {block.appVersion ? ` / app ${block.appVersion}` : ""}
-          </dd>
-          <dt>Data hash</dt>
-          <dd>{block.dataHashHex || "(empty — no transactions in this block)"}</dd>
-          <dt>Validators hash</dt>
-          <dd>{block.validatorsHashHex || "(empty)"}</dd>
-        </dl>
+        <>
+          <Freshness dataUpdatedAt={dataUpdatedAt} />
+          <dl className="account-fields">
+            <dt>Height</dt>
+            <dd>#{block.height}</dd>
+            <dt>Time</dt>
+            <dd>{block.time}</dd>
+            <dt>Transactions</dt>
+            <dd>
+              {block.numTxs} (chain total: {block.totalTxs.toLocaleString()})
+            </dd>
+            <dt>Proposer</dt>
+            <dd>
+              <Linkified text={block.proposerAddress} />
+            </dd>
+            <dt>Version</dt>
+            <dd>
+              {block.version}
+              {block.appVersion ? ` / app ${block.appVersion}` : ""}
+            </dd>
+            <dt>Data hash</dt>
+            <dd>{block.dataHashHex || "(empty — no transactions in this block)"}</dd>
+            <dt>Validators hash</dt>
+            <dd>{block.validatorsHashHex || "(empty)"}</dd>
+          </dl>
+        </>
       )}
     </div>
   );

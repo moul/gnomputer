@@ -46,7 +46,17 @@ export interface GnomputerSDK {
     get(key: string): Promise<string | null>;
     set(key: string, value: string): Promise<void>;
   };
+  queryCache: {
+    getAll(): Promise<{ queryKeyJson: string; data: unknown; updatedAt: number }[]>;
+    set(queryKeyJson: string, data: unknown, updatedAt: number): Promise<void>;
+  };
 }
+
+// "Instant last-known value on reload, refetch in the background" only needs
+// the last successful result per query — capped well below what IndexedDB
+// could hold, so a session that opens many different realms/blocks doesn't
+// grow this table forever.
+const QUERY_CACHE_MAX_ENTRIES = 50;
 
 export function createGnomputerSDK(
   options: { networkId?: string; dbName?: string } = {}
@@ -105,6 +115,38 @@ export function createGnomputerSDK(
       },
       set: async (key, value) => {
         await db.meta.put({ key: `uiState:${key}`, value });
+      },
+    },
+    queryCache: {
+      getAll: async () => {
+        const records = await db.queryCache.orderBy("insertSeq").toArray();
+        return records.map((r) => ({
+          queryKeyJson: r.queryKeyJson,
+          data: JSON.parse(r.dataJson),
+          updatedAt: r.updatedAt,
+        }));
+      },
+      set: async (queryKeyJson, data, updatedAt) => {
+        const existing = await db.queryCache.get(queryKeyJson);
+        if (existing) {
+          // True FIFO: updating a key's data does not move it back to the
+          // front of the eviction queue — only first-seen order matters.
+          await db.queryCache.put({ ...existing, dataJson: JSON.stringify(data), updatedAt });
+          return;
+        }
+        const count = await db.queryCache.count();
+        if (count >= QUERY_CACHE_MAX_ENTRIES) {
+          const oldest = await db.queryCache.orderBy("insertSeq").first();
+          if (oldest) await db.queryCache.delete(oldest.key);
+        }
+        const newest = await db.queryCache.orderBy("insertSeq").last();
+        await db.queryCache.put({
+          key: queryKeyJson,
+          queryKeyJson,
+          dataJson: JSON.stringify(data),
+          updatedAt,
+          insertSeq: (newest?.insertSeq ?? 0) + 1,
+        });
       },
     },
   };

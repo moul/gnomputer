@@ -1,12 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { Linkified } from "../shell/linkify";
+import { Freshness } from "../shell/freshness";
 
 export function ValidatorMonitor() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
 
-  const { data, error, isPending } = useQuery({
+  const { data, error, isPending, dataUpdatedAt } = useQuery({
     queryKey: ["validator-set", networkId],
     queryFn: async () => {
       const env = await sdk.rpc.getValidatorSet(new Date().toISOString());
@@ -34,6 +35,7 @@ export function ValidatorMonitor() {
 
   return (
     <div className="validator-monitor">
+      <Freshness dataUpdatedAt={dataUpdatedAt} />
       <p className="state-line">
         {data.validators.length} validators · {totalPower} total voting power · at height #
         {data.height}

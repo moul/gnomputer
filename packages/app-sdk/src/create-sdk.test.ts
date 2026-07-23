@@ -47,4 +47,37 @@ describe("createGnomputerSDK", () => {
     const trailId = await sdk.trails.start("Untitled Trail");
     expect(await sdk.trails.getActiveTrailId()).toBe(trailId);
   });
+
+  it("persists and restores query cache entries in insertion order", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    await sdk.queryCache.set('["a"]', { value: 1 }, 100);
+    await sdk.queryCache.set('["b"]', { value: 2 }, 200);
+    const all = await sdk.queryCache.getAll();
+    expect(all).toEqual([
+      { queryKeyJson: '["a"]', data: { value: 1 }, updatedAt: 100 },
+      { queryKeyJson: '["b"]', data: { value: 2 }, updatedAt: 200 },
+    ]);
+  });
+
+  it("updates a query cache entry in place without moving it in FIFO order", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    await sdk.queryCache.set('["a"]', { value: 1 }, 100);
+    await sdk.queryCache.set('["b"]', { value: 2 }, 200);
+    await sdk.queryCache.set('["a"]', { value: 3 }, 300);
+    const all = await sdk.queryCache.getAll();
+    expect(all.map((e) => e.queryKeyJson)).toEqual(['["a"]', '["b"]']);
+    expect(all[0].data).toEqual({ value: 3 });
+    expect(all[0].updatedAt).toBe(300);
+  });
+
+  it("evicts the oldest query cache entry once past the FIFO cap", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    for (let i = 0; i < 51; i++) {
+      await sdk.queryCache.set(`["key-${i}"]`, { i }, i);
+    }
+    const all = await sdk.queryCache.getAll();
+    expect(all).toHaveLength(50);
+    expect(all[0].queryKeyJson).toBe('["key-1"]');
+    expect(all.at(-1)!.queryKeyJson).toBe('["key-50"]');
+  });
 });

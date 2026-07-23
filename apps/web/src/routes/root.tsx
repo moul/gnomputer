@@ -9,9 +9,13 @@ import { Home } from "./home";
 import { StatusBar } from "../shell/status-bar";
 import { CommandPalette } from "../shell/command-palette";
 import { useThemePersistence } from "../shell/use-theme-persistence";
+import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
+import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
 
 function RootLayout() {
   useThemePersistence();
+  useQueryCachePersistence();
+  useSettingsTabPersistence();
   return (
     <>
       <StatusBar />

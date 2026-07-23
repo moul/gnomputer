@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from "react";
 import { useWindowStore } from "./window-store";
+import { useThemeStore } from "./theme-store";
 
 const ACCENT_VAR: Record<string, string> = {
   cyan: "var(--accent-cyan)",
@@ -21,35 +23,76 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
   const focus = useWindowStore((s) => s.focus);
   const restore = useWindowStore((s) => s.restore);
   const tile = useWindowStore((s) => s.tile);
+  const isModern = useThemeStore((s) => s.theme === "modern");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const entries = Object.entries(windows);
-  if (entries.length === 0) return null;
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    }
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
+
+  const allEntries = Object.entries(windows);
+  const openEntries = allEntries.filter(([, w]) => !w.closed);
+
+  function openWindow(id: string, w: { closed: boolean; minimized: boolean }) {
+    if (w.closed) reopen(id);
+    else if (w.minimized) restore(id);
+    else focus(id);
+    document
+      .getElementById(`window-${id}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    setMenuOpen(false);
+  }
 
   return (
     <div className="taskbar" role="toolbar" aria-label="Windows">
+      <div className="taskbar__start" ref={menuRef}>
+        <button
+          type="button"
+          className="taskbar__start-button"
+          aria-haspopup="true"
+          aria-expanded={menuOpen}
+          aria-label="Open apps menu"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          {isModern ? "🧭 Apps" : "[apps]"}
+        </button>
+        {menuOpen && allEntries.length > 0 && (
+          <div className="taskbar__start-menu" role="menu">
+            {allEntries.map(([id, w]) => (
+              <button
+                key={id}
+                type="button"
+                role="menuitem"
+                className="taskbar__start-item"
+                style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[id] ?? "cyan"] }}
+                onClick={() => openWindow(id, w)}
+              >
+                {w.title}
+                <span className="taskbar__start-item-state">
+                  {w.closed ? "" : w.minimized ? "minimized" : "open"}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="taskbar__items">
-        {entries.map(([id, w]) => (
+        {openEntries.map(([id, w]) => (
           <button
             key={id}
             type="button"
             className="taskbar__item"
-            data-open={!w.closed}
             data-minimized={w.minimized}
             style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[id] ?? "cyan"] }}
-            onClick={() => {
-              if (w.closed) {
-                reopen(id);
-              } else if (w.minimized) {
-                restore(id);
-              } else {
-                focus(id);
-              }
-              document
-                .getElementById(`window-${id}`)
-                ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-            }}
+            onClick={() => openWindow(id, w)}
           >
-            {w.minimized ? "▁ " : ""}
+            {w.minimized ? (isModern ? "🔽 " : "▁ ") : ""}
             {w.title}
           </button>
         ))}
@@ -61,7 +104,7 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
         aria-label="Tile all windows"
         onClick={() => tile(desktopBounds())}
       >
-        [##]
+        {isModern ? "⊞" : "[##]"}
       </button>
     </div>
   );

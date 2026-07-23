@@ -35,12 +35,21 @@ export interface MetaRecord {
   value: string;
 }
 
+export interface QueryCacheRecord {
+  key: string;
+  queryKeyJson: string;
+  dataJson: string;
+  updatedAt: number;
+  insertSeq: number;
+}
+
 export class GnomputerDB extends Dexie {
   workspaces!: EntityTable<WorkspaceRecord, "id">;
   trails!: EntityTable<TrailRecord, "id">;
   trailSteps!: EntityTable<TrailStepRecord, "refUri">;
   favorites!: EntityTable<FavoriteRecord, "refUri">;
   meta!: EntityTable<MetaRecord, "key">;
+  queryCache!: EntityTable<QueryCacheRecord, "key">;
 
   constructor(name: string) {
     super(name);
@@ -50,6 +59,14 @@ export class GnomputerDB extends Dexie {
       trailSteps: "[trailId+order], trailId",
       favorites: "refUri",
       meta: "key",
+    });
+    this.version(2).stores({
+      workspaces: "id, networkId",
+      trails: "id",
+      trailSteps: "[trailId+order], trailId",
+      favorites: "refUri",
+      meta: "key",
+      queryCache: "key, insertSeq",
     });
   }
 }

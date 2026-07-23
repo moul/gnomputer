@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useWindowStore, type WindowGeometry } from "./window-store";
+import { useThemeStore } from "./theme-store";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
 
@@ -32,6 +33,7 @@ export function Window({
   const minimize = useWindowStore((s) => s.minimize);
   const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
+  const isModern = useThemeStore((s) => s.theme === "modern");
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
       .filter((w) => !w.closed && !w.minimized)
@@ -118,7 +120,7 @@ export function Window({
             aria-label={`Minimize ${title}`}
             onClick={() => minimize(id)}
           >
-            [_]
+            {isModern ? "🟡" : "[_]"}
           </button>
           <button
             type="button"
@@ -126,7 +128,7 @@ export function Window({
             aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
             onClick={() => toggleMaximize(id, desktopBounds())}
           >
-            {win.maximized ? "[❐]" : "[□]"}
+            {isModern ? "🟢" : win.maximized ? "[❐]" : "[□]"}
           </button>
           <button
             type="button"
@@ -134,7 +136,7 @@ export function Window({
             aria-label={`Close ${title}`}
             onClick={() => close(id)}
           >
-            [x]
+            {isModern ? "🔴" : "[x]"}
           </button>
         </span>
       </div>

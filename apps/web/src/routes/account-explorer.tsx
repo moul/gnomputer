@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { Freshness } from "../shell/freshness";
 
 function formatBalance(coins: string): string {
   const match = /^(\d+)ugnot$/.exec(coins);
@@ -23,6 +24,7 @@ export function AccountExplorer({ address }: { address: string }) {
     data: info,
     error,
     isPending,
+    dataUpdatedAt,
   } = useQuery({
     queryKey: ["account", networkId, address],
     queryFn: async () => {
@@ -37,6 +39,7 @@ export function AccountExplorer({ address }: { address: string }) {
         <span>Account · {address}</span>
       </header>
       <div className="panel__body">
+        {!isPending && !error && <Freshness dataUpdatedAt={dataUpdatedAt} />}
         {error ? (
           <p className="state-line" role="alert">
             Could not load this account: {error.message}

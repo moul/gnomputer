@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { Linkified } from "../shell/linkify";
+import { Freshness } from "../shell/freshness";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const STAFF_PICKS = [
@@ -43,6 +44,7 @@ export function RealmBrowser({
     data: nodes,
     error,
     isPending,
+    dataUpdatedAt,
   } = useQuery({
     queryKey: ["realm-render", networkId, packagePath, renderPath],
     queryFn: async () => {
@@ -92,11 +94,14 @@ export function RealmBrowser({
           Loading realm…
         </p>
       ) : (
-        <article aria-label={`Realm ${packagePath}`}>
-          {nodes.map((node, i) => (
-            <RenderNodeView key={i} node={node} />
-          ))}
-        </article>
+        <>
+          <Freshness dataUpdatedAt={dataUpdatedAt} />
+          <article aria-label={`Realm ${packagePath}`}>
+            {nodes.map((node, i) => (
+              <RenderNodeView key={i} node={node} />
+            ))}
+          </article>
+        </>
       )}
     </div>
   );
