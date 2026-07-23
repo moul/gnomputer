@@ -500,7 +500,12 @@ main {
   position: absolute;
   bottom: calc(100% + var(--space-2));
   left: 0;
-  z-index: 50;
+  /* Windows' own z-index (window-store.ts topZIndex) is an unbounded
+     counter that climbs by 1 on every focus/open — over a long session it
+     eventually passes a "normal-looking" z-index like 50, burying this
+     popover behind whatever window is currently on top. Comfortably above
+     any realistic counter growth instead of guessing a ceiling. */
+  z-index: 999999;
   min-width: 220px;
   max-height: 320px;
   overflow-y: auto;
