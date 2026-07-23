@@ -70,6 +70,11 @@ export interface RpcClient {
   getStatus(): Promise<DataEnvelope<{ latestHeight: number; chainId: string }>>;
   queryRender(packagePath: string, path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   queryFile(path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** Evaluates a Gno expression against a realm's current state via
+   * vm/qeval (e.g. expression `Render("")` against packagePath
+   * "gno.land/r/gnoland/blog"). Throws on a VM-level error (bad syntax,
+   * unknown identifier, panic) — the caller shows that message as-is. */
+  evalExpression(packagePath: string, expression: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
   getBlockEvents(height: number, fetchedAt: string): Promise<DataEnvelope<BlockEvents>>;
   getAccountInfo(address: string, fetchedAt: string): Promise<DataEnvelope<AccountInfo>>;
@@ -158,6 +163,21 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.file.v1",
+      });
+    },
+
+    async evalExpression(packagePath, expression, fetchedAt) {
+      const client = await getClient();
+      const value = await abciQueryString(client, "vm/qeval", `${packagePath}.${expression}`);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "realm", packagePath },
+        data: value,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.eval.v1",
       });
     },
 

@@ -9,6 +9,12 @@ import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
 import { SourceExplorer } from "./source-explorer";
+import { RealmDocs } from "./realm-docs";
+import { RealmState } from "./realm-state";
+import { RealmHistory } from "./realm-history";
+import { RealmActions } from "./realm-actions";
+import { RealmGraph } from "./realm-graph";
+import { RealmRaw } from "./realm-raw";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const STAFF_PICKS = [
@@ -21,6 +27,12 @@ const STAFF_PICKS = [
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
   { id: "source", label: "Source" },
+  { id: "docs", label: "Docs" },
+  { id: "state", label: "State" },
+  { id: "history", label: "History" },
+  { id: "actions", label: "Actions" },
+  { id: "graph", label: "Graph" },
+  { id: "raw", label: "Raw" },
 ];
 
 export function RealmBrowser({
@@ -201,8 +213,20 @@ function RealmTabContent({ windowId, tab }: { windowId: string; tab: RealmTab })
           <div className="realm-browser__lens-body">
             {tab.lens === "render" ? (
               <RealmRenderView windowId={windowId} packagePath={tab.packagePath} renderPath={tab.renderPath} />
-            ) : (
+            ) : tab.lens === "source" ? (
               <SourceExplorer packagePath={tab.packagePath} />
+            ) : tab.lens === "docs" ? (
+              <RealmDocs packagePath={tab.packagePath} />
+            ) : tab.lens === "state" ? (
+              <RealmState packagePath={tab.packagePath} />
+            ) : tab.lens === "history" ? (
+              <RealmHistory packagePath={tab.packagePath} />
+            ) : tab.lens === "actions" ? (
+              <RealmActions packagePath={tab.packagePath} />
+            ) : tab.lens === "graph" ? (
+              <RealmGraph packagePath={tab.packagePath} windowId={windowId} />
+            ) : (
+              <RealmRaw packagePath={tab.packagePath} renderPath={tab.renderPath} />
             )}
           </div>
         </>

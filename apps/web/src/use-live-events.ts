@@ -13,8 +13,13 @@ export interface LiveEvent extends ChainEvent {
 
 /** Polls recent blocks and, for any with transactions, fetches their real
  * ABCI events via getBlockEvents — no indexer, no CORS wall, just the same
- * RPC host every other query already uses (see ADR-015's update). */
-export function useLiveEvents(paused = false): { events: LiveEvent[] } {
+ * RPC host every other query already uses (see ADR-015's update).
+ *
+ * An optional pkgPath filters to events from one package (e.g. the Realm
+ * Browser's History lens) — applied before the MAX_EVENTS_SHOWN cap, so an
+ * unrelated realm's events can't push a filtered-for realm's own events out
+ * of the window. */
+export function useLiveEvents(paused = false, pkgPath?: string): { events: LiveEvent[] } {
   const sdk = useSdk();
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
@@ -47,6 +52,7 @@ export function useLiveEvents(paused = false): { events: LiveEvent[] } {
         for (const block of results) {
           for (const tx of block.txs) {
             for (const event of tx.events) {
+              if (pkgPath !== undefined && event.pkgPath !== pkgPath) continue;
               newEvents.push({ ...event, height: block.height, txIndex: tx.txIndex });
             }
           }
@@ -71,7 +77,7 @@ export function useLiveEvents(paused = false): { events: LiveEvent[] } {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [sdk, paused]);
+  }, [sdk, paused, pkgPath]);
 
   return { events };
 }

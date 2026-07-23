@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type RealmLens = "render" | "source";
+export type RealmLens = "render" | "source" | "docs" | "state" | "history" | "actions" | "graph" | "raw";
 
 export interface RealmTab {
   id: string;

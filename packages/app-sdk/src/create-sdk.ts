@@ -32,7 +32,17 @@ export type {
 };
 import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
 import { createTrailApi, type TrailAPI } from "@gnomputer/trails";
-import { availableLenses, parseRenderMarkup } from "@gnomputer/lenses";
+import {
+  availableLenses,
+  parseRenderMarkup,
+  parseImports,
+  isChainPackage,
+  parseExportedSymbols,
+  type ParsedImport,
+  type ExportedSymbol,
+} from "@gnomputer/lenses";
+
+export type { ParsedImport, ExportedSymbol };
 
 export interface GnomputerSDK {
   networks: {
@@ -48,7 +58,13 @@ export interface GnomputerSDK {
   };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
-  lenses: { available: typeof availableLenses; parseRender: typeof parseRenderMarkup };
+  lenses: {
+    available: typeof availableLenses;
+    parseRender: typeof parseRenderMarkup;
+    parseImports: typeof parseImports;
+    isChainPackage: typeof isChainPackage;
+    parseExportedSymbols: typeof parseExportedSymbols;
+  };
   workspaces: {
     get(id: string): Promise<WorkspaceRecord | undefined>;
     save(record: WorkspaceRecord): Promise<void>;
@@ -106,7 +122,13 @@ export function createGnomputerSDK(
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },
-    lenses: { available: availableLenses, parseRender: parseRenderMarkup },
+    lenses: {
+      available: availableLenses,
+      parseRender: parseRenderMarkup,
+      parseImports,
+      isChainPackage,
+      parseExportedSymbols,
+    },
     workspaces: {
       get: (id) => db.workspaces.get(id),
       save: (record) => db.workspaces.put(record).then(() => undefined),

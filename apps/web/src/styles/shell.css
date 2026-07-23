@@ -257,6 +257,24 @@ main {
   gap: 2px;
   flex: 0 0 auto;
   border-bottom: 1px solid var(--border);
+  /* 8 lenses routinely don't fit a narrow window's width — scroll instead
+     of silently clipping tabs past the edge with no way to reach them. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.realm-browser__tabs .realm-browser__tab {
+  flex: 0 0 auto;
+}
+
+.realm-browser__tabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.realm-browser__tabs::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
 }
 
 .realm-browser__tab {
@@ -305,6 +323,176 @@ main {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.realm-docs,
+.realm-actions,
+.realm-graph,
+.realm-state,
+.realm-raw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.realm-docs h3,
+.realm-actions h3,
+.realm-graph h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.realm-docs__list,
+.realm-actions__list,
+.realm-graph__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.realm-docs__item,
+.realm-actions__item {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.realm-docs__item code,
+.realm-actions__item code {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.realm-docs__doc,
+.realm-actions__doc {
+  margin: var(--space-1) 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.realm-docs__file {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.realm-actions__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+}
+
+.realm-actions__file {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.realm-actions__footer button {
+  font-size: 11px;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-dim);
+}
+
+.realm-graph__list--plain li {
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: var(--space-1) 0;
+}
+
+.realm-graph__list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.realm-graph__list button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--accent);
+}
+
+.realm-graph__list button:hover {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.realm-graph__alias {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.realm-state__form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.realm-state__form input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.realm-state__log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.realm-state__entry {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.realm-state__expr {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: var(--space-1);
+}
+
+.realm-state__result,
+.realm-state__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.realm-state__error {
+  color: var(--danger);
+}
+
+.realm-raw__body {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
 }
 
 .realm-browser-home__list button {

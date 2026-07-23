@@ -123,6 +123,28 @@ describe("createRpcClient", () => {
     expect(env.data.username).toBeNull();
   });
 
+  it("evalExpression returns the raw vm/qeval result for the given packagePath and expression", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.evalExpression(
+      "gno.land/r/sys/users",
+      `ResolveAddress("${FUNDED_ADDRESS}")`,
+      "2026-07-22T00:00:00.000Z"
+    );
+    expect(env.source).toBe("rpc");
+    expect(env.schema).toBe("gnomputer.rpc.eval.v1");
+    expect(env.data).toContain('"test1" string');
+  });
+
+  it("evalExpression reflects a different expression argument in its result", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.evalExpression(
+      "gno.land/r/sys/users",
+      `ResolveAddress("${UNFUNDED_ADDRESS}")`,
+      "2026-07-22T00:00:00.000Z"
+    );
+    expect(env.data.trim().startsWith("(nil")).toBe(true);
+  });
+
   it("wraps getBlockEvents with real per-tx ABCI events (no indexer, no CORS wall)", async () => {
     const client = createRpcClient(test13);
     const env = await client.getBlockEvents(985592, "2026-07-22T00:00:00.000Z");
