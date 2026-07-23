@@ -4,6 +4,12 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH ?? "/",
+  define: {
+    // Surfaced in the Settings window and logged on boot so a stale-cache
+    // report ("I reloaded and nothing changed") can be confirmed or ruled
+    // out by comparing this against the latest commit, instead of guessing.
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   build: {
     // The bundle sits around 1MB largely because of @gnolang/tm2-rpc and
     // @gnolang/tm2-js-client's own dependency chain (@cosmjs/*, protobufjs,
@@ -34,6 +40,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        // Without these, an updated service worker installs but stays
+        // "waiting" until every open tab is fully closed — the classic PWA
+        // "I reloaded and it's still the old version" bug. skipWaiting lets
+        // the new SW activate immediately; clientsClaim lets it take control
+        // of already-open pages instead of only new navigations.
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: "Gnomputer",
         short_name: "Gnomputer",

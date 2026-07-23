@@ -3,6 +3,12 @@ import { useWindowStore, type WindowGeometry } from "./window-store";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
 
+function desktopBounds(): { width: number; height: number } {
+  const el = document.querySelector(".desktop");
+  const rect = el?.getBoundingClientRect();
+  return { width: rect?.width ?? window.innerWidth, height: rect?.height ?? window.innerHeight };
+}
+
 export function Window({
   id,
   title,
@@ -21,10 +27,12 @@ export function Window({
   const move = useWindowStore((s) => s.move);
   const resize = useWindowStore((s) => s.resize);
   const close = useWindowStore((s) => s.close);
+  const minimize = useWindowStore((s) => s.minimize);
+  const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
-      .filter((w) => !w.closed)
+      .filter((w) => !w.closed && !w.minimized)
       .map((w) => w.zIndex);
     return win !== undefined && win.zIndex === Math.max(...zIndexes);
   });
@@ -67,7 +75,7 @@ export function Window({
     };
   }, [id, move, resize]);
 
-  if (!win || win.closed) return null;
+  if (!win || win.closed || win.minimized) return null;
 
   const style: CSSProperties & Record<`--${string}`, string> = {
     left: win.x,
@@ -78,10 +86,15 @@ export function Window({
     "--window-accent": `var(--accent-${accent})`,
   };
 
+  const classNames = ["window"];
+  if (isTopmost) classNames.push("window--focused");
+  else classNames.push("window--inactive");
+  if (win.maximized) classNames.push("window--maximized");
+
   return (
     <div
       id={`window-${id}`}
-      className={`window${isTopmost ? " window--focused" : ""}`}
+      className={classNames.join(" ")}
       role="region"
       aria-label={title}
       style={style}
@@ -89,28 +102,55 @@ export function Window({
     >
       <div
         className="window__titlebar"
+        onDoubleClick={() => toggleMaximize(id, desktopBounds())}
         onPointerDown={(e) => {
+          if (win.maximized) return;
           dragState.current = { startX: e.clientX, startY: e.clientY, originX: win.x, originY: win.y };
         }}
       >
         <span className="window__title">{title}</span>
-        <button
-          type="button"
-          className="window__close"
-          aria-label={`Close ${title}`}
-          onClick={() => close(id)}
-        >
-          [x]
-        </button>
+        <span className="window__controls">
+          <button
+            type="button"
+            className="window__control"
+            aria-label={`Minimize ${title}`}
+            onClick={() => minimize(id)}
+          >
+            [_]
+          </button>
+          <button
+            type="button"
+            className="window__control"
+            aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
+            onClick={() => toggleMaximize(id, desktopBounds())}
+          >
+            {win.maximized ? "[❐]" : "[□]"}
+          </button>
+          <button
+            type="button"
+            className="window__control window__control--close"
+            aria-label={`Close ${title}`}
+            onClick={() => close(id)}
+          >
+            [x]
+          </button>
+        </span>
       </div>
       <div className="window__body">{children}</div>
-      <div
-        className="window__resize-handle"
-        onPointerDown={(e) => {
-          e.stopPropagation();
-          resizeState.current = { startX: e.clientX, startY: e.clientY, originW: win.width, originH: win.height };
-        }}
-      />
+      {!win.maximized && (
+        <div
+          className="window__resize-handle"
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            resizeState.current = {
+              startX: e.clientX,
+              startY: e.clientY,
+              originW: win.width,
+              originH: win.height,
+            };
+          }}
+        />
+      )}
     </div>
   );
 }

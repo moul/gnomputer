@@ -123,9 +123,7 @@ main {
   display: flex;
   flex-direction: column;
   padding: var(--space-5);
-  max-width: 1280px;
   width: 100%;
-  margin: 0 auto;
 }
 
 .home-layout {
@@ -147,9 +145,17 @@ main {
   margin-bottom: 0;
 }
 
+.trail-breadcrumb-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .trail-breadcrumb {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  white-space: nowrap;
   gap: var(--space-1);
   padding: var(--space-2) var(--space-3);
   background: var(--bg-inset);
@@ -157,11 +163,20 @@ main {
   border-radius: var(--radius);
   font-size: 12px;
   color: var(--text-dim);
+  flex: 1;
+  min-width: 0;
 }
 
 .trail-breadcrumb__sep {
   color: var(--text-faint);
   margin: 0 var(--space-1);
+}
+
+.trail-breadcrumb__clear {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  padding: var(--space-1) var(--space-2);
 }
 
 .open-package-form {
@@ -212,7 +227,6 @@ main {
 .taskbar {
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2);
@@ -220,6 +234,29 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: var(--font-mono);
+}
+
+.taskbar__tile-button {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 0;
+  color: var(--text-dim);
+}
+
+.taskbar__tile-button:hover {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.taskbar__items {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .taskbar__item {
@@ -239,6 +276,11 @@ main {
 .taskbar__item[data-open="false"] {
   opacity: 0.55;
   border-style: dashed;
+}
+
+.taskbar__item[data-minimized="true"] {
+  opacity: 0.7;
+  border-style: dotted;
 }
 
 .window {
@@ -304,6 +346,17 @@ main {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--window-accent, var(--accent-cyan));
 }
 
+.window--inactive {
+  opacity: 0.78;
+}
+
+.window--maximized {
+  left: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 .window__titlebar {
   position: relative;
   display: flex;
@@ -331,9 +384,17 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
   text-transform: uppercase;
+  flex: 1;
+  min-width: 0;
 }
 
-.window__close {
+.window__controls {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.window__control {
   background: transparent;
   border: none;
   padding: 0 var(--space-1);
@@ -344,9 +405,13 @@ main {
   color: var(--text-dim);
 }
 
-.window__close:hover {
+.window__control:hover {
   background: transparent;
   border: none;
+  color: var(--text);
+}
+
+.window__control--close:hover {
   color: var(--danger);
 }
 
