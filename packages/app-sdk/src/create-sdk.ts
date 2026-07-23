@@ -5,14 +5,17 @@ export { DEFAULT_NETWORK_ID };
 export type { NetworkConfig };
 import {
   createRpcClient,
+  listRealms,
   type RpcClient,
   type BlockSummary,
   type AccountInfo,
   type ValidatorInfo,
   type ValidatorSet,
+  type RealmSummary,
 } from "@gnomputer/rpc";
+import type { DataEnvelope } from "@gnomputer/core";
 
-export type { RpcClient, BlockSummary, AccountInfo, ValidatorInfo, ValidatorSet };
+export type { RpcClient, BlockSummary, AccountInfo, ValidatorInfo, ValidatorSet, RealmSummary };
 import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
 import { createTrailApi, type TrailAPI } from "@gnomputer/trails";
 import { availableLenses, parseRenderMarkup } from "@gnomputer/lenses";
@@ -25,6 +28,9 @@ export interface GnomputerSDK {
     setActive(id: string): void;
   };
   readonly rpc: RpcClient;
+  indexer: {
+    listRealms(): Promise<DataEnvelope<RealmSummary[]>>;
+  };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
   lenses: { available: typeof availableLenses; parseRender: typeof parseRenderMarkup };
@@ -67,6 +73,9 @@ export function createGnomputerSDK(
     },
     get rpc() {
       return rpc;
+    },
+    indexer: {
+      listRealms: () => listRealms(activeNetwork, new Date().toISOString()),
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },

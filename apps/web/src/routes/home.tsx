@@ -11,8 +11,6 @@ import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 
-const FEATURED_PACKAGE = "gno.land/r/sys/users";
-
 const WINDOW_ACCENTS: Record<string, string> = {
   realm: "cyan",
   source: "amber",
@@ -30,12 +28,16 @@ export function Home() {
   // restore the old cramped positions for anyone who'd already opened the app.
   useWindowPersistence("window-layout:home:v2");
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
-  const packagePath = search.pkg ?? FEATURED_PACKAGE;
+  const packagePath = search.pkg ?? "";
   const renderPath = search.path ?? "";
 
-  const realmTitle = renderPath
-    ? `Experience · ${packagePath} · ${renderPath}`
-    : `Experience · ${packagePath}`;
+  const realmTitle =
+    packagePath === ""
+      ? "Realm Browser"
+      : renderPath
+        ? `Experience · ${packagePath} · ${renderPath}`
+        : `Experience · ${packagePath}`;
+  const sourceTitle = packagePath === "" ? "Source" : `Source · ${packagePath}`;
 
   return (
     <div className="home-layout">
@@ -51,7 +53,7 @@ export function Home() {
           </Window>
           <Window
             id="source"
-            title={`Source · ${packagePath}`}
+            title={sourceTitle}
             accent="amber"
             defaultGeometry={{ x: 396, y: 0, width: 380, height: 300 }}
           >

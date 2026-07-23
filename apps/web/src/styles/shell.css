@@ -156,6 +156,55 @@ main {
   gap: var(--space-4);
 }
 
+.realm-browser-home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.realm-browser-home h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.realm-browser-home__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.realm-browser-home__list button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3);
+}
+
+.realm-browser-home__list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.realm-browser-home__path {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .open-package-form {
   display: flex;
   align-items: flex-end;

@@ -7,11 +7,15 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const hasPackage = packagePath !== "";
 
-  useTrailRecorder({
-    uri: `gno://${networkId}/source-file/${packagePath}`,
-    label: `${packagePath} (source)`,
-  });
+  useTrailRecorder(
+    {
+      uri: `gno://${networkId}/source-file/${packagePath}`,
+      label: `${packagePath} (source)`,
+    },
+    hasPackage
+  );
 
   useEffect(() => {
     setSelectedFile(null);
@@ -30,6 +34,7 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
         .map((line) => line.trim())
         .filter(Boolean);
     },
+    enabled: hasPackage,
   });
 
   const activeFile = selectedFile ?? files?.[0] ?? null;
@@ -49,6 +54,9 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
 
   const error = filesError ?? sourceError;
 
+  if (!hasPackage) {
+    return <p className="state-line">Open a realm to see its source.</p>;
+  }
   if (error) {
     return (
       <p className="state-line" role="alert">

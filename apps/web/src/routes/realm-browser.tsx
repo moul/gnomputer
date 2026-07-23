@@ -6,6 +6,13 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { Linkified } from "../shell/linkify";
 import type { RenderNode } from "@gnomputer/lenses";
 
+const STAFF_PICKS = [
+  { label: "Users", packagePath: "gno.land/r/sys/users" },
+  { label: "Boards2", packagePath: "gno.land/r/gnoland/boards2" },
+  { label: "Blog", packagePath: "gno.land/r/gnoland/blog" },
+  { label: "GovDAO", packagePath: "gno.land/r/gov/dao" },
+];
+
 export function RealmBrowser({
   packagePath,
   renderPath = "",
@@ -17,16 +24,20 @@ export function RealmBrowser({
   const networkId = sdk.networks.getActive().id;
   const navigate = useNavigate();
   const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
+  const hasPackage = packagePath !== "";
 
   useEffect(() => {
     setDraftPackagePath(packagePath);
   }, [packagePath]);
 
   const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
-  useTrailRecorder({
-    uri: `gno://${networkId}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
-    label: trailLabel,
-  });
+  useTrailRecorder(
+    {
+      uri: `gno://${networkId}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
+      label: trailLabel,
+    },
+    hasPackage
+  );
 
   const {
     data: nodes,
@@ -38,7 +49,12 @@ export function RealmBrowser({
       const env = await sdk.rpc.queryRender(packagePath, renderPath, new Date().toISOString());
       return sdk.lenses.parseRender(env.data, packagePath);
     },
+    enabled: hasPackage,
   });
+
+  function openPackage(pkg: string) {
+    void navigate({ to: "/", search: { pkg } });
+  }
 
   return (
     <div className="realm-browser">
@@ -46,7 +62,8 @@ export function RealmBrowser({
         className="open-package-form"
         onSubmit={(e) => {
           e.preventDefault();
-          void navigate({ to: "/", search: { pkg: draftPackagePath } });
+          if (draftPackagePath === "") return;
+          openPackage(draftPackagePath);
         }}
       >
         <label>
@@ -58,8 +75,15 @@ export function RealmBrowser({
           />
         </label>
         <button type="submit">Open</button>
+        {hasPackage && (
+          <button type="button" onClick={() => void navigate({ to: "/", search: {} })}>
+            🏠 Home
+          </button>
+        )}
       </form>
-      {error ? (
+      {!hasPackage ? (
+        <RealmBrowserHome onOpen={openPackage} />
+      ) : error ? (
         <p className="state-line" role="alert">
           Could not load this realm: {error.message}
         </p>
@@ -74,6 +98,64 @@ export function RealmBrowser({
           ))}
         </article>
       )}
+    </div>
+  );
+}
+
+function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void }) {
+  const sdk = useSdk();
+  const {
+    data: realms,
+    error,
+    isPending,
+  } = useQuery({
+    queryKey: ["realm-list", sdk.networks.getActive().id],
+    queryFn: async () => (await sdk.indexer.listRealms()).data,
+    retry: false,
+  });
+
+  return (
+    <div className="realm-browser-home">
+      <section>
+        <h3>Staff picks</h3>
+        <ul className="realm-browser-home__list">
+          {STAFF_PICKS.map((pick) => (
+            <li key={pick.packagePath}>
+              <button type="button" onClick={() => onOpen(pick.packagePath)}>
+                {pick.label}
+                <span className="realm-browser-home__path">{pick.packagePath}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section>
+        <h3>Community realms</h3>
+        {error ? (
+          <p className="state-line" role="alert">
+            Realm discovery isn't reachable from the browser on this network right now — the
+            indexer doesn't allow direct browser access yet. Try Staff Picks above, or open a
+            realm path directly.
+          </p>
+        ) : isPending ? (
+          <p className="state-line" aria-busy="true">
+            Discovering deployed realms…
+          </p>
+        ) : realms.length === 0 ? (
+          <p className="state-line">No other realms discovered on this network yet.</p>
+        ) : (
+          <ul className="realm-browser-home__list">
+            {realms.map((realm) => (
+              <li key={realm.packagePath}>
+                <button type="button" onClick={() => onOpen(realm.packagePath)}>
+                  {realm.packagePath}
+                  <span className="realm-browser-home__path">deployed at #{realm.blockHeight}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }
