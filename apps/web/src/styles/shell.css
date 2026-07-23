@@ -1280,3 +1280,34 @@ main {
   font-size: 11px;
   color: var(--text-dim);
 }
+
+/* ASCII themes: a real terminal doesn't vary type size per element — it
+   differentiates through bold/color/underline instead, at one uniform
+   size. The 50-odd font-size rules elsewhere in this file exist for
+   normal UI hierarchy (chrome stays as-is, it's not "content"), so
+   content inside a window body is force-reset here rather than by
+   hunting down every rule's specificity individually. */
+:root[data-theme^="ascii"] .window__body,
+:root[data-theme^="ascii"] .window__body * {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+/* A small terminal-like flourish for the focused window: a blinking
+   block cursor after the title, like a shell prompt waiting for input. */
+:root[data-theme^="ascii"] .window--focused .window__title::after {
+  content: "▊";
+  margin-left: var(--space-1);
+  animation: ascii-cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes ascii-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
