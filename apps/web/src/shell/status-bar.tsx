@@ -1,37 +1,23 @@
-import { useEffect, useState } from "react";
-import { useShellStore } from "../store";
 import { useFocusedWindow, useWindowStore } from "./window-store";
 import { useNetworkStatus } from "./use-network-status";
 import { openSettings } from "./open-settings";
+import { useShellStore } from "../store";
 import { useThemeStore, THEME_LABELS } from "./theme-store";
 
 const THEME_ICON: Record<string, string> = {
   "ascii-dark": "◐",
   "ascii-light": "◑",
-  modern: "◈",
+  "modern-light": "◈",
+  "modern-dark": "◆",
 };
-
-function pad(n: number): string {
-  return n.toString().padStart(2, "0");
-}
-
-function formatClock(date: Date): string {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
 
 export function StatusBar() {
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
   const reopenWindow = useWindowStore((s) => s.reopen);
   const focused = useFocusedWindow();
-  const { data, state, network } = useNetworkStatus();
+  const { state, network } = useNetworkStatus();
   const theme = useThemeStore((s) => s.theme);
   const cycleTheme = useThemeStore((s) => s.cycleTheme);
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <header className="status-bar" role="banner">
@@ -52,9 +38,6 @@ export function StatusBar() {
         🔍 Search…
       </button>
       <div className="status-bar__right">
-        <span className="status-bar__clock" title={now.toISOString()}>
-          {formatClock(now)} {data ? `#${data.latestHeight}` : "#…"}
-        </span>
         <button
           type="button"
           className="status-bar__icon-button"
@@ -92,6 +75,15 @@ export function StatusBar() {
           aria-label="User settings"
         >
           🔌 guest
+        </button>
+        <button
+          type="button"
+          className="status-bar__icon-button status-bar__gear"
+          onClick={() => reopenWindow("settings")}
+          title="Settings"
+          aria-label="Open settings"
+        >
+          ⚙
         </button>
       </div>
     </header>

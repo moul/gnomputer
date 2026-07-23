@@ -56,13 +56,6 @@
   gap: var(--space-3);
 }
 
-.status-bar__clock {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
 .status-bar__icon-button {
   display: inline-flex;
   align-items: center;
@@ -79,6 +72,11 @@
 .status-bar__icon-button:hover {
   color: var(--text);
   border-color: var(--border-strong);
+}
+
+.status-bar__gear {
+  font-size: 15px;
+  padding: var(--space-1) var(--space-2);
 }
 
 .status-dot {
@@ -983,12 +981,19 @@ main {
 
 .history-list button {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
   padding: var(--space-2) var(--space-3);
   font-size: 13px;
   color: var(--text);
+}
+
+.history-list__icon {
+  flex: 0 0 auto;
 }
 
 .history-list button:hover {
@@ -1007,43 +1012,43 @@ main {
    rounded windows, no corner brackets, no all-caps titlebars. Only the shell
    chrome changes; --ui-font (theme.css) already swaps window/taskbar/status
    bar text to a sans face for this theme. */
-:root[data-theme="modern"] .window {
+:root[data-theme^="modern"] .window {
   border-width: 1px;
   border-radius: var(--radius-lg);
   box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14);
   overflow: hidden;
 }
 
-:root[data-theme="modern"] .window--focused {
+:root[data-theme^="modern"] .window--focused {
   box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14), 0 0 0 1px var(--window-accent, var(--accent-cyan));
 }
 
-:root[data-theme="modern"] .window::before,
-:root[data-theme="modern"] .window::after,
-:root[data-theme="modern"] .window__titlebar::before,
-:root[data-theme="modern"] .window__resize-handle::before {
+:root[data-theme^="modern"] .window::before,
+:root[data-theme^="modern"] .window::after,
+:root[data-theme^="modern"] .window__titlebar::before,
+:root[data-theme^="modern"] .window__resize-handle::before {
   display: none;
 }
 
-:root[data-theme="modern"] .window__titlebar {
+:root[data-theme^="modern"] .window__titlebar {
   border-bottom-width: 1px;
 }
 
-:root[data-theme="modern"] .window__title {
+:root[data-theme^="modern"] .window__title {
   text-transform: none;
   font-weight: 600;
 }
 
-:root[data-theme="modern"] .window__title::before {
+:root[data-theme^="modern"] .window__title::before {
   content: none;
 }
 
-:root[data-theme="modern"] .taskbar__item,
-:root[data-theme="modern"] .settings-window__tab {
+:root[data-theme^="modern"] .taskbar__item,
+:root[data-theme^="modern"] .settings-window__tab {
   text-transform: none;
 }
 
-:root[data-theme="modern"] .taskbar__item {
+:root[data-theme^="modern"] .taskbar__item {
   border-radius: 999px;
 }
 
@@ -1065,4 +1070,49 @@ main {
   background: transparent;
   color: var(--text);
   text-decoration-style: solid;
+}
+
+.taskbar__clock {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  padding: 0 var(--space-2);
+}
+
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.settings-theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-align: left;
+  padding: var(--space-3);
+}
+
+.settings-theme-option[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--bg-inset);
+}
+
+.settings-theme-option__glyph {
+  font-size: 20px;
+}
+
+.settings-theme-option__label {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.settings-theme-option__description {
+  font-size: 11px;
+  color: var(--text-dim);
 }

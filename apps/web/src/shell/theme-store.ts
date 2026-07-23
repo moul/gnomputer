@@ -1,13 +1,14 @@
 import { create } from "zustand";
 
-export type ThemeId = "ascii-dark" | "ascii-light" | "modern";
+export type ThemeId = "ascii-dark" | "ascii-light" | "modern-light" | "modern-dark";
 
-export const THEME_ORDER: ThemeId[] = ["ascii-dark", "ascii-light", "modern"];
+export const THEME_ORDER: ThemeId[] = ["ascii-dark", "ascii-light", "modern-light", "modern-dark"];
 
 export const THEME_LABELS: Record<ThemeId, string> = {
   "ascii-dark": "ASCII · Dark",
   "ascii-light": "ASCII · Light",
-  modern: "Modern",
+  "modern-light": "Clean · Light",
+  "modern-dark": "Clean · Dark",
 };
 
 interface ThemeState {

@@ -3,6 +3,7 @@ import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { Window } from "./window";
 import { openRef } from "./open-ref";
+import { iconForRefUri } from "./entity-icon";
 
 export function HistoryWindow() {
   const sdk = useSdk();
@@ -45,6 +46,9 @@ export function HistoryWindow() {
               .map((step, i) => (
                 <li key={`${step.refUri}-${i}`}>
                   <button type="button" onClick={() => openRef(step.refUri)}>
+                    <span className="history-list__icon" aria-hidden="true">
+                      {iconForRefUri(step.refUri)}
+                    </span>
                     {step.label}
                   </button>
                 </li>

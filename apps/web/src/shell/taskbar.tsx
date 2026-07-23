@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindowStore } from "./window-store";
 import { useThemeStore } from "./theme-store";
+import { useNetworkStatus } from "./use-network-status";
 
 const ACCENT_VAR: Record<string, string> = {
   cyan: "var(--accent-cyan)",
@@ -17,15 +18,30 @@ function desktopBounds(): { width: number; height: number } {
   return { width: rect?.width ?? window.innerWidth, height: rect?.height ?? window.innerHeight };
 }
 
+function pad(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
+function formatClock(date: Date): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 export function Taskbar({ accents }: { accents: Record<string, string> }) {
   const windows = useWindowStore((s) => s.windows);
   const reopen = useWindowStore((s) => s.reopen);
   const focus = useWindowStore((s) => s.focus);
   const restore = useWindowStore((s) => s.restore);
   const tile = useWindowStore((s) => s.tile);
-  const isModern = useThemeStore((s) => s.theme === "modern");
+  const isModern = useThemeStore((s) => s.theme.startsWith("modern"));
+  const { data } = useNetworkStatus();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -106,6 +122,9 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
       >
         {isModern ? "⊞" : "[##]"}
       </button>
+      <span className="taskbar__clock" title={now.toISOString()}>
+        {formatClock(now)} {data ? `#${data.latestHeight}` : "#…"}
+      </span>
     </div>
   );
 }

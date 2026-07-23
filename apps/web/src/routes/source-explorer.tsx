@@ -12,7 +12,7 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
   useTrailRecorder(
     {
       uri: `gno://${networkId}/source-file/${packagePath}`,
-      label: `${packagePath} (source)`,
+      label: `${packagePath} › Source`,
     },
     hasPackage
   );

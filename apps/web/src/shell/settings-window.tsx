@@ -2,17 +2,32 @@ import { Window } from "./window";
 import { useSettingsUiStore, type SettingsTab } from "./settings-store";
 import { SettingsNetworkTab } from "./settings-network-tab";
 import { SettingsUserTab } from "./settings-user-tab";
+import { SettingsThemeTab } from "./settings-theme-tab";
 import { SettingsAboutTab } from "./settings-about-tab";
+import { useTrailRecorder } from "../use-trail-recorder";
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: "network", label: "Network" },
   { id: "user", label: "User" },
+  { id: "theme", label: "Theme" },
   { id: "about", label: "About" },
 ];
+
+const TAB_LABEL: Record<SettingsTab, string> = {
+  network: "Network",
+  user: "User",
+  theme: "Theme",
+  about: "About",
+};
 
 export function SettingsWindow() {
   const activeTab = useSettingsUiStore((s) => s.activeTab);
   const setActiveTab = useSettingsUiStore((s) => s.setActiveTab);
+
+  useTrailRecorder({
+    uri: `gno://_/settings/${activeTab}`,
+    label: `Settings › ${TAB_LABEL[activeTab]}`,
+  });
 
   return (
     <Window
@@ -41,6 +56,7 @@ export function SettingsWindow() {
         <div className="settings-window__body">
           {activeTab === "network" && <SettingsNetworkTab />}
           {activeTab === "user" && <SettingsUserTab />}
+          {activeTab === "theme" && <SettingsThemeTab />}
           {activeTab === "about" && <SettingsAboutTab />}
         </div>
       </div>

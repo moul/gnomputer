@@ -2,6 +2,8 @@ import { router } from "../routes/root";
 import { useWindowStore } from "./window-store";
 import { usePendingRefsStore } from "./pending-refs-store";
 import { openSettings } from "./open-settings";
+import { useRealmLensStore } from "./realm-lens-store";
+import { isSettingsTab } from "./settings-store";
 import type { EntityKind } from "./entity-patterns";
 
 function focusOrReopen(id: string) {
@@ -15,7 +17,7 @@ function focusOrReopen(id: string) {
 // full URI grammar is broader — this covers what a click-through needs today
 // and grows alongside the universal EntityLink work).
 export function openRef(uri: string): boolean {
-  const match = /^gno:\/\/[^/]+\/(realm|source-file|address|block)\/(.*)$/.exec(uri);
+  const match = /^gno:\/\/[^/]+\/(realm|source-file|address|block|settings)\/(.*)$/.exec(uri);
   if (!match) return false;
   const [, kind, rest] = match;
   if (kind === undefined || rest === undefined) return false;
@@ -24,12 +26,14 @@ export function openRef(uri: string): boolean {
     case "realm": {
       const [packagePath, renderPath] = rest.split("#");
       void router.navigate({ to: "/", search: renderPath ? { pkg: packagePath, path: renderPath } : { pkg: packagePath } });
+      useRealmLensStore.getState().setLens("render");
       focusOrReopen("realm");
       return true;
     }
     case "source-file": {
       void router.navigate({ to: "/", search: { pkg: rest } });
-      focusOrReopen("source");
+      useRealmLensStore.getState().setLens("source");
+      focusOrReopen("realm");
       return true;
     }
     case "address": {
@@ -42,6 +46,11 @@ export function openRef(uri: string): boolean {
       if (!Number.isFinite(height)) return false;
       usePendingRefsStore.getState().setPendingBlockHeight(height);
       focusOrReopen("block-explorer");
+      return true;
+    }
+    case "settings": {
+      if (!isSettingsTab(rest)) return false;
+      openSettings(rest);
       return true;
     }
     default:

@@ -33,7 +33,7 @@ export function Window({
   const minimize = useWindowStore((s) => s.minimize);
   const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
-  const isModern = useThemeStore((s) => s.theme === "modern");
+  const isModern = useThemeStore((s) => s.theme.startsWith("modern"));
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
       .filter((w) => !w.closed && !w.minimized)

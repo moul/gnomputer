@@ -1,13 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useSdk } from "../sdk-context";
-import { useSettingsUiStore, type SettingsTab } from "./settings-store";
+import { useSettingsUiStore, isSettingsTab } from "./settings-store";
 
 const STORAGE_KEY = "settings-active-tab";
-const VALID_TABS: SettingsTab[] = ["network", "user", "about"];
-
-function isSettingsTab(value: string): value is SettingsTab {
-  return (VALID_TABS as string[]).includes(value);
-}
 
 export function useSettingsTabPersistence() {
   const sdk = useSdk();
