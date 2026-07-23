@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLiveActivity } from "../use-live-activity";
 import { useSdk } from "../sdk-context";
-
-function relativeTime(iso: string, now: number): string {
-  const seconds = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));
-  if (seconds < 60) return `${seconds}s ago`;
-  const minutes = Math.round(seconds / 60);
-  return `${minutes}m ago`;
-}
+import { formatTimeAgo } from "../format-time-ago";
 
 export function RecentActivity() {
   const sdk = useSdk();
@@ -37,7 +31,7 @@ export function RecentActivity() {
               <span className="activity-list__txs">
                 {block.numTxs} {block.numTxs === 1 ? "transaction" : "transactions"}
               </span>
-              <span className="activity-list__time">{relativeTime(block.time, now)}</span>
+              <span className="activity-list__time">{formatTimeAgo(block.time, now)}</span>
             </li>
           ))}
         </ul>

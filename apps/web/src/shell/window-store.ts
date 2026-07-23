@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
 export interface WindowGeometry {
   x: number;
@@ -19,7 +20,12 @@ interface WindowRecord extends WindowGeometry {
 interface WindowManagerState {
   windows: Record<string, WindowRecord>;
   topZIndex: number;
-  ensureWindow: (id: string, title: string, defaults: WindowGeometry) => void;
+  ensureWindow: (
+    id: string,
+    title: string,
+    defaults: WindowGeometry,
+    options?: { startClosed?: boolean }
+  ) => void;
   focus: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
   resize: (id: string, width: number, height: number) => void;
@@ -39,7 +45,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
   windows: {},
   topZIndex: 1,
 
-  ensureWindow: (id, title, defaults) => {
+  ensureWindow: (id, title, defaults, options) => {
     const existing = get().windows[id];
     if (existing) {
       if (existing.title !== title) {
@@ -56,7 +62,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
           ...defaults,
           title,
           zIndex: nextZ,
-          closed: false,
+          closed: options?.startClosed ?? false,
           minimized: false,
           maximized: false,
           preMaximizeGeometry: null,
@@ -187,3 +193,16 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     });
   },
 }));
+
+export function useFocusedWindow(): { id: string; title: string } | null {
+  return useWindowStore(
+    useShallow((s) => {
+      let top: { id: string; title: string; zIndex: number } | null = null;
+      for (const [id, w] of Object.entries(s.windows)) {
+        if (w.closed || w.minimized) continue;
+        if (!top || w.zIndex > top.zIndex) top = { id, title: w.title, zIndex: w.zIndex };
+      }
+      return top ? { id: top.id, title: top.title } : null;
+    })
+  );
+}

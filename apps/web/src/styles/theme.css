@@ -32,12 +32,22 @@
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono:
     ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  /* Window chrome (titlebars, taskbar, status bar) reads this instead of
+     --font-mono directly, so the "modern" theme can swap chrome to a sans
+     face without touching code/data displays that need a real monospace
+     font regardless of theme. */
+  --ui-font: var(--font-mono);
   --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
   --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
+/* Fallback for the sliver of time before main.tsx applies the persisted (or
+   default) data-theme attribute — practically never hit since index.html
+   ships data-theme="ascii-dark" statically, but kept so an OS-light visitor
+   never flashes the dark palette if that default is ever removed. Scoped to
+   :not([data-theme]) so it never fights an explicit theme choice. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #f6f7f9;
     --bg-elevated: #ffffff;
     --bg-inset: #eef0f3;
@@ -60,6 +70,55 @@
     --warning-bg: #fbf3dd;
     --shadow-modal: 0 16px 48px rgba(20, 30, 40, 0.18);
   }
+}
+
+:root[data-theme="ascii-light"] {
+  --bg: #f6f7f9;
+  --bg-elevated: #ffffff;
+  --bg-inset: #eef0f3;
+  --border: #dde1e6;
+  --border-strong: #c4cad2;
+  --text: #1a2027;
+  --text-dim: #5b6572;
+  --text-faint: #8b96a5;
+  --accent: #0f7c92;
+  --accent-dim: #d3f0ec;
+  --accent-cyan: #0f7c92;
+  --accent-amber: #92650f;
+  --accent-magenta: #9c2fa8;
+  --accent-green: #1a8f4e;
+  --accent-blue: #2f5fb3;
+  --accent-red: #c23a52;
+  --danger: #b3261e;
+  --danger-bg: #fbeceb;
+  --warning: #92650f;
+  --warning-bg: #fbf3dd;
+  --shadow-modal: 0 16px 48px rgba(20, 30, 40, 0.18);
+}
+
+:root[data-theme="modern"] {
+  --bg: #eef1f6;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f5f7fa;
+  --border: #e2e6ed;
+  --border-strong: #cdd3dd;
+  --text: #1f2530;
+  --text-dim: #6b7280;
+  --text-faint: #9aa2af;
+  --accent: #4f7cff;
+  --accent-dim: #dbe6ff;
+  --accent-cyan: #4f7cff;
+  --accent-amber: #d9822b;
+  --accent-magenta: #b355d6;
+  --accent-green: #2fa968;
+  --accent-blue: #4f7cff;
+  --accent-red: #e0556f;
+  --danger: #e0556f;
+  --danger-bg: #fdeef1;
+  --warning: #d9822b;
+  --warning-bg: #fdf3e7;
+  --ui-font: var(--font-sans);
+  --shadow-modal: 0 20px 60px rgba(30, 41, 59, 0.16);
 }
 
 * {

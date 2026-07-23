@@ -6,15 +6,15 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { Home } from "./home";
-import { WorldExplorer } from "./world-explorer";
-import { AccountPage } from "./account-page";
-import { TopBar } from "../shell/top-bar";
+import { StatusBar } from "../shell/status-bar";
 import { CommandPalette } from "../shell/command-palette";
+import { useThemePersistence } from "../shell/use-theme-persistence";
 
 function RootLayout() {
+  useThemePersistence();
   return (
     <>
-      <TopBar />
+      <StatusBar />
       <CommandPalette />
       <main>
         <Outlet />
@@ -33,23 +33,10 @@ const homeRoute = createRoute({
     path: typeof search.path === "string" ? search.path : undefined,
   }),
 });
-const worldRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/world",
-  component: WorldExplorer,
-});
-const accountRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/account",
-  component: AccountPage,
-  validateSearch: (search: Record<string, unknown>): { addr?: string } => ({
-    addr: typeof search.addr === "string" ? search.addr : undefined,
-  }),
-});
 
-const routeTree = rootRoute.addChildren([homeRoute, worldRoute, accountRoute]);
+const routeTree = rootRoute.addChildren([homeRoute]);
 
-// Every search value we use (pkg, path, addr) is a plain string, but the
+// Every search value we use (pkg, path) is a plain string, but the
 // router's default stringifySearch JSON-encodes every value regardless of
 // type — a package path ends up as ?pkg=%22gno.land%2Fr%2Fgov%2Fdao%22, with
 // literal quote characters in the URL. Gnomputer's URIs are meant to be

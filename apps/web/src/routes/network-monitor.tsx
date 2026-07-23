@@ -1,20 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { useSdk } from "../sdk-context";
+import { useNetworkStatus } from "../shell/use-network-status";
 
 export function NetworkMonitor() {
-  const sdk = useSdk();
-  const network = sdk.networks.getActive();
-
-  const { data, error, isPending } = useQuery({
-    queryKey: ["network-status", network.id],
-    queryFn: async () => {
-      const start = performance.now();
-      const env = await sdk.rpc.getStatus();
-      const latencyMs = Math.round(performance.now() - start);
-      return { ...env.data, latencyMs };
-    },
-    refetchInterval: 5000,
-  });
+  const { data, error, isPending, network } = useNetworkStatus();
 
   if (error) {
     return (

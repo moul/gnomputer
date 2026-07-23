@@ -1,6 +1,15 @@
+import { execSync } from "node:child_process";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
+
+function gitHash(): string {
+  try {
+    return execSync("git rev-parse --short HEAD").toString().trim();
+  } catch {
+    return "unknown";
+  }
+}
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH ?? "/",
@@ -9,6 +18,8 @@ export default defineConfig({
     // report ("I reloaded and nothing changed") can be confirmed or ruled
     // out by comparing this against the latest commit, instead of guessing.
     __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __GIT_HASH__: JSON.stringify(gitHash()),
+    __GIT_REPO__: JSON.stringify("https://github.com/moul/gnomputer"),
   },
   build: {
     // The bundle sits around 1MB largely because of @gnolang/tm2-rpc and
@@ -17,10 +28,7 @@ export default defineConfig({
     // clients instead of hand-rolling wire-protocol encoding. Splitting
     // vendor code into its own chunk doesn't shrink that, but it means a
     // future app-code-only change doesn't invalidate the cached vendor chunk
-    // for returning visitors. Route-level code splitting (lazy-loading
-    // World/Account) is the next real lever if bundle size becomes a problem
-    // — not done here since Home needs the same RPC clients immediately
-    // anyway, so it wouldn't reduce first-paint cost.
+    // for returning visitors.
     chunkSizeWarningLimit: 1100,
     rollupOptions: {
       output: {

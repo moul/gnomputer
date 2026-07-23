@@ -27,15 +27,6 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
 
   return (
     <div className="taskbar" role="toolbar" aria-label="Windows">
-      <button
-        type="button"
-        className="taskbar__tile-button"
-        title="Tile all windows"
-        aria-label="Tile all windows"
-        onClick={() => tile(desktopBounds())}
-      >
-        [##]
-      </button>
       <div className="taskbar__items">
         {entries.map(([id, w]) => (
           <button
@@ -63,6 +54,15 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
           </button>
         ))}
       </div>
+      <button
+        type="button"
+        className="taskbar__tile-button"
+        title="Tile all windows"
+        aria-label="Tile all windows"
+        onClick={() => tile(desktopBounds())}
+      >
+        [##]
+      </button>
     </div>
   );
 }

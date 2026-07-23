@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
@@ -13,6 +14,12 @@ export function RealmBrowser({
 }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
+  const navigate = useNavigate();
+  const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
+
+  useEffect(() => {
+    setDraftPackagePath(packagePath);
+  }, [packagePath]);
 
   const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
   useTrailRecorder({
@@ -32,26 +39,41 @@ export function RealmBrowser({
     },
   });
 
-  if (error) {
-    return (
-      <p className="state-line" role="alert">
-        Could not load this realm: {error.message}
-      </p>
-    );
-  }
-  if (isPending) {
-    return (
-      <p className="state-line" aria-busy="true">
-        Loading realm…
-      </p>
-    );
-  }
   return (
-    <article aria-label={`Realm ${packagePath}`}>
-      {nodes.map((node, i) => (
-        <RenderNodeView key={i} node={node} />
-      ))}
-    </article>
+    <div className="realm-browser">
+      <form
+        className="open-package-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void navigate({ to: "/", search: { pkg: draftPackagePath } });
+        }}
+      >
+        <label>
+          Realm path
+          <input
+            value={draftPackagePath}
+            onChange={(e) => setDraftPackagePath(e.target.value)}
+            placeholder="gno.land/r/sys/names"
+          />
+        </label>
+        <button type="submit">Open</button>
+      </form>
+      {error ? (
+        <p className="state-line" role="alert">
+          Could not load this realm: {error.message}
+        </p>
+      ) : isPending ? (
+        <p className="state-line" aria-busy="true">
+          Loading realm…
+        </p>
+      ) : (
+        <article aria-label={`Realm ${packagePath}`}>
+          {nodes.map((node, i) => (
+            <RenderNodeView key={i} node={node} />
+          ))}
+        </article>
+      )}
+    </div>
   );
 }
 

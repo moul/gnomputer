@@ -1,4 +1,4 @@
-.top-bar {
+.status-bar {
   position: sticky;
   top: 0;
   z-index: 10;
@@ -9,80 +9,96 @@
   padding: var(--space-3) var(--space-5);
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
+  font-family: var(--ui-font);
 }
 
 @media (max-width: 700px) {
-  .top-bar {
+  .status-bar {
     padding: var(--space-3);
   }
 
-  .top-bar__search {
+  .status-bar__search {
     margin-left: 0;
     order: 1;
   }
-
-  .top-bar__guest {
-    order: 2;
-  }
 }
 
-.top-bar__brand {
-  font-weight: 600;
+.status-bar__left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.status-bar__brand {
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
+  flex: 0 0 auto;
 }
 
-.top-bar__nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.top-bar__nav a {
-  color: var(--text-dim);
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.top-bar__nav a:hover {
-  color: var(--text);
-}
-
-.top-bar__nav a[aria-current="page"] {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.top-bar__network {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.status-bar__context {
   color: var(--text-dim);
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.top-bar__network select {
-  font-size: 13px;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text);
-}
-
-.top-bar__search {
+.status-bar__search {
   margin-left: auto;
   color: var(--text-dim);
 }
 
-.top-bar__guest {
-  padding: var(--space-1) var(--space-3);
+.status-bar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.status-bar__clock {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-bar__icon-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
   border-radius: 999px;
   background: var(--bg-inset);
   border: 1px solid var(--border);
   color: var(--text-dim);
   font-size: 12px;
   white-space: nowrap;
+}
+
+.status-bar__icon-button:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.status-dot[data-state="connected"] {
+  background: var(--accent-green);
+}
+
+.status-dot[data-state="connecting"] {
+  background: var(--warning);
+}
+
+.status-dot[data-state="error"] {
+  background: var(--danger);
 }
 
 .command-palette {
@@ -134,49 +150,10 @@ main {
   gap: var(--space-3);
 }
 
-.home-lede {
-  color: var(--text-dim);
-  margin: 0;
-}
-
-.home-lede--primary {
-  color: var(--text);
-  font-size: 16px;
-  margin-bottom: 0;
-}
-
-.trail-breadcrumb-row {
+.realm-browser {
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.trail-breadcrumb {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  white-space: nowrap;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 12px;
-  color: var(--text-dim);
-  flex: 1;
-  min-width: 0;
-}
-
-.trail-breadcrumb__sep {
-  color: var(--text-faint);
-  margin: 0 var(--space-1);
-}
-
-.trail-breadcrumb__clear {
-  flex: 0 0 auto;
-  font-size: 11px;
-  color: var(--text-faint);
-  padding: var(--space-1) var(--space-2);
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .open-package-form {
@@ -199,20 +176,12 @@ main {
   font-size: 13px;
 }
 
-.home-toolbar {
-  display: flex;
-  flex-direction: column;
-  flex: 0 0 auto;
-  gap: var(--space-2);
-}
-
 .desktop-shell {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-top: var(--space-3);
 }
 
 .desktop {
@@ -233,7 +202,7 @@ main {
   background: var(--bg-inset);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-family: var(--font-mono);
+  font-family: var(--ui-font);
 }
 
 .taskbar__tile-button {
@@ -291,7 +260,7 @@ main {
   border: 2px solid var(--window-accent, var(--accent-cyan));
   border-radius: 0;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
-  font-family: var(--font-mono);
+  font-family: var(--ui-font);
 }
 
 .window::before,
@@ -398,7 +367,7 @@ main {
   background: transparent;
   border: none;
   padding: 0 var(--space-1);
-  font-family: var(--font-mono);
+  font-family: var(--ui-font);
   font-weight: 700;
   font-size: 12px;
   line-height: 1;
@@ -590,24 +559,6 @@ main {
   border-radius: var(--radius);
 }
 
-.world-explorer-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.world-explorer-list li {
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 13px;
-}
-
 .recent-activity {
   height: 100%;
 }
@@ -722,4 +673,200 @@ main {
 
 .block-explorer .account-fields dd {
   word-break: break-all;
+}
+
+.settings-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.settings-window__tabs {
+  display: flex;
+  gap: 2px;
+  padding: var(--space-2) var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+
+.settings-window__tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: var(--space-2) var(--space-3);
+}
+
+.settings-window__tab[data-active="true"] {
+  color: var(--text);
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.settings-window__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.settings-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.settings-field select {
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+
+.settings-field__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.settings-section-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-dim);
+}
+
+.settings-user-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.settings-user-identity__emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.settings-user-identity__label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.settings-user-identity__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.settings-user-identity button {
+  margin-left: auto;
+}
+
+.history-window {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-list button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.history-list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.history-window__clear {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-faint);
+  align-self: flex-start;
+}
+
+/* "Modern" theme: a normal-looking desktop instead of the ASCII-art chrome —
+   rounded windows, no corner brackets, no all-caps titlebars. Only the shell
+   chrome changes; --ui-font (theme.css) already swaps window/taskbar/status
+   bar text to a sans face for this theme. */
+:root[data-theme="modern"] .window {
+  border-width: 1px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14);
+  overflow: hidden;
+}
+
+:root[data-theme="modern"] .window--focused {
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14), 0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+:root[data-theme="modern"] .window::before,
+:root[data-theme="modern"] .window::after,
+:root[data-theme="modern"] .window__titlebar::before,
+:root[data-theme="modern"] .window__resize-handle::before {
+  display: none;
+}
+
+:root[data-theme="modern"] .window__titlebar {
+  border-bottom-width: 1px;
+}
+
+:root[data-theme="modern"] .window__title {
+  text-transform: none;
+  font-weight: 600;
+}
+
+:root[data-theme="modern"] .window__title::before {
+  content: none;
+}
+
+:root[data-theme="modern"] .taskbar__item,
+:root[data-theme="modern"] .settings-window__tab {
+  text-transform: none;
+}
+
+:root[data-theme="modern"] .taskbar__item {
+  border-radius: 999px;
 }

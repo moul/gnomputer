@@ -14,12 +14,14 @@ export function Window({
   title,
   defaultGeometry,
   accent = "cyan",
+  startClosed = false,
   children,
 }: {
   id: string;
   title: string;
   defaultGeometry: WindowGeometry;
   accent?: WindowAccent;
+  startClosed?: boolean;
   children: ReactNode;
 }) {
   const ensureWindow = useWindowStore((s) => s.ensureWindow);
@@ -38,7 +40,7 @@ export function Window({
   });
 
   useEffect(() => {
-    ensureWindow(id, title, defaultGeometry);
+    ensureWindow(id, title, defaultGeometry, { startClosed });
     // Geometry is only ever applied once per window id — re-running this with
     // a fresh defaultGeometry object identity on every render must NOT reset a
     // window the user has already dragged or resized. Title updates (e.g. a
@@ -142,6 +144,7 @@ export function Window({
           className="window__resize-handle"
           onPointerDown={(e) => {
             e.stopPropagation();
+            focus(id);
             resizeState.current = {
               startX: e.clientX,
               startY: e.clientY,

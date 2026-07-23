@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { usePendingRefsStore } from "../shell/pending-refs-store";
 
 export function BlockExplorer() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const [draftHeight, setDraftHeight] = useState("");
   const [height, setHeight] = useState<number | null>(null);
+  const pendingHeight = usePendingRefsStore((s) => s.pendingBlockHeight);
 
   const { data: status } = useQuery({
     queryKey: ["block-explorer-latest", networkId],
@@ -20,6 +22,13 @@ export function BlockExplorer() {
       setDraftHeight(String(status.latestHeight - 2));
     }
   }, [status, height]);
+
+  useEffect(() => {
+    if (pendingHeight === null) return;
+    setHeight(pendingHeight);
+    setDraftHeight(String(pendingHeight));
+    usePendingRefsStore.getState().setPendingBlockHeight(null);
+  }, [pendingHeight]);
 
   useTrailRecorder({
     uri: `gno://${networkId}/block/${height ?? ""}`,

@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useSearch, useNavigate } from "@tanstack/react-router";
+import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
 import { SourceExplorer } from "./source-explorer";
 import { RecentActivity } from "./recent-activity";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
-import { TrailBreadcrumb } from "../shell/trail-breadcrumb";
 import { Window } from "../shell/window";
 import { Taskbar } from "../shell/taskbar";
+import { SettingsWindow } from "../shell/settings-window";
+import { HistoryWindow } from "../shell/history-window";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const FEATURED_PACKAGE = "gno.land/r/sys/users";
@@ -20,6 +20,8 @@ const WINDOW_ACCENTS: Record<string, string> = {
   "network-monitor": "green",
   "validator-monitor": "blue",
   "block-explorer": "red",
+  settings: "magenta",
+  history: "green",
 };
 
 export function Home() {
@@ -28,14 +30,8 @@ export function Home() {
   // restore the old cramped positions for anyone who'd already opened the app.
   useWindowPersistence("window-layout:home:v2");
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
-  const navigate = useNavigate();
   const packagePath = search.pkg ?? FEATURED_PACKAGE;
   const renderPath = search.path ?? "";
-  const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
-
-  useEffect(() => {
-    setDraftPackagePath(packagePath);
-  }, [packagePath]);
 
   const realmTitle = renderPath
     ? `Experience · ${packagePath} · ${renderPath}`
@@ -43,31 +39,6 @@ export function Home() {
 
   return (
     <div className="home-layout">
-      <div className="home-toolbar">
-        <p className="home-lede home-lede--primary">You are browsing the shared computer.</p>
-        <p className="home-lede">
-          Open any program, user, function or transaction to follow it through the world.
-        </p>
-        <TrailBreadcrumb />
-        <form
-          className="open-package-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void navigate({ to: "/", search: { pkg: draftPackagePath } });
-          }}
-        >
-          <label>
-            Open a package path
-            <input
-              value={draftPackagePath}
-              onChange={(e) => setDraftPackagePath(e.target.value)}
-              placeholder="gno.land/r/sys/names"
-            />
-          </label>
-          <button type="submit">Open</button>
-        </form>
-      </div>
-
       <div className="desktop-shell">
         <div className="desktop">
           <Window
@@ -118,6 +89,8 @@ export function Home() {
           >
             <BlockExplorer />
           </Window>
+          <SettingsWindow />
+          <HistoryWindow />
         </div>
         <Taskbar accents={WINDOW_ACCENTS} />
       </div>
