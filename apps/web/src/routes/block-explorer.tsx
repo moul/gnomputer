@@ -4,6 +4,7 @@ import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { usePendingRefsStore } from "../shell/pending-refs-store";
 import { useNetworkStatus } from "../shell/use-network-status";
+import { Linkified } from "../shell/linkify";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
@@ -105,7 +106,9 @@ export function BlockExplorer() {
             {block.numTxs} (chain total: {block.totalTxs.toLocaleString()})
           </dd>
           <dt>Proposer</dt>
-          <dd>{block.proposerAddress}</dd>
+          <dd>
+            <Linkified text={block.proposerAddress} />
+          </dd>
           <dt>Version</dt>
           <dd>
             {block.version}

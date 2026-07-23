@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { Linkified } from "../shell/linkify";
 import type { RenderNode } from "@gnomputer/lenses";
 
 export function RealmBrowser({
@@ -80,7 +81,11 @@ export function RealmBrowser({
 function RenderNodeView({ node }: { node: RenderNode }) {
   switch (node.type) {
     case "heading":
-      return <h2>{node.content}</h2>;
+      return (
+        <h2>
+          <Linkified text={node.content ?? ""} />
+        </h2>
+      );
     case "code":
       return <pre>{node.content}</pre>;
     case "link":
@@ -88,11 +93,19 @@ function RenderNodeView({ node }: { node: RenderNode }) {
     case "paragraph":
       return (
         <p>
-          {node.content ?? node.children?.map((c, i) => <RenderNodeView key={i} node={c} />)}
+          {node.content !== undefined ? (
+            <Linkified text={node.content} />
+          ) : (
+            node.children?.map((c, i) => <RenderNodeView key={i} node={c} />)
+          )}
         </p>
       );
     default:
-      return <span>{node.content}</span>;
+      return (
+        <span>
+          <Linkified text={node.content ?? ""} />
+        </span>
+      );
   }
 }
 

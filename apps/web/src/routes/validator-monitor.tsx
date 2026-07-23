@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
+import { Linkified } from "../shell/linkify";
 
 export function ValidatorMonitor() {
   const sdk = useSdk();
@@ -40,7 +41,9 @@ export function ValidatorMonitor() {
       <ul className="validator-list">
         {sorted.map((v) => (
           <li key={v.address} className="validator-list__row">
-            <span className="validator-list__address">{v.address}</span>
+            <span className="validator-list__address">
+              <Linkified text={v.address} />
+            </span>
             <span className="validator-list__power">power {v.votingPower}</span>
             <span className="validator-list__priority">priority {v.proposerPriority}</span>
           </li>
