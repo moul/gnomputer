@@ -1,6 +1,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useWindowStore, type WindowGeometry } from "./window-store";
 import { useThemeStore } from "./theme-store";
+import { iconForWindowId } from "./app-registry";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
 
@@ -76,6 +77,7 @@ export function Window({
     function onPointerUp() {
       dragState.current = null;
       resizeState.current = null;
+      document.body.style.userSelect = "";
     }
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
@@ -116,9 +118,15 @@ export function Window({
         onPointerDown={(e) => {
           if (win.maximized) return;
           dragState.current = { startX: e.clientX, startY: e.clientY, originX: win.x, originY: win.y };
+          document.body.style.userSelect = "none";
         }}
       >
-        <span className="window__title">{title}</span>
+        <span className="window__title">
+          <span className="window__title-icon" aria-hidden="true">
+            {iconForWindowId(id)}
+          </span>
+          {title}
+        </span>
         <span className="window__controls">
           <button
             type="button"
@@ -159,6 +167,7 @@ export function Window({
               originW: win.width,
               originH: win.height,
             };
+            document.body.style.userSelect = "none";
           }}
         />
       )}

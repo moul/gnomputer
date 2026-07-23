@@ -30,6 +30,10 @@ interface RealmTabsState {
   setActiveTab: (windowId: string, tabId: string) => void;
   updateActiveTab: (windowId: string, patch: Partial<Omit<RealmTab, "id">>) => void;
   popOutActiveTab: (windowId: string) => string | null;
+  /** Spawns a fresh standalone window with a single Home tab, independent
+   * of any existing window's state — used by the Apps start-menu launcher
+   * for a multi-window app, where there's no "current tab" to seed from. */
+  createNewWindow: () => string;
   removeWindow: (windowId: string) => void;
 }
 
@@ -138,6 +142,20 @@ export const useRealmTabsStore = create<RealmTabsState>((set, get) => ({
         [windowId]: { tabs: sourceTabs, activeTabId: sourceActiveId },
         [newWindowId]: { tabs: [newTab], activeTabId: newTab.id },
       },
+    }));
+    return newWindowId;
+  },
+
+  createNewWindow: () => {
+    const winSeq = get().nextWindowSeq;
+    const newWindowId = `realm-${winSeq}`;
+    const tabSeq = get().nextTabSeq;
+    const homeTab = makeHomeTab(`tab-${tabSeq}`);
+    set((state) => ({
+      nextWindowSeq: winSeq + 1,
+      nextTabSeq: tabSeq + 1,
+      extraWindowIds: [...state.extraWindowIds, newWindowId],
+      windows: { ...state.windows, [newWindowId]: { tabs: [homeTab], activeTabId: homeTab.id } },
     }));
     return newWindowId;
   },

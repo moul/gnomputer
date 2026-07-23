@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useWindowStore } from "./window-store";
 import { useThemeStore } from "./theme-store";
 import { useNetworkStatus } from "./use-network-status";
+import { iconForWindowId, APP_REGISTRY } from "./app-registry";
+import { useRealmTabsStore } from "./realm-tabs-store";
 
 const ACCENT_VAR: Record<string, string> = {
   cyan: "var(--accent-cyan)",
@@ -32,6 +34,7 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
   const focus = useWindowStore((s) => s.focus);
   const restore = useWindowStore((s) => s.restore);
   const tile = useWindowStore((s) => s.tile);
+  const createNewRealmWindow = useRealmTabsStore((s) => s.createNewWindow);
   const isModern = useThemeStore((s) => s.theme.startsWith("modern"));
   const { data } = useNetworkStatus();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,16 +55,32 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [menuOpen]);
 
-  const allEntries = Object.entries(windows);
-  const openEntries = allEntries.filter(([, w]) => !w.closed);
+  const openEntries = Object.entries(windows).filter(([, w]) => !w.closed);
+
+  function scrollToWindow(id: string) {
+    document
+      .getElementById(`window-${id}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  }
 
   function openWindow(id: string, w: { closed: boolean; minimized: boolean }) {
     if (w.closed) reopen(id);
     else if (w.minimized) restore(id);
     else focus(id);
-    document
-      .getElementById(`window-${id}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    scrollToWindow(id);
+  }
+
+  function launchApp(app: (typeof APP_REGISTRY)[number]) {
+    if (app.supportsMultiWindow) {
+      const newId = createNewRealmWindow();
+      // The new window mounts (and calls ensureWindow, giving it the
+      // topmost zIndex) on the next render — scrollIntoView needs to wait
+      // for that DOM node to exist.
+      requestAnimationFrame(() => scrollToWindow(newId));
+    } else {
+      const win = windows[app.id];
+      if (win) openWindow(app.id, win);
+    }
     setMenuOpen(false);
   }
 
@@ -78,21 +97,21 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
         >
           {isModern ? "🧭 Apps" : "[apps]"}
         </button>
-        {menuOpen && allEntries.length > 0 && (
+        {menuOpen && (
           <div className="taskbar__start-menu" role="menu">
-            {allEntries.map(([id, w]) => (
+            {APP_REGISTRY.map((app) => (
               <button
-                key={id}
+                key={app.id}
                 type="button"
                 role="menuitem"
                 className="taskbar__start-item"
-                style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[id] ?? "cyan"] }}
-                onClick={() => openWindow(id, w)}
+                style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[app.id] ?? "cyan"] }}
+                onClick={() => launchApp(app)}
               >
-                {w.title}
-                <span className="taskbar__start-item-state">
-                  {w.closed ? "" : w.minimized ? "minimized" : "open"}
+                <span className="taskbar__item-icon" aria-hidden="true">
+                  {app.icon}
                 </span>
+                {app.label}
               </button>
             ))}
           </div>
@@ -109,6 +128,9 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
             onClick={() => openWindow(id, w)}
           >
             {w.minimized ? (isModern ? "🔽 " : "▁ ") : ""}
+            <span className="taskbar__item-icon" aria-hidden="true">
+              {iconForWindowId(id)}
+            </span>
             {w.title}
           </button>
         ))}

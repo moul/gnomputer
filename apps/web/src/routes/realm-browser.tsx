@@ -6,6 +6,7 @@ import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
 import { SourceExplorer } from "./source-explorer";
 import type { RenderNode } from "@gnomputer/lenses";
@@ -129,9 +130,11 @@ export function RealmBrowser({
 }
 
 function RealmTabContent({ windowId, tab }: { windowId: string; tab: RealmTab }) {
+  const sdk = useSdk();
   const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
   const [draftPackagePath, setDraftPackagePath] = useState(tab.packagePath);
   const hasPackage = tab.packagePath !== "";
+  const gnowebUrl = sdk.networks.getActive().gnowebUrl;
 
   useEffect(() => {
     setDraftPackagePath(tab.packagePath);
@@ -164,6 +167,16 @@ function RealmTabContent({ windowId, tab }: { windowId: string; tab: RealmTab })
           <button type="button" onClick={() => openInRealmTab(windowId, { packagePath: "" })}>
             🏠 Home
           </button>
+        )}
+        {hasPackage && gnowebUrl && (
+          <a
+            className="realm-browser__gnoweb-link"
+            href={gnowebRealmUrl(gnowebUrl, tab.packagePath, tab.renderPath || undefined)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open on gnoweb ↗
+          </a>
         )}
       </form>
       {!hasPackage ? (

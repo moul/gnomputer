@@ -12,7 +12,15 @@ const STATE_LABEL: Record<string, string> = {
 export function SettingsNetworkTab() {
   const sdk = useSdk();
   const { activeNetworkId, setActiveNetwork } = useShellStore();
-  const { state } = useNetworkStatus();
+  const { state, network } = useNetworkStatus();
+
+  const links: { label: string; url: string }[] = [
+    { label: "RPC", url: network.rpcUrl },
+    { label: "gnoweb", url: network.gnowebUrl ?? "" },
+    { label: "tx-indexer", url: network.indexerGraphqlUrl ?? "" },
+    { label: "gnockpit", url: network.gnockpitUrl ?? "" },
+    { label: "Explorer", url: network.explorerUrl ?? "" },
+  ].filter((link) => link.url !== "");
 
   return (
     <div className="settings-tab">
@@ -37,6 +45,19 @@ export function SettingsNetworkTab() {
         {STATE_LABEL[state]}
       </p>
       <NetworkMonitor />
+      <div>
+        <p className="settings-section-label">Known links</p>
+        <ul className="settings-network-links">
+          {links.map((link) => (
+            <li key={link.label}>
+              <span className="settings-network-links__label">{link.label}</span>
+              <a href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.url}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

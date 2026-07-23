@@ -2,22 +2,12 @@ import { useFocusedWindow, useWindowStore } from "./window-store";
 import { useNetworkStatus } from "./use-network-status";
 import { openSettings } from "./open-settings";
 import { useShellStore } from "../store";
-import { useThemeStore, THEME_LABELS } from "./theme-store";
-
-const THEME_ICON: Record<string, string> = {
-  "ascii-dark": "◐",
-  "ascii-light": "◑",
-  "modern-light": "◈",
-  "modern-dark": "◆",
-};
 
 export function StatusBar() {
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
   const reopenWindow = useWindowStore((s) => s.reopen);
   const focused = useFocusedWindow();
   const { state, network } = useNetworkStatus();
-  const theme = useThemeStore((s) => s.theme);
-  const cycleTheme = useThemeStore((s) => s.cycleTheme);
 
   return (
     <header className="status-bar" role="banner">
@@ -41,24 +31,6 @@ export function StatusBar() {
         <button
           type="button"
           className="status-bar__icon-button"
-          onClick={() => reopenWindow("history")}
-          title="History — everywhere you've been this session"
-          aria-label="History"
-        >
-          🕘 History
-        </button>
-        <button
-          type="button"
-          className="status-bar__icon-button"
-          onClick={cycleTheme}
-          title={`Theme: ${THEME_LABELS[theme]} — click to cycle`}
-          aria-label="Cycle theme"
-        >
-          {THEME_ICON[theme]}
-        </button>
-        <button
-          type="button"
-          className="status-bar__icon-button"
           data-state={state}
           onClick={() => openSettings("network")}
           title={`${network.name} — click for network settings`}
@@ -74,7 +46,7 @@ export function StatusBar() {
           title="Browsing as guest — click to view profile / connect"
           aria-label="User settings"
         >
-          🔌 guest
+          👤 guest
         </button>
         <button
           type="button"

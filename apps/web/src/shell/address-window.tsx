@@ -5,6 +5,7 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { Freshness } from "./freshness";
 import { Window } from "./window";
 import { useAddressWindowStore } from "./address-window-store";
+import { gnowebAddressUrl } from "./gnoweb-links";
 
 function formatBalance(coins: string): string {
   const match = /^(\d+)ugnot$/.exec(coins);
@@ -23,7 +24,7 @@ export function AddressWindow() {
       title={address ? `Address · ${address}` : "Address"}
       accent="cyan"
       startClosed
-      defaultGeometry={{ x: 80, y: 80, width: 420, height: 380 }}
+      defaultGeometry={{ x: 80, y: 80, width: 420, height: 420 }}
     >
       {address ? <AddressContent address={address} /> : <p className="state-line">No address selected yet.</p>}
     </Window>
@@ -33,6 +34,7 @@ export function AddressWindow() {
 function AddressContent({ address }: { address: string }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
+  const gnowebUrl = sdk.networks.getActive().gnowebUrl;
   const [copied, setCopied] = useState(false);
 
   useTrailRecorder({
@@ -65,6 +67,16 @@ function AddressContent({ address }: { address: string }) {
     },
   });
 
+  const {
+    data: packageCount,
+    error: packageCountError,
+    isPending: packageCountPending,
+  } = useQuery({
+    queryKey: ["package-count", networkId, address],
+    queryFn: async () => (await sdk.indexer.countPackagesByCreator(address)).data.count,
+    retry: false,
+  });
+
   return (
     <div className="address-window">
       <div className="address-window__identity">
@@ -93,6 +105,16 @@ function AddressContent({ address }: { address: string }) {
         >
           {copied ? "Copied!" : "Copy"}
         </button>
+        {gnowebUrl && (
+          <a
+            className="address-window__gnoweb-link"
+            href={gnowebAddressUrl(gnowebUrl, address)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            gnoweb ↗
+          </a>
+        )}
       </div>
 
       {!accountPending && !accountError && <Freshness dataUpdatedAt={dataUpdatedAt} />}
@@ -104,20 +126,37 @@ function AddressContent({ address }: { address: string }) {
         <p className="state-line" aria-busy="true">
           Loading account…
         </p>
-      ) : !info.initialized ? (
-        <p className="state-line">
-          This address has no on-chain activity yet — it has never received funds or sent a
-          transaction.
-        </p>
       ) : (
-        <dl className="account-fields">
-          <dt>Balance</dt>
-          <dd>{formatBalance(info.balance)}</dd>
-          <dt>Account number</dt>
-          <dd>{info.accountNumber}</dd>
-          <dt>Sequence</dt>
-          <dd>{info.sequence}</dd>
-        </dl>
+        <>
+          <dl className="account-fields">
+            <dt>Status</dt>
+            <dd>{info.initialized ? "Active" : "Not initialized"}</dd>
+            {info.initialized && (
+              <>
+                <dt>Balance</dt>
+                <dd>{formatBalance(info.balance)}</dd>
+                <dt>Account number</dt>
+                <dd>{info.accountNumber}</dd>
+                <dt>Sequence</dt>
+                <dd>{info.sequence}</dd>
+              </>
+            )}
+            <dt>Packages deployed</dt>
+            <dd>
+              {packageCountPending
+                ? "Checking…"
+                : packageCountError
+                  ? "Not available (indexer unreachable from the browser)"
+                  : packageCount}
+            </dd>
+          </dl>
+          {!info.initialized && (
+            <p className="state-line">
+              This address has no on-chain activity yet — it has never received funds or sent a
+              transaction.
+            </p>
+          )}
+        </>
       )}
     </div>
   );

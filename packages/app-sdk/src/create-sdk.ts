@@ -6,6 +6,7 @@ export type { NetworkConfig };
 import {
   createRpcClient,
   listRealms,
+  countPackagesByCreator,
   type RpcClient,
   type BlockSummary,
   type AccountInfo,
@@ -30,6 +31,7 @@ export interface GnomputerSDK {
   readonly rpc: RpcClient;
   indexer: {
     listRealms(): Promise<DataEnvelope<RealmSummary[]>>;
+    countPackagesByCreator(address: string): Promise<DataEnvelope<{ count: number }>>;
   };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
@@ -86,6 +88,8 @@ export function createGnomputerSDK(
     },
     indexer: {
       listRealms: () => listRealms(activeNetwork, new Date().toISOString()),
+      countPackagesByCreator: (address) =>
+        countPackagesByCreator(activeNetwork, address, new Date().toISOString()),
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },

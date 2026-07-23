@@ -143,7 +143,6 @@ main {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-5);
   width: 100%;
 }
 
@@ -326,6 +325,20 @@ main {
   font-size: 13px;
 }
 
+.realm-browser__gnoweb-link,
+.address-window__gnoweb-link {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.realm-browser__gnoweb-link:hover,
+.address-window__gnoweb-link:hover {
+  color: var(--accent);
+}
+
 .desktop-shell {
   flex: 1;
   min-height: 0;
@@ -388,6 +401,10 @@ main {
   border-color: var(--taskbar-accent, var(--border-strong));
 }
 
+.taskbar__item-icon {
+  margin-right: var(--space-1);
+}
+
 .taskbar__item[data-minimized="true"] {
   opacity: 0.7;
   border-style: dotted;
@@ -439,12 +456,6 @@ main {
   background: var(--bg-inset);
 }
 
-.taskbar__start-item-state {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
-}
 
 .window {
   position: absolute;
@@ -549,6 +560,11 @@ main {
   text-transform: uppercase;
   flex: 1;
   min-width: 0;
+}
+
+.window__title-icon {
+  margin-right: var(--space-1);
+  text-transform: none;
 }
 
 .window__controls {
@@ -771,6 +787,8 @@ main {
 .recent-activity__toolbar {
   flex: 0 0 auto;
   display: flex;
+  align-items: center;
+  gap: var(--space-3);
   justify-content: flex-end;
   padding: var(--space-2) var(--space-3) 0;
 }
@@ -778,6 +796,14 @@ main {
 .recent-activity__toolbar button {
   font-size: 11px;
   padding: var(--space-1) var(--space-2);
+}
+
+.recent-activity__filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11px;
+  color: var(--text-dim);
 }
 
 .activity-list {
@@ -991,6 +1017,38 @@ main {
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-dim);
+}
+
+.settings-network-links {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settings-network-links li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: 12px;
+}
+
+.settings-network-links li a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+.settings-network-links__label {
+  flex: 0 0 auto;
+  width: 70px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.03em;
 }
 
 .settings-user-identity {

@@ -15,10 +15,21 @@ describe("DEFAULT_NETWORKS", () => {
     });
   });
 
-  it("still includes test13 and betanet as selectable networks", () => {
+  it("still includes test13, betanet, and gnodev as selectable networks", () => {
     expect(DEFAULT_NETWORKS.map((n) => n.id)).toEqual(
-      expect.arrayContaining(["topaz", "test13", "betanet"])
+      expect.arrayContaining(["topaz", "test13", "betanet", "gnodev"])
     );
+  });
+
+  it("gnodev points at gnodev's documented local defaults and doesn't override the default network", () => {
+    expect(DEFAULT_NETWORK_ID).not.toBe("gnodev");
+    const gnodev = DEFAULT_NETWORKS.find((n) => n.id === "gnodev");
+    expect(gnodev).toMatchObject({
+      chainId: "dev",
+      rpcUrl: "http://127.0.0.1:26657",
+      gnowebUrl: "http://127.0.0.1:8888",
+      environment: "local",
+    });
   });
 
   it("every network has a websocket URL derived from its RPC URL", () => {

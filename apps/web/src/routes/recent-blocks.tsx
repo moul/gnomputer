@@ -8,6 +8,7 @@ export function RecentBlocks() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const [paused, setPaused] = useState(false);
+  const [txsOnly, setTxsOnly] = useState(false);
   const { blocks } = useLiveActivity(paused);
   const [now, setNow] = useState(() => Date.now());
   const warnings = sdk.networks.getActive().warnings ?? [];
@@ -17,9 +18,15 @@ export function RecentBlocks() {
     return () => clearInterval(interval);
   }, []);
 
+  const visibleBlocks = txsOnly ? blocks.filter((b) => b.numTxs > 0) : blocks;
+
   return (
     <div className="recent-activity">
       <div className="recent-activity__toolbar">
+        <label className="recent-activity__filter">
+          <input type="checkbox" checked={txsOnly} onChange={(e) => setTxsOnly(e.target.checked)} />
+          Only with txs
+        </label>
         <button type="button" onClick={() => setPaused((p) => !p)}>
           {paused ? "▶ Resume" : "⏸ Pause"}
         </button>
@@ -31,9 +38,11 @@ export function RecentBlocks() {
         <p className="state-line" aria-busy="true">
           Watching the chain for new blocks…
         </p>
+      ) : visibleBlocks.length === 0 ? (
+        <p className="state-line">No blocks with transactions in the current window yet.</p>
       ) : (
         <ul className="activity-list">
-          {blocks.map((block) => (
+          {visibleBlocks.map((block) => (
             <li key={block.height} className="activity-list__row">
               <button
                 type="button"

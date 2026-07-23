@@ -24,11 +24,15 @@ const LIST_REALMS_QUERY = `{
   }
 }`;
 
-async function queryIndexer<T>(graphqlUrl: string, query: string): Promise<T> {
+async function queryIndexer<T>(
+  graphqlUrl: string,
+  query: string,
+  variables?: Record<string, unknown>
+): Promise<T> {
   const res = await fetch(graphqlUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, variables }),
   });
   if (!res.ok) {
     throw new Error(`Indexer request failed: ${res.status} ${res.statusText}`);
@@ -38,6 +42,57 @@ async function queryIndexer<T>(graphqlUrl: string, query: string): Promise<T> {
     throw new Error(json.errors[0].message ?? "Indexer query failed");
   }
   return json.data as T;
+}
+
+// `creator` is a real filter field on MsgAddPackage (confirmed via
+// introspection and a live query returning a known address's actual
+// deployed packages) — blocked by the same missing-CORS-header issue as
+// every other indexer call, not by the query itself being wrong.
+const COUNT_BY_CREATOR_QUERY = `
+  query CountByCreator($address: String!) {
+    getTransactions(where: { success: { eq: true }, messages: { typeUrl: { eq: "add_package" }, value: { MsgAddPackage: { creator: { eq: $address } } } } }) {
+      messages { value { ... on MsgAddPackage { package { path } } } }
+    }
+  }
+`;
+
+export async function countPackagesByCreator(
+  network: { id: string; indexerGraphqlUrl?: string },
+  address: string,
+  fetchedAt: string
+): Promise<DataEnvelope<{ count: number }>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — package discovery needs one.`);
+  }
+
+  const data = await queryIndexer<{ getTransactions: AddPackageTx[] }>(
+    network.indexerGraphqlUrl,
+    COUNT_BY_CREATOR_QUERY,
+    { address }
+  );
+  const paths = new Set<string>();
+  for (const tx of data.getTransactions) {
+    for (const message of tx.messages) {
+      const path = message.value?.package?.path;
+      if (path) paths.add(path);
+    }
+  }
+
+  return wrapEnvelope({
+    ref: {
+      uri: `gno://${network.id}/address/${address}`,
+      kind: "address",
+      objectId: address,
+      networkId: network.id,
+    },
+    data: { count: paths.size },
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.package-count.v1",
+  });
 }
 
 export async function listRealms(

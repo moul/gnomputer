@@ -1,4 +1,9 @@
-import { useThemeStore, THEME_ORDER, THEME_LABELS, type ThemeId } from "./theme-store";
+import { useThemeStore, THEME_LABELS, type ThemeId } from "./theme-store";
+
+// Display order for the grid — deliberately not THEME_ORDER (the cycle-button
+// order): ASCII on top, Clean (modern) on the bottom, Light on the left,
+// Dark on the right, so the 2x2 layout reads as two clear axes.
+const THEME_GRID_ORDER: ThemeId[] = ["ascii-light", "ascii-dark", "modern-light", "modern-dark"];
 
 const THEME_PREVIEW: Record<ThemeId, string> = {
   "ascii-dark": "◐",
@@ -22,7 +27,7 @@ export function SettingsThemeTab() {
     <div className="settings-tab">
       <p className="settings-section-label">Theme</p>
       <div className="settings-theme-grid">
-        {THEME_ORDER.map((id) => (
+        {THEME_GRID_ORDER.map((id) => (
           <button
             key={id}
             type="button"

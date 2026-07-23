@@ -14,6 +14,7 @@ const LATEST_SAFETY_MARGIN = 2;
 export function BlockExplorer() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
+  const explorerUrl = sdk.networks.getActive().explorerUrl;
   const [draftHeight, setDraftHeight] = useState("");
   const [height, setHeight] = useState<number | null>(null);
   const [latest, setLatest] = useState(true);
@@ -87,6 +88,16 @@ export function BlockExplorer() {
         >
           {latest ? "● Latest" : "○ Latest"}
         </button>
+        {explorerUrl && (
+          <a
+            className="realm-browser__gnoweb-link"
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Open in Explorer ↗
+          </a>
+        )}
       </form>
 
       {error ? (
