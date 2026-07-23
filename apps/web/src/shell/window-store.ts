@@ -8,7 +8,7 @@ export interface WindowGeometry {
   height: number;
 }
 
-interface WindowRecord extends WindowGeometry {
+export interface WindowRecord extends WindowGeometry {
   title: string;
   zIndex: number;
   closed: boolean;
