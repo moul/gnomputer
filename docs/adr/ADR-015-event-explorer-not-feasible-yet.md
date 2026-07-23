@@ -1,5 +1,10 @@
 # ADR-015: Event Explorer is not feasible yet — no reachable event source
 
+> **Partially superseded by [ADR-016](./ADR-016-event-explorer-via-block-results.md).**
+> The indexer and `subscribe` findings below still hold, but a third RPC
+> method, `block_results`, was later found to expose real per-tx events
+> without CORS issues. An Event Explorer was built on it.
+
 ## Context
 
 The spec calls for an Event Explorer showing chain events as they happen. Two

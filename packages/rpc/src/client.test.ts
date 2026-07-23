@@ -10,6 +10,7 @@ import accountUninitializedFixture from "./__fixtures__/account-uninitialized.js
 import validatorsFixture from "./__fixtures__/validators.json";
 import qevalUsernameFixture from "./__fixtures__/qeval-username.json";
 import qevalUsernameNilFixture from "./__fixtures__/qeval-username-nil.json";
+import blockResultsFixture from "./__fixtures__/block-results.json";
 
 const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -43,7 +44,9 @@ function mockFetchWithFixtures() {
             ? blockFixture
             : body.method === "validators"
               ? validatorsFixture
-              : {};
+              : body.method === "block_results"
+                ? blockResultsFixture
+                : {};
     return new Response(JSON.stringify(fixture), { headers: { "content-type": "application/json" } });
   }) as unknown as typeof fetch;
 }
@@ -118,6 +121,30 @@ describe("createRpcClient", () => {
     const client = createRpcClient(test13);
     const env = await client.resolveUsername(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.data.username).toBeNull();
+  });
+
+  it("wraps getBlockEvents with real per-tx ABCI events (no indexer, no CORS wall)", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.getBlockEvents(985592, "2026-07-22T00:00:00.000Z");
+    expect(env.source).toBe("rpc");
+    expect(env.data.height).toBe(985592);
+    expect(env.data.txs).toHaveLength(1);
+
+    const tx = env.data.txs[0]!;
+    expect(tx.success).toBe(true);
+    expect(tx.gasWanted).toBe(458800000);
+    expect(tx.gasUsed).toBe(226636261);
+    expect(tx.events.length).toBe(22);
+    expect(tx.events[0]).toEqual({
+      type: "Approval",
+      pkgPath: "gno.land/p/demo/tokens/grc20",
+      attrs: [
+        { key: "token", value: "gno.land/r/gnoswap/gns.GNS" },
+        { key: "owner", value: "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k" },
+        { key: "spender", value: "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp" },
+        { key: "value", value: "14872957" },
+      ],
+    });
   });
 
   it("wraps getValidatorSet with real bech32 addresses, not raw bytes", async () => {

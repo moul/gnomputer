@@ -2,7 +2,13 @@ import type { Tm2Client } from "@gnolang/tm2-rpc";
 import type { JSONRPCProvider } from "@gnolang/tm2-js-client";
 import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
-import { connectTm2Client, connectProvider, abciQueryString, fetchValidatorsRaw } from "./queries";
+import {
+  connectTm2Client,
+  connectProvider,
+  abciQueryString,
+  fetchValidatorsRaw,
+  fetchBlockResultsRaw,
+} from "./queries";
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes)
@@ -41,11 +47,31 @@ export interface AccountInfo {
   initialized: boolean;
 }
 
+export interface ChainEvent {
+  type: string;
+  pkgPath: string | null;
+  attrs: { key: string; value: string }[];
+}
+
+export interface BlockTxResult {
+  txIndex: number;
+  success: boolean;
+  gasWanted: number;
+  gasUsed: number;
+  events: ChainEvent[];
+}
+
+export interface BlockEvents {
+  height: number;
+  txs: BlockTxResult[];
+}
+
 export interface RpcClient {
   getStatus(): Promise<DataEnvelope<{ latestHeight: number; chainId: string }>>;
   queryRender(packagePath: string, path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   queryFile(path: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
+  getBlockEvents(height: number, fetchedAt: string): Promise<DataEnvelope<BlockEvents>>;
   getAccountInfo(address: string, fetchedAt: string): Promise<DataEnvelope<AccountInfo>>;
   getValidatorSet(fetchedAt: string): Promise<DataEnvelope<ValidatorSet>>;
   resolveUsername(address: string, fetchedAt: string): Promise<DataEnvelope<{ username: string | null }>>;
@@ -160,6 +186,32 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt: new Date().toISOString(),
         freshness: "live",
         schema: "gnomputer.rpc.block-summary.v1",
+      });
+    },
+
+    async getBlockEvents(height, fetchedAt) {
+      const raw = await fetchBlockResultsRaw(network.rpcUrl, height);
+      const txs: BlockTxResult[] = raw.deliverTx.map((tx, txIndex) => ({
+        txIndex,
+        success: tx.ResponseBase.Error === null,
+        gasWanted: Number(tx.GasWanted),
+        gasUsed: Number(tx.GasUsed),
+        events: (tx.ResponseBase.Events ?? []).map((e) => ({
+          type: e.type,
+          pkgPath: e.pkg_path ?? null,
+          attrs: e.attrs ?? [],
+        })),
+      }));
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "block", objectId: String(height) },
+        data: { height: raw.height, txs },
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        height: raw.height,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.block-events.v1",
       });
     },
 

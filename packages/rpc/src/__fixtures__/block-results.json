@@ -1,0 +1,620 @@
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "height": "985592",
+    "results": {
+      "deliver_tx": [
+        {
+          "ResponseBase": {
+            "Error": null,
+            "Data": "CgooIjE0ODcyOTU3IiBzdHJpbmcpCigiLTEwNTE2NzciIHN0cmluZykKCgoKCgo=",
+            "Events": [
+              {
+                "@type": "/tm.Event",
+                "type": "Approval",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "owner",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "spender",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "value",
+                    "value": "14872957"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "from",
+                    "value": ""
+                  },
+                  {
+                    "key": "to",
+                    "value": "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+                  },
+                  {
+                    "key": "value",
+                    "value": "28538812"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "MintGNS",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": "gno.land/r/gnoswap/emission"
+                  },
+                  {
+                    "key": "mintedBlockTime",
+                    "value": "1784727797"
+                  },
+                  {
+                    "key": "mintedGNSAmount",
+                    "value": "28538812"
+                  },
+                  {
+                    "key": "accumMintedGNSAmount",
+                    "value": "25484010428817"
+                  },
+                  {
+                    "key": "accumLeftMintGNSAmount",
+                    "value": "874515989571183"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/gns"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1q6d4ns7zkr492rgl0pcgf5ajaf2dlz0nnptky3"
+                  },
+                  {
+                    "key": "value",
+                    "value": "21404110"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1mjvd83nnjee3z2g7683er55me9f09688pd4mj9"
+                  },
+                  {
+                    "key": "value",
+                    "value": "5707762"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g177jkk4xx79uledh9xedqkq4ht4ef9t6amxwjeq"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g13lpjmjhl2du7whed3wxe4n5508txxja6ezxeg7"
+                  },
+                  {
+                    "key": "value",
+                    "value": "1426940"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "MintAndDistributeGns",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": "gno.land/r/gnoswap/router"
+                  },
+                  {
+                    "key": "lastTimestamp",
+                    "value": "1784727797"
+                  },
+                  {
+                    "key": "currentTimestamp",
+                    "value": "1784727797"
+                  },
+                  {
+                    "key": "currentHeight",
+                    "value": "985592"
+                  },
+                  {
+                    "key": "mintedAmount",
+                    "value": "28538812"
+                  },
+                  {
+                    "key": "prevLeftAmount",
+                    "value": "2"
+                  },
+                  {
+                    "key": "distributedAmount",
+                    "value": "28538812"
+                  },
+                  {
+                    "key": "currentLeftAmount",
+                    "value": "2"
+                  },
+                  {
+                    "key": "gnsTotalSupply",
+                    "value": "125484010428817"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/emission"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoland/wugnot.wugnot"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "value",
+                    "value": "1053256"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1dexaf6aqkkyr9yfy9d5up69lsn7ra80af34g5v"
+                  },
+                  {
+                    "key": "value",
+                    "value": "14872957"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Swap",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": "gno.land/r/gnoswap/router"
+                  },
+                  {
+                    "key": "poolPath",
+                    "value": "gno.land/r/gnoland/wugnot:gno.land/r/gnoswap/gns:100"
+                  },
+                  {
+                    "key": "zeroForOne",
+                    "value": "false"
+                  },
+                  {
+                    "key": "requestAmount",
+                    "value": "14872957"
+                  },
+                  {
+                    "key": "sqrtPriceLimitX96",
+                    "value": "1461373636630004318706518188784493106690254656248"
+                  },
+                  {
+                    "key": "payer",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "recipient",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "token0Amount",
+                    "value": "-1053256"
+                  },
+                  {
+                    "key": "token1Amount",
+                    "value": "14872957"
+                  },
+                  {
+                    "key": "protocolFee0",
+                    "value": "0"
+                  },
+                  {
+                    "key": "protocolFee1",
+                    "value": "0"
+                  },
+                  {
+                    "key": "sqrtPriceX96",
+                    "value": "297713221210296704239128606859"
+                  },
+                  {
+                    "key": "exactIn",
+                    "value": "true"
+                  },
+                  {
+                    "key": "currentTick",
+                    "value": "26477"
+                  },
+                  {
+                    "key": "liquidity",
+                    "value": "100002086994"
+                  },
+                  {
+                    "key": "feeGrowthGlobal0X128",
+                    "value": "760643886381817342796077413810303113"
+                  },
+                  {
+                    "key": "feeGrowthGlobal1X128",
+                    "value": "4070169106739028257565828343869184215"
+                  },
+                  {
+                    "key": "balanceToken0",
+                    "value": "26836397631"
+                  },
+                  {
+                    "key": "balanceToken1",
+                    "value": "376970923990"
+                  },
+                  {
+                    "key": "tickCumulative",
+                    "value": "45729922234"
+                  },
+                  {
+                    "key": "liquidityCumulative",
+                    "value": "298253607945145584"
+                  },
+                  {
+                    "key": "secondsPerLiquidityCumulativeX128",
+                    "value": "10148655907554215074554466753510025"
+                  },
+                  {
+                    "key": "observationTimestamp",
+                    "value": "1784727797"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/pool/v1"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Approval",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoland/wugnot.wugnot"
+                  },
+                  {
+                    "key": "owner",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "spender",
+                    "value": "g1r340tuven27z8wq50u8d20eqrsj470082682tp"
+                  },
+                  {
+                    "key": "value",
+                    "value": "1579"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoland/wugnot.wugnot"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1r340tuven27z8wq50u8d20eqrsj470082682tp"
+                  },
+                  {
+                    "key": "value",
+                    "value": "1579"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "AddToProtocolFee",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": "gno.land/r/gnoswap/router"
+                  },
+                  {
+                    "key": "tokenPath",
+                    "value": "gno.land/r/gnoland/wugnot"
+                  },
+                  {
+                    "key": "amount",
+                    "value": "1579"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/protocol_fee/v1"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "SwapRouteFee",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": ""
+                  },
+                  {
+                    "key": "tokenPath",
+                    "value": "gno.land/r/gnoland/wugnot"
+                  },
+                  {
+                    "key": "amount",
+                    "value": "1579"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/router/v1"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoland/wugnot.wugnot"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "to",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "value",
+                    "value": "1051677"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "ExactInSwap",
+                "attrs": [
+                  {
+                    "key": "prevAddr",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "prevRealm",
+                    "value": ""
+                  },
+                  {
+                    "key": "input",
+                    "value": "gno.land/r/gnoswap/gns"
+                  },
+                  {
+                    "key": "output",
+                    "value": "gno.land/r/gnoland/wugnot"
+                  },
+                  {
+                    "key": "exactAmount",
+                    "value": "14872957"
+                  },
+                  {
+                    "key": "quote",
+                    "value": "100"
+                  },
+                  {
+                    "key": "resultInputAmount",
+                    "value": "14872957"
+                  },
+                  {
+                    "key": "resultOutputAmount",
+                    "value": "-1051677"
+                  },
+                  {
+                    "key": "referrer",
+                    "value": "g1ad6d454rev5sfeck0f8gwp6g9yw3m8t8tryy8d"
+                  },
+                  {
+                    "key": "routes[0]",
+                    "value": "gno.land/r/gnoswap/gns:gno.land/r/gnoland/wugnot:100"
+                  }
+                ],
+                "pkg_path": "gno.land/r/gnoswap/router/v1"
+              },
+              {
+                "@type": "/tm.StorageUnlockEvent",
+                "bytes_delta": "-8",
+                "fee_refund": "800ugnot",
+                "pkg_path": "gno.land/r/gnoland/wugnot",
+                "refund_withheld": false
+              },
+              {
+                "@type": "/tm.StorageUnlockEvent",
+                "bytes_delta": "-2207",
+                "fee_refund": "220700ugnot",
+                "pkg_path": "gno.land/r/gnoswap/gns",
+                "refund_withheld": false
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Approval",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoswap/gns.GNS"
+                  },
+                  {
+                    "key": "owner",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "spender",
+                    "value": "g1vc883gshu5z7ytk5cdynhc8c2dh67pdp4cszkp"
+                  },
+                  {
+                    "key": "value",
+                    "value": "0"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.StorageDepositEvent",
+                "bytes_delta": "2199",
+                "fee_delta": "219900ugnot",
+                "pkg_path": "gno.land/r/gnoswap/gns"
+              },
+              {
+                "@type": "/tm.Event",
+                "type": "Transfer",
+                "attrs": [
+                  {
+                    "key": "token",
+                    "value": "gno.land/r/gnoland/wugnot.wugnot"
+                  },
+                  {
+                    "key": "from",
+                    "value": "g1jc9kculnumsdtwtwlg8ha6ag6sawqqn0taz38k"
+                  },
+                  {
+                    "key": "to",
+                    "value": ""
+                  },
+                  {
+                    "key": "value",
+                    "value": "1040738"
+                  }
+                ],
+                "pkg_path": "gno.land/p/demo/tokens/grc20"
+              },
+              {
+                "@type": "/tm.StorageDepositEvent",
+                "bytes_delta": "8",
+                "fee_delta": "800ugnot",
+                "pkg_path": "gno.land/r/gnoland/wugnot"
+              }
+            ],
+            "Log": "msg:0,success:true,log:,events:[]\nmsg:1,success:true,log:,events:[]\nmsg:2,success:true,log:,events:[]\nmsg:3,success:true,log:,events:[]",
+            "Info": "\n\n\n"
+          },
+          "GasWanted": "458800000",
+          "GasUsed": "226636261"
+        }
+      ],
+      "end_block": {
+        "ResponseBase": {
+          "Error": null,
+          "Data": null,
+          "Events": null,
+          "Log": "",
+          "Info": ""
+        },
+        "ValidatorUpdates": null,
+        "ConsensusParams": null,
+        "Events": null
+      },
+      "begin_block": {
+        "ResponseBase": {
+          "Error": null,
+          "Data": null,
+          "Events": null,
+          "Log": "",
+          "Info": ""
+        }
+      }
+    }
+  }
+}

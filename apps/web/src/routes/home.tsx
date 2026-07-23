@@ -4,6 +4,7 @@ import { RecentBlocks } from "./recent-blocks";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
+import { EventExplorer } from "./event-explorer";
 import { Window } from "../shell/window";
 import { Taskbar } from "../shell/taskbar";
 import { SettingsWindow } from "../shell/settings-window";
@@ -21,6 +22,7 @@ const WINDOW_ACCENTS: Record<string, string> = {
   settings: "magenta",
   history: "green",
   address: "amber",
+  "event-explorer": "blue",
 };
 
 export function Home() {
@@ -82,6 +84,15 @@ export function Home() {
             defaultGeometry={{ x: 396, y: 356, width: 380, height: 300 }}
           >
             <BlockExplorer />
+          </Window>
+          <Window
+            id="event-explorer"
+            title="Event Explorer"
+            accent="blue"
+            startClosed
+            defaultGeometry={{ x: 120, y: 100, width: 480, height: 400 }}
+          >
+            <EventExplorer />
           </Window>
           <SettingsWindow />
           <HistoryWindow />

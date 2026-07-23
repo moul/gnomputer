@@ -13,10 +13,23 @@ import {
   type ValidatorInfo,
   type ValidatorSet,
   type RealmSummary,
+  type ChainEvent,
+  type BlockTxResult,
+  type BlockEvents,
 } from "@gnomputer/rpc";
 import type { DataEnvelope } from "@gnomputer/core";
 
-export type { RpcClient, BlockSummary, AccountInfo, ValidatorInfo, ValidatorSet, RealmSummary };
+export type {
+  RpcClient,
+  BlockSummary,
+  AccountInfo,
+  ValidatorInfo,
+  ValidatorSet,
+  RealmSummary,
+  ChainEvent,
+  BlockTxResult,
+  BlockEvents,
+};
 import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
 import { createTrailApi, type TrailAPI } from "@gnomputer/trails";
 import { availableLenses, parseRenderMarkup } from "@gnomputer/lenses";
