@@ -8,17 +8,25 @@ import blockFixture from "./__fixtures__/block.json";
 import accountFixture from "./__fixtures__/account.json";
 import accountUninitializedFixture from "./__fixtures__/account-uninitialized.json";
 import validatorsFixture from "./__fixtures__/validators.json";
+import qevalUsernameFixture from "./__fixtures__/qeval-username.json";
+import qevalUsernameNilFixture from "./__fixtures__/qeval-username-nil.json";
 
 const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
 const UNFUNDED_ADDRESS = "g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzp0nh0";
 
 function abciQueryFixture(init?: RequestInit) {
-  const body = JSON.parse(String(init?.body ?? "{}")) as { params?: { path?: string } };
+  const body = JSON.parse(String(init?.body ?? "{}")) as {
+    params?: { path?: string; data?: string };
+  };
   const path = body.params?.path ?? "";
   if (path === "vm/qfile") return qfileFixture;
   if (path.startsWith("auth/accounts/")) {
     return path.endsWith(UNFUNDED_ADDRESS) ? accountUninitializedFixture : accountFixture;
+  }
+  if (path === "vm/qeval") {
+    const decoded = body.params?.data ? atob(body.params.data) : "";
+    return decoded.includes(UNFUNDED_ADDRESS) ? qevalUsernameNilFixture : qevalUsernameFixture;
   }
   return qrenderFixture;
 }
@@ -97,6 +105,19 @@ describe("createRpcClient", () => {
     const client = createRpcClient(test13);
     const env = await client.getAccountInfo(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.data.initialized).toBe(false);
+  });
+
+  it("resolves a registered username via vm/qeval", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.resolveUsername(FUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
+    expect(env.source).toBe("rpc");
+    expect(env.data.username).toBe("test1");
+  });
+
+  it("resolves to a null username for an address with no registration", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.resolveUsername(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
+    expect(env.data.username).toBeNull();
   });
 
   it("wraps getValidatorSet with real bech32 addresses, not raw bytes", async () => {

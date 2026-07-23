@@ -48,6 +48,18 @@ export interface RpcClient {
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
   getAccountInfo(address: string, fetchedAt: string): Promise<DataEnvelope<AccountInfo>>;
   getValidatorSet(fetchedAt: string): Promise<DataEnvelope<ValidatorSet>>;
+  resolveUsername(address: string, fetchedAt: string): Promise<DataEnvelope<{ username: string | null }>>;
+}
+
+// Matches the value-tagged field in vm/qeval's Gno-syntax struct dump, e.g.
+// `("test1" string)` inside `(&(struct{...("test1" string)...} ...UserData) ...)`.
+// Distinct from the address field, which is tagged `.uverse.address` instead
+// of `string`, so this can't accidentally grab the wrong quoted value.
+const QEVAL_STRING_FIELD = /\("([^"]*)"\s+string\)/;
+
+function parseResolveAddressUsername(raw: string): string | null {
+  if (raw.trim().startsWith("(nil")) return null;
+  return QEVAL_STRING_FIELD.exec(raw)?.[1] ?? null;
 }
 
 export function createRpcClient(network: NetworkConfig): RpcClient {
@@ -184,6 +196,26 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.account.v1",
+      });
+    },
+
+    async resolveUsername(address, fetchedAt) {
+      const client = await getClient();
+      const raw = await abciQueryString(
+        client,
+        "vm/qeval",
+        `gno.land/r/sys/users.ResolveAddress("${address}")`
+      );
+      const username = parseResolveAddressUsername(raw);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "address", objectId: address },
+        data: { username },
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.username.v1",
       });
     },
 

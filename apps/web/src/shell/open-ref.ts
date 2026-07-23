@@ -4,6 +4,7 @@ import { usePendingRefsStore } from "./pending-refs-store";
 import { openSettings } from "./open-settings";
 import { useRealmLensStore } from "./realm-lens-store";
 import { isSettingsTab } from "./settings-store";
+import { useAddressWindowStore } from "./address-window-store";
 import type { EntityKind } from "./entity-patterns";
 
 function focusOrReopen(id: string) {
@@ -37,8 +38,8 @@ export function openRef(uri: string): boolean {
       return true;
     }
     case "address": {
-      usePendingRefsStore.getState().setPendingAddress(rest);
-      openSettings("user");
+      useAddressWindowStore.getState().setCurrentAddress(rest);
+      focusOrReopen("address");
       return true;
     }
     case "block": {

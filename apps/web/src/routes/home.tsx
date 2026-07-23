@@ -8,6 +8,7 @@ import { Window } from "../shell/window";
 import { Taskbar } from "../shell/taskbar";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
+import { AddressWindow } from "../shell/address-window";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const WINDOW_ACCENTS: Record<string, string> = {
@@ -18,6 +19,7 @@ const WINDOW_ACCENTS: Record<string, string> = {
   "block-explorer": "red",
   settings: "magenta",
   history: "green",
+  address: "amber",
 };
 
 export function Home() {
@@ -82,6 +84,7 @@ export function Home() {
           </Window>
           <SettingsWindow />
           <HistoryWindow />
+          <AddressWindow />
         </div>
         <Taskbar accents={WINDOW_ACCENTS} />
       </div>
