@@ -3,28 +3,31 @@ import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { usePendingRefsStore } from "../shell/pending-refs-store";
+import { useNetworkStatus } from "../shell/use-network-status";
+
+// Trail a couple of blocks behind the chain tip — the very latest block can
+// briefly 404 against getBlockSummary before it's fully indexed.
+const LATEST_SAFETY_MARGIN = 2;
 
 export function BlockExplorer() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const [draftHeight, setDraftHeight] = useState("");
   const [height, setHeight] = useState<number | null>(null);
+  const [latest, setLatest] = useState(true);
   const pendingHeight = usePendingRefsStore((s) => s.pendingBlockHeight);
-
-  const { data: status } = useQuery({
-    queryKey: ["block-explorer-latest", networkId],
-    queryFn: async () => (await sdk.rpc.getStatus()).data,
-  });
+  const { data: status } = useNetworkStatus();
 
   useEffect(() => {
-    if (height === null && status) {
-      setHeight(status.latestHeight - 2);
-      setDraftHeight(String(status.latestHeight - 2));
-    }
-  }, [status, height]);
+    if (!latest || !status) return;
+    const target = status.latestHeight - LATEST_SAFETY_MARGIN;
+    setHeight(target);
+    setDraftHeight(String(target));
+  }, [latest, status]);
 
   useEffect(() => {
     if (pendingHeight === null) return;
+    setLatest(false);
     setHeight(pendingHeight);
     setDraftHeight(String(pendingHeight));
     usePendingRefsStore.getState().setPendingBlockHeight(null);
@@ -55,7 +58,10 @@ export function BlockExplorer() {
         onSubmit={(e) => {
           e.preventDefault();
           const parsed = Number(draftHeight);
-          if (Number.isFinite(parsed) && parsed > 0) setHeight(parsed);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            setLatest(false);
+            setHeight(parsed);
+          }
         }}
       >
         <label>
@@ -63,10 +69,21 @@ export function BlockExplorer() {
           <input
             value={draftHeight}
             onChange={(e) => setDraftHeight(e.target.value)}
+            disabled={latest}
             inputMode="numeric"
           />
         </label>
-        <button type="submit">Open</button>
+        <button type="submit" disabled={latest}>
+          Open
+        </button>
+        <button
+          type="button"
+          data-active={latest}
+          className="block-explorer__latest-toggle"
+          onClick={() => setLatest((l) => !l)}
+        >
+          {latest ? "● Latest" : "○ Latest"}
+        </button>
       </form>
 
       {error ? (

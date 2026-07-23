@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
-import { useLiveActivity } from "../use-live-activity";
 import { useSdk } from "../sdk-context";
 import { formatTimeAgo } from "../format-time-ago";
+import { useLiveActivity } from "../use-live-activity";
+import { openRef } from "../shell/open-ref";
 
-export function RecentActivity() {
+export function RecentBlocks() {
   const sdk = useSdk();
-  const { blocks } = useLiveActivity();
+  const networkId = sdk.networks.getActive().id;
+  const [paused, setPaused] = useState(false);
+  const { blocks } = useLiveActivity(paused);
   const [now, setNow] = useState(() => Date.now());
   const warnings = sdk.networks.getActive().warnings ?? [];
 
@@ -16,6 +19,11 @@ export function RecentActivity() {
 
   return (
     <div className="recent-activity">
+      <div className="recent-activity__toolbar">
+        <button type="button" onClick={() => setPaused((p) => !p)}>
+          {paused ? "▶ Resume" : "⏸ Pause"}
+        </button>
+      </div>
       {warnings.length > 0 && (
         <p className="panel__notice">{warnings.map((w) => w.message).join(" ")}</p>
       )}
@@ -27,7 +35,13 @@ export function RecentActivity() {
         <ul className="activity-list">
           {blocks.map((block) => (
             <li key={block.height} className="activity-list__row">
-              <span className="activity-list__height">#{block.height}</span>
+              <button
+                type="button"
+                className="activity-list__height"
+                onClick={() => openRef(`gno://${networkId}/block/${block.height}`)}
+              >
+                #{block.height}
+              </button>
               <span className="activity-list__txs">
                 {block.numTxs} {block.numTxs === 1 ? "transaction" : "transactions"}
               </span>

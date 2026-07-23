@@ -1,7 +1,7 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
 import { SourceExplorer } from "./source-explorer";
-import { RecentActivity } from "./recent-activity";
+import { RecentBlocks } from "./recent-blocks";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
@@ -16,7 +16,7 @@ const FEATURED_PACKAGE = "gno.land/r/sys/users";
 const WINDOW_ACCENTS: Record<string, string> = {
   realm: "cyan",
   source: "amber",
-  activity: "magenta",
+  "recent-blocks": "magenta",
   "network-monitor": "green",
   "validator-monitor": "blue",
   "block-explorer": "red",
@@ -58,12 +58,12 @@ export function Home() {
             <SourceExplorer packagePath={packagePath} />
           </Window>
           <Window
-            id="activity"
-            title="Recent activity"
+            id="recent-blocks"
+            title="Recent Blocks"
             accent="magenta"
             defaultGeometry={{ x: 792, y: 0, width: 380, height: 300 }}
           >
-            <RecentActivity />
+            <RecentBlocks />
           </Window>
           <Window
             id="network-monitor"

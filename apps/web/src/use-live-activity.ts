@@ -6,12 +6,13 @@ const POLL_INTERVAL_MS = 4000;
 const MAX_BLOCKS_SHOWN = 12;
 const MAX_BACKFILL_PER_TICK = 5;
 
-export function useLiveActivity(): { blocks: BlockSummary[] } {
+export function useLiveActivity(paused = false): { blocks: BlockSummary[] } {
   const sdk = useSdk();
   const [blocks, setBlocks] = useState<BlockSummary[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
 
   useEffect(() => {
+    if (paused) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -51,7 +52,7 @@ export function useLiveActivity(): { blocks: BlockSummary[] } {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [sdk]);
+  }, [sdk, paused]);
 
   return { blocks };
 }
