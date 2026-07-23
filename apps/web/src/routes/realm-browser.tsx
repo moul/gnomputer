@@ -5,6 +5,8 @@ import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
+import { useRealmLensStore, type RealmLens } from "../shell/realm-lens-store";
+import { SourceExplorer } from "./source-explorer";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const STAFF_PICKS = [
@@ -14,6 +16,11 @@ const STAFF_PICKS = [
   { label: "GovDAO", packagePath: "gno.land/r/gov/dao" },
 ];
 
+const LENS_TABS: { id: RealmLens; label: string }[] = [
+  { id: "render", label: "Render" },
+  { id: "source", label: "Source" },
+];
+
 export function RealmBrowser({
   packagePath,
   renderPath = "",
@@ -21,38 +28,15 @@ export function RealmBrowser({
   packagePath: string;
   renderPath?: string;
 }) {
-  const sdk = useSdk();
-  const networkId = sdk.networks.getActive().id;
   const navigate = useNavigate();
   const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
   const hasPackage = packagePath !== "";
+  const lens = useRealmLensStore((s) => s.lens);
+  const setLens = useRealmLensStore((s) => s.setLens);
 
   useEffect(() => {
     setDraftPackagePath(packagePath);
   }, [packagePath]);
-
-  const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
-  useTrailRecorder(
-    {
-      uri: `gno://${networkId}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
-      label: trailLabel,
-    },
-    hasPackage
-  );
-
-  const {
-    data: nodes,
-    error,
-    isPending,
-    dataUpdatedAt,
-  } = useQuery({
-    queryKey: ["realm-render", networkId, packagePath, renderPath],
-    queryFn: async () => {
-      const env = await sdk.rpc.queryRender(packagePath, renderPath, new Date().toISOString());
-      return sdk.lenses.parseRender(env.data, packagePath);
-    },
-    enabled: hasPackage,
-  });
 
   function openPackage(pkg: string) {
     void navigate({ to: "/", search: { pkg } });
@@ -85,25 +69,88 @@ export function RealmBrowser({
       </form>
       {!hasPackage ? (
         <RealmBrowserHome onOpen={openPackage} />
-      ) : error ? (
-        <p className="state-line" role="alert">
-          Could not load this realm: {error.message}
-        </p>
-      ) : isPending ? (
-        <p className="state-line" aria-busy="true">
-          Loading realm…
-        </p>
       ) : (
         <>
-          <Freshness dataUpdatedAt={dataUpdatedAt} />
-          <article aria-label={`Realm ${packagePath}`}>
-            {nodes.map((node, i) => (
-              <RenderNodeView key={i} node={node} />
+          <div className="realm-browser__tabs" role="tablist" aria-label="Realm view">
+            {LENS_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={lens === tab.id}
+                data-active={lens === tab.id}
+                className="realm-browser__tab"
+                onClick={() => setLens(tab.id)}
+              >
+                {tab.label}
+              </button>
             ))}
-          </article>
+          </div>
+          <div className="realm-browser__lens-body">
+            {lens === "render" ? (
+              <RealmRenderView packagePath={packagePath} renderPath={renderPath} />
+            ) : (
+              <SourceExplorer packagePath={packagePath} />
+            )}
+          </div>
         </>
       )}
     </div>
+  );
+}
+
+function RealmRenderView({
+  packagePath,
+  renderPath,
+}: {
+  packagePath: string;
+  renderPath: string;
+}) {
+  const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
+
+  const trailLabel = renderPath ? `${packagePath} (${renderPath})` : packagePath;
+  useTrailRecorder({
+    uri: `gno://${networkId}/realm/${packagePath}${renderPath ? `#${renderPath}` : ""}`,
+    label: trailLabel,
+  });
+
+  const {
+    data: nodes,
+    error,
+    isPending,
+    dataUpdatedAt,
+  } = useQuery({
+    queryKey: ["realm-render", networkId, packagePath, renderPath],
+    queryFn: async () => {
+      const env = await sdk.rpc.queryRender(packagePath, renderPath, new Date().toISOString());
+      return sdk.lenses.parseRender(env.data, packagePath);
+    },
+  });
+
+  if (error) {
+    return (
+      <p className="state-line" role="alert">
+        Could not load this realm: {error.message}
+      </p>
+    );
+  }
+  if (isPending) {
+    return (
+      <p className="state-line" aria-busy="true">
+        Loading realm…
+      </p>
+    );
+  }
+  return (
+    <>
+      <Freshness dataUpdatedAt={dataUpdatedAt} />
+      <article aria-label={`Realm ${packagePath}`}>
+        {nodes.map((node, i) => (
+          <RenderNodeView key={i} node={node} />
+        ))}
+      </article>
+    </>
   );
 }
 

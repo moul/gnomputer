@@ -11,11 +11,13 @@ import { CommandPalette } from "../shell/command-palette";
 import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
+import { useRealmLensPersistence } from "../shell/use-realm-lens-persistence";
 
 function RootLayout() {
   useThemePersistence();
   useQueryCachePersistence();
   useSettingsTabPersistence();
+  useRealmLensPersistence();
   return (
     <>
       <StatusBar />

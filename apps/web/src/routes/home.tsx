@@ -1,6 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { SourceExplorer } from "./source-explorer";
 import { RecentBlocks } from "./recent-blocks";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
@@ -13,7 +12,6 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const WINDOW_ACCENTS: Record<string, string> = {
   realm: "cyan",
-  source: "amber",
   "recent-blocks": "magenta",
   "network-monitor": "green",
   "validator-monitor": "blue",
@@ -23,10 +21,10 @@ const WINDOW_ACCENTS: Record<string, string> = {
 };
 
 export function Home() {
-  // Bumped to v2 when the default layout moved from a tall single-column stack
-  // to a compact 3x2 grid — a v1 persisted layout would otherwise silently
-  // restore the old cramped positions for anyone who'd already opened the app.
-  useWindowPersistence("window-layout:home:v2");
+  // Bumped to v3 when Source merged into the Realm Browser window as a lens
+  // tab instead of its own window — a v2 persisted layout would still carry
+  // a "source" entry that no longer corresponds to anything rendered.
+  useWindowPersistence("window-layout:home:v3");
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
   const packagePath = search.pkg ?? "";
   const renderPath = search.path ?? "";
@@ -35,9 +33,8 @@ export function Home() {
     packagePath === ""
       ? "Realm Browser"
       : renderPath
-        ? `Experience · ${packagePath} · ${renderPath}`
-        : `Experience · ${packagePath}`;
-  const sourceTitle = packagePath === "" ? "Source" : `Source · ${packagePath}`;
+        ? `Realm Browser · ${packagePath} · ${renderPath}`
+        : `Realm Browser · ${packagePath}`;
 
   return (
     <div className="home-layout">
@@ -47,23 +44,15 @@ export function Home() {
             id="realm"
             title={realmTitle}
             accent="cyan"
-            defaultGeometry={{ x: 0, y: 0, width: 380, height: 300 }}
+            defaultGeometry={{ x: 0, y: 0, width: 460, height: 340 }}
           >
             <RealmBrowser packagePath={packagePath} renderPath={renderPath} />
-          </Window>
-          <Window
-            id="source"
-            title={sourceTitle}
-            accent="amber"
-            defaultGeometry={{ x: 396, y: 0, width: 380, height: 300 }}
-          >
-            <SourceExplorer packagePath={packagePath} />
           </Window>
           <Window
             id="recent-blocks"
             title="Recent Blocks"
             accent="magenta"
-            defaultGeometry={{ x: 792, y: 0, width: 380, height: 300 }}
+            defaultGeometry={{ x: 476, y: 0, width: 380, height: 340 }}
           >
             <RecentBlocks />
           </Window>
@@ -71,7 +60,7 @@ export function Home() {
             id="network-monitor"
             title="Network Monitor"
             accent="green"
-            defaultGeometry={{ x: 0, y: 316, width: 380, height: 300 }}
+            defaultGeometry={{ x: 872, y: 0, width: 380, height: 340 }}
           >
             <NetworkMonitor />
           </Window>
@@ -79,7 +68,7 @@ export function Home() {
             id="validator-monitor"
             title="Validator Monitor"
             accent="blue"
-            defaultGeometry={{ x: 396, y: 316, width: 380, height: 300 }}
+            defaultGeometry={{ x: 0, y: 356, width: 380, height: 300 }}
           >
             <ValidatorMonitor />
           </Window>
@@ -87,7 +76,7 @@ export function Home() {
             id="block-explorer"
             title="Block Explorer"
             accent="red"
-            defaultGeometry={{ x: 792, y: 316, width: 380, height: 300 }}
+            defaultGeometry={{ x: 396, y: 356, width: 380, height: 300 }}
           >
             <BlockExplorer />
           </Window>
