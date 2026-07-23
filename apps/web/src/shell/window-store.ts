@@ -24,7 +24,7 @@ interface WindowManagerState {
     id: string,
     title: string,
     defaults: WindowGeometry,
-    options?: { startClosed?: boolean }
+    options?: { startClosed?: boolean; startMaximized?: boolean }
   ) => void;
   focus: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
@@ -68,7 +68,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
           zIndex: nextZ,
           closed: options?.startClosed ?? false,
           minimized: false,
-          maximized: false,
+          maximized: options?.startMaximized ?? false,
           preMaximizeGeometry: null,
         },
       },

@@ -166,7 +166,12 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  /* percentage, not 100vh — under CSS zoom (zoom-store.ts), vh keeps
+     resolving against the unzoomed device viewport while the box's on-
+     screen size is scaled, leaving a blank gap below the taskbar. A
+     percentage chain (html/body already set height:100% above) scales
+     consistently with the rest of the zoomed subtree. */
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }

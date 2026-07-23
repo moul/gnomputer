@@ -79,6 +79,34 @@
   padding: var(--space-1) var(--space-2);
 }
 
+.status-bar__zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  padding: 2px;
+}
+
+.status-bar__zoom button {
+  min-width: 26px;
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  border-radius: 999px;
+}
+
+.status-bar__zoom button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.status-bar__zoom button:disabled {
+  opacity: 0.35;
+}
+
 .status-dot {
   display: inline-block;
   width: 8px;
@@ -384,6 +412,16 @@ main {
   font-family: var(--ui-font);
 }
 
+/* Stacks the Apps launcher above the tile button instead of spending
+   horizontal room on both — narrow screens need that room for the open-
+   windows list, which no longer wraps (see .taskbar__items below). */
+.taskbar__start-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .taskbar__tile-button {
   flex: 0 0 auto;
   font-size: 11px;
@@ -398,13 +436,34 @@ main {
   background: var(--bg-elevated);
 }
 
+/* A real taskbar doesn't grow taller as more apps open — it stays one row
+   and becomes scrollable/swipeable instead. touch-action:pan-x lets a
+   finger-drag scroll this list horizontally rather than being captured by
+   the desktop's own touch scrolling. */
 .taskbar__items {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  touch-action: pan-x;
+  scrollbar-width: thin;
+}
+
+.taskbar__items::-webkit-scrollbar {
+  height: 6px;
+}
+
+.taskbar__items::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+.taskbar__items .taskbar__item {
+  flex: 0 0 auto;
 }
 
 .taskbar__item {
@@ -562,6 +621,7 @@ main {
   color: var(--window-accent, var(--accent-cyan));
   cursor: move;
   user-select: none;
+  touch-action: none;
   touch-action: none;
 }
 
@@ -1259,12 +1319,25 @@ main {
 .taskbar__clock {
   flex: 0 0 auto;
   margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.3;
   font-family: var(--ui-font);
-  font-size: 12px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   padding: 0 var(--space-2);
+}
+
+.taskbar__clock-time {
+  font-size: 12px;
+}
+
+.taskbar__clock-height {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
 }
 
 .settings-theme-grid {

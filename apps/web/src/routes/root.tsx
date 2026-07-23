@@ -12,12 +12,14 @@ import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
 import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
+import { useZoomPersistence } from "../shell/use-zoom-persistence";
 
 function RootLayout() {
   useThemePersistence();
   useQueryCachePersistence();
   useSettingsTabPersistence();
   useRealmTabsPersistence();
+  useZoomPersistence();
   return (
     <>
       <StatusBar />

@@ -86,36 +86,47 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
 
   return (
     <div className="taskbar" role="toolbar" aria-label="Windows">
-      <div className="taskbar__start" ref={menuRef}>
+      <div className="taskbar__start-col">
+        <div className="taskbar__start" ref={menuRef}>
+          <button
+            type="button"
+            className="taskbar__start-button"
+            aria-haspopup="true"
+            aria-expanded={menuOpen}
+            aria-label="Open apps menu"
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {isModern ? "🧭 Apps" : "[apps]"}
+          </button>
+          {menuOpen && (
+            <div className="taskbar__start-menu" role="menu">
+              {APP_REGISTRY.map((app) => (
+                <button
+                  key={app.id}
+                  type="button"
+                  role="menuitem"
+                  className="taskbar__start-item"
+                  style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[app.id] ?? "cyan"] }}
+                  onClick={() => launchApp(app)}
+                >
+                  <span className="taskbar__item-icon" aria-hidden="true">
+                    {app.icon}
+                  </span>
+                  {app.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         <button
           type="button"
-          className="taskbar__start-button"
-          aria-haspopup="true"
-          aria-expanded={menuOpen}
-          aria-label="Open apps menu"
-          onClick={() => setMenuOpen((v) => !v)}
+          className="taskbar__tile-button"
+          title="Tile all windows"
+          aria-label="Tile all windows"
+          onClick={() => tile(desktopBounds())}
         >
-          {isModern ? "🧭 Apps" : "[apps]"}
+          {isModern ? "⊞" : "[##]"}
         </button>
-        {menuOpen && (
-          <div className="taskbar__start-menu" role="menu">
-            {APP_REGISTRY.map((app) => (
-              <button
-                key={app.id}
-                type="button"
-                role="menuitem"
-                className="taskbar__start-item"
-                style={{ ["--taskbar-accent" as string]: ACCENT_VAR[accents[app.id] ?? "cyan"] }}
-                onClick={() => launchApp(app)}
-              >
-                <span className="taskbar__item-icon" aria-hidden="true">
-                  {app.icon}
-                </span>
-                {app.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
       <div className="taskbar__items">
         {openEntries.map(([id, w]) => (
@@ -135,18 +146,10 @@ export function Taskbar({ accents }: { accents: Record<string, string> }) {
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        className="taskbar__tile-button"
-        title="Tile all windows"
-        aria-label="Tile all windows"
-        onClick={() => tile(desktopBounds())}
-      >
-        {isModern ? "⊞" : "[##]"}
-      </button>
-      <span className="taskbar__clock" title={now.toISOString()}>
-        {formatClock(now)} {data ? `#${data.latestHeight}` : "#…"}
-      </span>
+      <div className="taskbar__clock" title={now.toISOString()}>
+        <span className="taskbar__clock-time">{formatClock(now)}</span>
+        <span className="taskbar__clock-height">{data ? `#${data.latestHeight}` : "#…"}</span>
+      </div>
     </div>
   );
 }
