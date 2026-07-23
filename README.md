@@ -21,24 +21,35 @@ read-only PWA with a windowed desktop interface. See:
 
 ### What's in the desktop
 
-Everything below is real, live data from the official Gno testnet (Test13) — no mocked
-or fabricated content in the running app:
+Everything below is real, live data from Gno testnets (default: Topaz; also Test13,
+betanet, and a local `gnodev` option) — no mocked or fabricated content in the running
+app:
 
-- **Experience** — a realm's rendered output, with Gno's own internal link/pagination
-  routing followed generically (works for any realm, e.g. GovDAO's 49+ real proposals).
-- **Source** — a realm's file tree and source, fetched directly from the chain.
-- **Recent activity** — polls block headers live; shows height, real transaction
-  counts, and time. No transaction-content decoding yet (see ADR-013).
+- **Realm Browser** — a realm's rendered output, with Gno's own internal link/pagination
+  routing followed generically; multiple tabs per window, and multiple windows at once
+  (pop out a tab into its own window). Source lens shows the realm's file tree and
+  source, fetched directly from the chain.
+- **Recent Blocks** — polls block headers live; height, real transaction counts, time,
+  with a filter for blocks that actually contain transactions.
 - **Network Monitor** — chain ID, live height, measured RPC latency, endpoint trust.
 - **Validator Monitor** — the full live validator set: address, voting power, proposer
   priority.
-- **Block Explorer** — look up any block by height; full header detail including
-  proposer and data/validator hashes.
-- **Account** (`/account`) and **World** (`/world`) — balance/account lookup by
-  address, and a favorites list.
+- **Block Explorer** — look up any block by height; header detail plus a real
+  per-transaction list (success, gas used/wanted, decoded event types).
+- **Event Explorer** — a live stream of decoded chain events as new blocks land.
+- **Gnockpit** — a compact chain/validator summary with a link out to the full
+  Gnockpit instance for the active network, when one is configured.
+- **User Info** — address lookup: balance, account number, sequence, deployed package
+  count, and a link to the same address on gnoweb.
+- **History** — every realm/block/address you've visited this session, recorded as a
+  Trail.
+- **Settings** — Network (switch networks, see all known endpoints for one), User
+  (guest identity, address lookup), and Theme (ASCII/Clean, each in light and dark).
 
-Windows are draggable, resizable, closable (reopen from the dock that appears), and
-their layout persists across reloads.
+Windows are draggable, resizable, minimizable, and closable; unopened apps live behind
+an Apps start-menu and a Settings gear in the top bar. Layout, theme, and zoom persist
+across reloads. The shell is responsive down to phone widths — a fresh mobile visit
+gets a more zoomed-out, maximized-window default.
 
 ## Development
 
@@ -51,4 +62,6 @@ pnpm --filter @gnomputer/web e2e   # Playwright
 pnpm build
 ```
 
-Default network: the official Gno testnet (Test13). Switch networks from the top bar.
+Default network: Topaz. Switch networks from the top bar (Network settings), which
+also lists every other endpoint (gnoweb, tx-indexer, Gnockpit, explorer) known for the
+active network.
