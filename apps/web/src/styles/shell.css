@@ -162,6 +162,69 @@ main {
   height: 100%;
 }
 
+.realm-browser__tabstrip {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding-bottom: var(--space-2);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.realm-browser__tabstrip-item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.realm-browser__tabstrip-item[data-active="true"] {
+  border-color: var(--window-accent, var(--accent));
+}
+
+.realm-browser__tabstrip-item button:first-child {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 11px;
+  color: var(--text-dim);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.realm-browser__tabstrip-item[data-active="true"] button:first-child {
+  color: var(--text);
+  background: var(--bg-inset);
+}
+
+.realm-browser__tab-close {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-1);
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.realm-browser__tab-close:hover {
+  color: var(--danger);
+  background: transparent;
+}
+
+.realm-browser__tab-new,
+.realm-browser__tab-popout {
+  flex: 0 0 auto;
+  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-dim);
+}
+
 .realm-browser__tabs {
   display: flex;
   gap: 2px;

@@ -16,6 +16,7 @@ export function Window({
   defaultGeometry,
   accent = "cyan",
   startClosed = false,
+  onClose,
   children,
 }: {
   id: string;
@@ -23,6 +24,11 @@ export function Window({
   defaultGeometry: WindowGeometry;
   accent?: WindowAccent;
   startClosed?: boolean;
+  /** Called instead of the normal close() when set — for windows that are
+   * dynamically created instances (e.g. a popped-out realm browser) rather
+   * than a fixed app, closing the titlebar button means "destroy this
+   * instance" instead of "hide until reopened from the taskbar." */
+  onClose?: () => void;
   children: ReactNode;
 }) {
   const ensureWindow = useWindowStore((s) => s.ensureWindow);
@@ -134,7 +140,7 @@ export function Window({
             type="button"
             className="window__control window__control--close"
             aria-label={`Close ${title}`}
-            onClick={() => close(id)}
+            onClick={() => (onClose ? onClose() : close(id))}
           >
             {isModern ? "🔴" : "[x]"}
           </button>

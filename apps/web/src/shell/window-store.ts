@@ -30,6 +30,10 @@ interface WindowManagerState {
   move: (id: string, x: number, y: number) => void;
   resize: (id: string, width: number, height: number) => void;
   close: (id: string) => void;
+  /** Deletes the window entirely rather than marking it closed — for
+   * dynamically-created windows (e.g. a popped-out realm browser instance)
+   * that shouldn't leave an orphaned entry behind once destroyed. */
+  remove: (id: string) => void;
   reopen: (id: string) => void;
   minimize: (id: string) => void;
   restore: (id: string) => void;
@@ -108,6 +112,14 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     const win = get().windows[id];
     if (!win) return;
     set((state) => ({ windows: { ...state.windows, [id]: { ...win, closed: true } } }));
+  },
+
+  remove: (id) => {
+    set((state) => {
+      const windows = { ...state.windows };
+      delete windows[id];
+      return { windows };
+    });
   },
 
   reopen: (id) => {

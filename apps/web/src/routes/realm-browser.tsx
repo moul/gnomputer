@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
-import { useRealmLensStore, type RealmLens } from "../shell/realm-lens-store";
+import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
+import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { router } from "../routes/root";
 import { SourceExplorer } from "./source-explorer";
 import type { RenderNode } from "@gnomputer/lenses";
 
@@ -22,28 +23,126 @@ const LENS_TABS: { id: RealmLens; label: string }[] = [
 ];
 
 export function RealmBrowser({
-  packagePath,
-  renderPath = "",
+  windowId,
+  packagePath: urlPackagePath,
+  renderPath: urlRenderPath,
 }: {
-  packagePath: string;
+  windowId: string;
+  packagePath?: string;
   renderPath?: string;
 }) {
-  const navigate = useNavigate();
-  const [draftPackagePath, setDraftPackagePath] = useState(packagePath);
-  const hasPackage = packagePath !== "";
-  const lens = useRealmLensStore((s) => s.lens);
-  const setLens = useRealmLensStore((s) => s.setLens);
+  const ensureWindow = useRealmTabsStore((s) => s.ensureWindow);
+  const win = useRealmTabsStore((s) => s.windows[windowId]);
+  const openTab = useRealmTabsStore((s) => s.openTab);
+  const closeTab = useRealmTabsStore((s) => s.closeTab);
+  const setActiveTab = useRealmTabsStore((s) => s.setActiveTab);
+  const popOutActiveTab = useRealmTabsStore((s) => s.popOutActiveTab);
+  const isPrimary = windowId === "realm";
 
   useEffect(() => {
-    setDraftPackagePath(packagePath);
-  }, [packagePath]);
+    ensureWindow(windowId);
+  }, [windowId, ensureWindow]);
 
-  function openPackage(pkg: string) {
-    void navigate({ to: "/", search: { pkg } });
+  // Primary window only: when the URL changes (a Linkify click, a shared
+  // link, browser back/forward), bring the active tab in line with it. Tab
+  // switches and in-tab navigation flow the other direction (see selectTab
+  // and openInRealmTab) — this effect exists only to react to external URL
+  // changes, so it deliberately does not depend on tab/window state.
+  useEffect(() => {
+    if (!isPrimary || urlPackagePath === undefined) return;
+    const state = useRealmTabsStore.getState();
+    const current = state.windows[windowId];
+    const activeTab = current?.tabs.find((t) => t.id === current.activeTabId);
+    if (!activeTab) return;
+    if (activeTab.packagePath === urlPackagePath && activeTab.renderPath === (urlRenderPath ?? "")) {
+      return;
+    }
+    openInRealmTab(windowId, { packagePath: urlPackagePath, renderPath: urlRenderPath });
+  }, [isPrimary, urlPackagePath, urlRenderPath, windowId]);
+
+  if (!win) return null;
+
+  const activeTab = win.tabs.find((t) => t.id === win.activeTabId) ?? win.tabs[0]!;
+
+  function selectTab(tabId: string) {
+    setActiveTab(windowId, tabId);
+    if (!isPrimary) return;
+    const tab = win!.tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    void router.navigate({
+      to: "/",
+      search:
+        tab.packagePath === ""
+          ? {}
+          : tab.renderPath
+            ? { pkg: tab.packagePath, path: tab.renderPath }
+            : { pkg: tab.packagePath },
+    });
   }
 
   return (
     <div className="realm-browser">
+      <div className="realm-browser__tabstrip" role="tablist" aria-label="Open realms">
+        {win.tabs.map((t) => (
+          <span
+            key={t.id}
+            className="realm-browser__tabstrip-item"
+            data-active={t.id === win.activeTabId}
+          >
+            <button type="button" onClick={() => selectTab(t.id)}>
+              {t.packagePath === "" ? "🏠 Home" : t.packagePath}
+            </button>
+            {win.tabs.length > 1 && (
+              <button
+                type="button"
+                className="realm-browser__tab-close"
+                aria-label="Close tab"
+                onClick={() => closeTab(windowId, t.id)}
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
+        <button
+          type="button"
+          className="realm-browser__tab-new"
+          aria-label="New tab"
+          title="New tab"
+          onClick={() => openTab(windowId)}
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="realm-browser__tab-popout"
+          aria-label="Open in a new window"
+          title="Open this tab in its own window"
+          onClick={() => popOutActiveTab(windowId)}
+        >
+          ⧉
+        </button>
+      </div>
+      <RealmTabContent windowId={windowId} tab={activeTab} />
+    </div>
+  );
+}
+
+function RealmTabContent({ windowId, tab }: { windowId: string; tab: RealmTab }) {
+  const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
+  const [draftPackagePath, setDraftPackagePath] = useState(tab.packagePath);
+  const hasPackage = tab.packagePath !== "";
+
+  useEffect(() => {
+    setDraftPackagePath(tab.packagePath);
+  }, [tab.packagePath]);
+
+  function openPackage(pkg: string) {
+    openInRealmTab(windowId, { packagePath: pkg });
+  }
+
+  return (
+    <>
       <form
         className="open-package-form"
         onSubmit={(e) => {
@@ -62,7 +161,7 @@ export function RealmBrowser({
         </label>
         <button type="submit">Open</button>
         {hasPackage && (
-          <button type="button" onClick={() => void navigate({ to: "/", search: {} })}>
+          <button type="button" onClick={() => openInRealmTab(windowId, { packagePath: "" })}>
             🏠 Home
           </button>
         )}
@@ -72,37 +171,39 @@ export function RealmBrowser({
       ) : (
         <>
           <div className="realm-browser__tabs" role="tablist" aria-label="Realm view">
-            {LENS_TABS.map((tab) => (
+            {LENS_TABS.map((lensTab) => (
               <button
-                key={tab.id}
+                key={lensTab.id}
                 type="button"
                 role="tab"
-                aria-selected={lens === tab.id}
-                data-active={lens === tab.id}
+                aria-selected={tab.lens === lensTab.id}
+                data-active={tab.lens === lensTab.id}
                 className="realm-browser__tab"
-                onClick={() => setLens(tab.id)}
+                onClick={() => updateActiveTab(windowId, { lens: lensTab.id })}
               >
-                {tab.label}
+                {lensTab.label}
               </button>
             ))}
           </div>
           <div className="realm-browser__lens-body">
-            {lens === "render" ? (
-              <RealmRenderView packagePath={packagePath} renderPath={renderPath} />
+            {tab.lens === "render" ? (
+              <RealmRenderView windowId={windowId} packagePath={tab.packagePath} renderPath={tab.renderPath} />
             ) : (
-              <SourceExplorer packagePath={packagePath} />
+              <SourceExplorer packagePath={tab.packagePath} />
             )}
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 
 function RealmRenderView({
+  windowId,
   packagePath,
   renderPath,
 }: {
+  windowId: string;
   packagePath: string;
   renderPath: string;
 }) {
@@ -147,7 +248,7 @@ function RealmRenderView({
       <Freshness dataUpdatedAt={dataUpdatedAt} />
       <article aria-label={`Realm ${packagePath}`}>
         {nodes.map((node, i) => (
-          <RenderNodeView key={i} node={node} />
+          <RenderNodeView key={i} node={node} windowId={windowId} />
         ))}
       </article>
     </>
@@ -212,7 +313,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void })
   );
 }
 
-function RenderNodeView({ node }: { node: RenderNode }) {
+function RenderNodeView({ node, windowId }: { node: RenderNode; windowId: string }) {
   switch (node.type) {
     case "heading":
       return (
@@ -223,14 +324,14 @@ function RenderNodeView({ node }: { node: RenderNode }) {
     case "code":
       return <pre>{node.content}</pre>;
     case "link":
-      return <GnoLink node={node} />;
+      return <GnoLink node={node} windowId={windowId} />;
     case "paragraph":
       return (
         <p>
           {node.content !== undefined ? (
             <Linkified text={node.content} />
           ) : (
-            node.children?.map((c, i) => <RenderNodeView key={i} node={c} />)
+            node.children?.map((c, i) => <RenderNodeView key={i} node={c} windowId={windowId} />)
           )}
         </p>
       );
@@ -243,19 +344,16 @@ function RenderNodeView({ node }: { node: RenderNode }) {
   }
 }
 
-function GnoLink({ node }: { node: RenderNode }) {
-  const navigate = useNavigate();
-
+function GnoLink({ node, windowId }: { node: RenderNode; windowId: string }) {
   if (node.ref?.packagePath) {
     const packagePath = node.ref.packagePath;
     const renderPath = node.renderPath ?? "";
-    const search = renderPath ? { pkg: packagePath, path: renderPath } : { pkg: packagePath };
     return (
       <a
         href={`/?pkg=${encodeURIComponent(packagePath)}${renderPath ? `&path=${encodeURIComponent(renderPath)}` : ""}`}
         onClick={(e) => {
           e.preventDefault();
-          void navigate({ to: "/", search });
+          openInRealmTab(windowId, { packagePath, renderPath });
         }}
       >
         {node.content}

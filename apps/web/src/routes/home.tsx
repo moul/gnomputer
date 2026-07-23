@@ -9,6 +9,7 @@ import { Taskbar } from "../shell/taskbar";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
 import { AddressWindow } from "../shell/address-window";
+import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const WINDOW_ACCENTS: Record<string, string> = {
@@ -48,7 +49,7 @@ export function Home() {
             accent="cyan"
             defaultGeometry={{ x: 0, y: 0, width: 460, height: 340 }}
           >
-            <RealmBrowser packagePath={packagePath} renderPath={renderPath} />
+            <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
           </Window>
           <Window
             id="recent-blocks"
@@ -85,6 +86,7 @@ export function Home() {
           <SettingsWindow />
           <HistoryWindow />
           <AddressWindow />
+          <ExtraRealmWindows />
         </div>
         <Taskbar accents={WINDOW_ACCENTS} />
       </div>

@@ -2,7 +2,7 @@ import { router } from "../routes/root";
 import { useWindowStore } from "./window-store";
 import { usePendingRefsStore } from "./pending-refs-store";
 import { openSettings } from "./open-settings";
-import { useRealmLensStore } from "./realm-lens-store";
+import { openInRealmTab } from "./open-in-realm-tab";
 import { isSettingsTab } from "./settings-store";
 import { useAddressWindowStore } from "./address-window-store";
 import type { EntityKind } from "./entity-patterns";
@@ -26,14 +26,12 @@ export function openRef(uri: string): boolean {
   switch (kind) {
     case "realm": {
       const [packagePath, renderPath] = rest.split("#");
-      void router.navigate({ to: "/", search: renderPath ? { pkg: packagePath, path: renderPath } : { pkg: packagePath } });
-      useRealmLensStore.getState().setLens("render");
+      openInRealmTab("realm", { packagePath: packagePath ?? "", renderPath, lens: "render" });
       focusOrReopen("realm");
       return true;
     }
     case "source-file": {
-      void router.navigate({ to: "/", search: { pkg: rest } });
-      useRealmLensStore.getState().setLens("source");
+      openInRealmTab("realm", { packagePath: rest, lens: "source" });
       focusOrReopen("realm");
       return true;
     }
