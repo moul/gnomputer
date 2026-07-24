@@ -8,6 +8,7 @@ import {
 import { Home } from "./home";
 import { IslandBar } from "../shell/island-bar";
 import { CommandPalette } from "../shell/command-palette";
+import { UpdateBanner } from "../shell/update-banner";
 import { AppErrorFallback } from "../shell/app-error-fallback";
 import { ErrorBoundary } from "../shell/error-boundary";
 import { useThemePersistence } from "../shell/use-theme-persistence";
@@ -31,6 +32,9 @@ function RootLayout() {
       </ErrorBoundary>
       <ErrorBoundary>
         <CommandPalette />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <UpdateBanner />
       </ErrorBoundary>
       <main>
         <Outlet />
