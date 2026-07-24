@@ -41,10 +41,10 @@ export function Home() {
 
   const realmTitle =
     packagePath === ""
-      ? "Realm Browser"
+      ? "Browser"
       : renderPath
-        ? `Realm Browser · ${packagePath} · ${renderPath}`
-        : `Realm Browser · ${packagePath}`;
+        ? `Browser · ${packagePath} · ${renderPath}`
+        : `Browser · ${packagePath}`;
 
   return (
     <div className="home-layout">

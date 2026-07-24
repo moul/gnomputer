@@ -10,7 +10,7 @@ export interface KnownRealm {
 
 export const KNOWN_REALMS: KnownRealm[] = [
   { label: "Users", packagePath: "gno.land/r/sys/users" },
-  { label: "Boards2", packagePath: "gno.land/r/gnoland/boards2" },
+  { label: "Boards2", packagePath: "gno.land/r/gnoland/boards2/v1" },
   { label: "Blog", packagePath: "gno.land/r/gnoland/blog" },
   { label: "GovDAO", packagePath: "gno.land/r/gov/dao" },
 ];

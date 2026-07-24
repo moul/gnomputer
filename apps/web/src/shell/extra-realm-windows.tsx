@@ -18,7 +18,7 @@ export function ExtraRealmWindows() {
       {extraWindowIds.map((id, i) => {
         const win = windows[id];
         const activeTab = win?.tabs.find((t) => t.id === win.activeTabId);
-        const title = activeTab && activeTab.packagePath !== "" ? `Realm Browser · ${activeTab.packagePath}` : "Realm Browser";
+        const title = activeTab && activeTab.packagePath !== "" ? `Browser · ${activeTab.packagePath}` : "Browser";
         return (
           <Window
             key={id}

@@ -15,11 +15,16 @@ function clampZoom(zoom: number): number {
 }
 
 function applyZoom(zoom: number) {
-  // `zoom` is a non-standard CSS property (no CSSStyleDeclaration typing),
-  // widely supported by Chromium/Safari/Firefox, and unlike `transform:
-  // scale()` it rescales layout itself — pointer coordinates used by window
-  // drag/resize (window.tsx) stay correct with no extra coordinate math.
-  document.documentElement.style.setProperty("zoom", String(zoom));
+  // Scoped to .desktop, not <html> — status bar and taskbar stay full-size
+  // regardless of zoom. `zoom` is a non-standard CSS property (no
+  // CSSStyleDeclaration typing), widely supported by Chromium/Safari/
+  // Firefox; unlike `transform: scale()` it rescales layout itself, so
+  // window position/size (left/top/width/height, all plain px) render
+  // correctly rescaled with no math on those values. The one thing that
+  // does need adjusting is pointer-move deltas during drag/resize, since
+  // .desktop is no longer the root — see window.tsx's use of useZoomStore.
+  const desktop = document.querySelector<HTMLElement>(".desktop");
+  if (desktop) desktop.style.setProperty("zoom", String(zoom));
 }
 
 interface ZoomState {
