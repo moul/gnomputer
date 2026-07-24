@@ -30,7 +30,14 @@ export type {
   BlockTxResult,
   BlockEvents,
 };
-import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
+import {
+  openDatabase,
+  type WorkspaceRecord,
+  type FavoriteRecord,
+  type ScriptRecord,
+} from "@gnomputer/storage";
+
+export type { ScriptRecord };
 import { createTrailApi, type TrailAPI, type TrailSummary } from "@gnomputer/trails";
 
 export type { TrailSummary };
@@ -85,6 +92,13 @@ export interface GnomputerSDK {
   queryCache: {
     getAll(): Promise<{ queryKeyJson: string; data: unknown; updatedAt: number }[]>;
     set(queryKeyJson: string, data: unknown, updatedAt: number): Promise<void>;
+  };
+  scripts: {
+    /** Most recently updated first. */
+    list(): Promise<ScriptRecord[]>;
+    create(name: string, code: string): Promise<ScriptRecord>;
+    update(id: string, patch: { name?: string; code?: string }): Promise<void>;
+    remove(id: string): Promise<void>;
   };
 }
 
@@ -192,6 +206,41 @@ export function createGnomputerSDK(
           updatedAt,
           insertSeq: (newest?.insertSeq ?? 0) + 1,
         });
+      },
+    },
+    scripts: {
+      list: async () => {
+        const all = await db.scripts.toArray();
+        return all.sort((a, b) => b.updatedSeq - a.updatedSeq);
+      },
+      create: async (name, code) => {
+        const now = new Date().toISOString();
+        const random = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2);
+        const newest = await db.scripts.orderBy("updatedSeq").last();
+        const record: ScriptRecord = {
+          id: `script-${random}`,
+          name,
+          code,
+          createdAt: now,
+          updatedAt: now,
+          updatedSeq: (newest?.updatedSeq ?? 0) + 1,
+        };
+        await db.scripts.put(record);
+        return record;
+      },
+      update: async (id, patch) => {
+        const existing = await db.scripts.get(id);
+        if (!existing) return;
+        const newest = await db.scripts.orderBy("updatedSeq").last();
+        await db.scripts.put({
+          ...existing,
+          ...patch,
+          updatedAt: new Date().toISOString(),
+          updatedSeq: (newest?.updatedSeq ?? 0) + 1,
+        });
+      },
+      remove: async (id) => {
+        await db.scripts.delete(id);
       },
     },
   };
