@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNetworkStatus } from "../shell/use-network-status";
 import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
+import { ErrorState } from "../shell/error-state";
 
 // A lightweight, embedded slice of what the real Gnockpit dashboard shows
 // (chain identity + validator set summary), backed by the same RPC calls the
@@ -24,9 +25,10 @@ export function Gnockpit() {
 
   if (status.error) {
     return (
-      <p className="state-line" role="alert">
-        Could not reach {network.name}: {status.error.message}
-      </p>
+      <ErrorState
+        message={`Could not reach ${network.name}: ${status.error.message}`}
+        onRetry={() => void status.refetch()}
+      />
     );
   }
   if (status.isPending) {

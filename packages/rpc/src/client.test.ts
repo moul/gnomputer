@@ -13,6 +13,7 @@ import qevalUsernameFixture from "./__fixtures__/qeval-username.json";
 import qevalUsernameNilFixture from "./__fixtures__/qeval-username-nil.json";
 import blockResultsFixture from "./__fixtures__/block-results.json";
 import qpathsFixture from "./__fixtures__/qpaths.json";
+import qrenderInvalidPathFixture from "./__fixtures__/qrender-invalid-path.json";
 
 const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -65,6 +66,11 @@ function abciQueryFixture(params: { path?: string; data?: string } | undefined) 
     return decoded.includes(UNFUNDED_ADDRESS) ? qevalUsernameNilFixture : qevalUsernameFixture;
   }
   if (path.startsWith("vm/qpaths")) return qpathsFixture;
+  if (path === "vm/qrender") {
+    const decoded = params?.data ? atob(params.data) : "";
+    if (decoded.startsWith("gno.land/r/does/not/exist")) return qrenderInvalidPathFixture;
+    return qrenderFixture;
+  }
   return qrenderFixture;
 }
 
@@ -109,6 +115,13 @@ describe("createRpcClient", () => {
     const env = await client.queryRender("gno.land/r/sys/users", "", "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data).toContain("r/sys/users");
+  });
+
+  it("queryRender rejects with a readable message for a package that doesn't exist", async () => {
+    const client = createRpcClient(test13);
+    await expect(
+      client.queryRender("gno.land/r/does/not/exist", "", "2026-07-22T00:00:00.000Z")
+    ).rejects.toThrow("package not found: gno.land/r/does/not/exist");
   });
 
   it("wraps queryFile in a DataEnvelope with the decoded source", async () => {

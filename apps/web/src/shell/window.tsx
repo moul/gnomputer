@@ -36,7 +36,6 @@ export function Window({
   const move = useWindowStore((s) => s.move);
   const resize = useWindowStore((s) => s.resize);
   const close = useWindowStore((s) => s.close);
-  const minimize = useWindowStore((s) => s.minimize);
   const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
@@ -152,48 +151,49 @@ export function Window({
       }}
     >
       <div
-        className="window__titlebar"
-        onDoubleClick={() => toggleMaximize(id, desktopBounds())}
-        onPointerDown={(e) => {
-          if (win.maximized) return;
-          dragState.current = { startX: e.clientX, startY: e.clientY, originX: win.x, originY: win.y };
-          document.body.style.userSelect = "none";
-        }}
+        className="window__content"
+        style={
+          overviewGeometry
+            ? { width: win.width, height: win.height, zoom: overviewGeometry.scale }
+            : undefined
+        }
       >
-        <span className="window__title">
-          <span className="window__title-icon" aria-hidden="true">
-            {iconForWindowId(id)}
+        <div
+          className="window__titlebar"
+          onDoubleClick={() => toggleMaximize(id, desktopBounds())}
+          onPointerDown={(e) => {
+            if (win.maximized) return;
+            dragState.current = { startX: e.clientX, startY: e.clientY, originX: win.x, originY: win.y };
+            document.body.style.userSelect = "none";
+          }}
+        >
+          <span className="window__title">
+            <span className="window__title-icon" aria-hidden="true">
+              {iconForWindowId(id)}
+            </span>
+            {title}
           </span>
-          {title}
-        </span>
-        <span className="window__controls">
-          <button
-            type="button"
-            className="window__control"
-            aria-label={`Minimize ${title}`}
-            onClick={() => minimize(id)}
-          >
-            {isModern ? "🟡" : "[_]"}
-          </button>
-          <button
-            type="button"
-            className="window__control"
-            aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
-            onClick={() => toggleMaximize(id, desktopBounds())}
-          >
-            {isModern ? "🟢" : win.maximized ? "[❐]" : "[□]"}
-          </button>
-          <button
-            type="button"
-            className="window__control window__control--close"
-            aria-label={`Close ${title}`}
-            onClick={() => (onClose ? onClose() : close(id))}
-          >
-            {isModern ? "🔴" : "[x]"}
-          </button>
-        </span>
+          <span className="window__controls">
+            <button
+              type="button"
+              className="window__control"
+              aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
+              onClick={() => toggleMaximize(id, desktopBounds())}
+            >
+              {isModern ? "🟢" : win.maximized ? "[❐]" : "[□]"}
+            </button>
+            <button
+              type="button"
+              className="window__control window__control--close"
+              aria-label={`Close ${title}`}
+              onClick={() => (onClose ? onClose() : close(id))}
+            >
+              {isModern ? "🔴" : "[x]"}
+            </button>
+          </span>
+        </div>
+        <div className="window__body">{children}</div>
       </div>
-      <div className="window__body">{children}</div>
       {!win.maximized && (
         <div
           className="window__resize-handle"

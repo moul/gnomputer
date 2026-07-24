@@ -15,6 +15,7 @@ describe("computeOverviewLayout", () => {
     // Never upscaled past its real size, since it already fits the single cell.
     expect(rect.width).toBe(400);
     expect(rect.height).toBe(300);
+    expect(rect.scale).toBe(1);
     expect(rect.x).toBeGreaterThan(0);
     expect(rect.y).toBeGreaterThan(0);
   });

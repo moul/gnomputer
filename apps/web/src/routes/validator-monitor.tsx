@@ -2,12 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
+import { ErrorState } from "../shell/error-state";
 
 export function ValidatorMonitor() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
 
-  const { data, error, isPending, dataUpdatedAt } = useQuery({
+  const { data, error, isPending, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["validator-set", networkId],
     queryFn: async () => {
       const env = await sdk.rpc.getValidatorSet(new Date().toISOString());
@@ -17,9 +18,10 @@ export function ValidatorMonitor() {
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load the validator set: {error.message}
-      </p>
+      <ErrorState
+        message={`Could not load the validator set: ${error.message}`}
+        onRetry={() => void refetch()}
+      />
     );
   }
   if (isPending) {

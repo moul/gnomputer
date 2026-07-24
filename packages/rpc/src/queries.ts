@@ -9,8 +9,32 @@ export function connectProvider(rpcUrl: string): Promise<JSONRPCProvider> {
   return JSONRPCProvider.create(rpcUrl);
 }
 
+// A VM-level failure (bad package path, panic, ...) is still a 200/success
+// at the JSON-RPC transport layer — it shows up as responseBase.error, a
+// SEPARATE thing from a transport error, and abciQuery() itself never
+// throws for it. Confirmed live: an unknown package path comes back with
+// error={"@type": "/vm.InvalidPkgPathError"}, data=null, and a verbose
+// stack-trace-shaped log — silently decoding that null data as "" left
+// every caller here reporting success with empty content instead of
+// surfacing the failure (the URL bar's error state, every lens's own
+// "Could not load..." message, etc. all depend on this actually throwing).
+function extractAbciErrorMessage(responseBase: { log: string; error: { "@type": string } }): string {
+  // The log's first stack-trace line reads like
+  // "    0  path/to/file.go:58 - package not found: X" — the part after
+  // " - " is the actual human message; anything before it is call-site
+  // noise from wherever the node happened to construct the error.
+  const match = /^\s*\d+\s+\S+\.go:\d+\s+-\s+(.+)$/m.exec(responseBase.log);
+  if (match?.[1]) return match[1];
+  // No usable log line — fall back to a readable form of the error type
+  // itself (e.g. "/vm.InvalidPkgPathError" -> "InvalidPkgPathError").
+  return responseBase.error["@type"].split(".").pop() || responseBase.error["@type"];
+}
+
 export async function abciQueryString(client: Tm2Client, path: string, data: string): Promise<string> {
   const result = await client.abciQuery({ path, data: new TextEncoder().encode(data) });
+  if (result.responseBase.error) {
+    throw new Error(extractAbciErrorMessage(result.responseBase));
+  }
   return new TextDecoder().decode(result.responseBase.data);
 }
 

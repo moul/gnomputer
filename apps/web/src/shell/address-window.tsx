@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { useResolveUser } from "../use-resolve-user";
 import { Freshness } from "./freshness";
 import { Window } from "./window";
+import { ErrorState } from "./error-state";
 import { useAddressWindowStore } from "./address-window-store";
-import { gnowebAddressUrl } from "./gnoweb-links";
+import { gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
 
 function formatBalance(coins: string): string {
   const match = /^(\d+)ugnot$/.exec(coins);
@@ -17,6 +19,7 @@ function formatBalance(coins: string): string {
 
 export function AddressWindow() {
   const address = useAddressWindowStore((s) => s.currentAddress);
+  const setCurrentAddress = useAddressWindowStore((s) => s.setCurrentAddress);
 
   return (
     <Window
@@ -26,15 +29,73 @@ export function AddressWindow() {
       startClosed
       defaultGeometry={{ x: 80, y: 80, width: 420, height: 420 }}
     >
-      {address ? <AddressContent address={address} /> : <p className="state-line">No address selected yet.</p>}
+      <div className="address-window">
+        <AddressLookupForm onResolved={setCurrentAddress} />
+        {address ? (
+          <AddressContent address={address} />
+        ) : (
+          <p className="state-line">No address selected yet — look one up above.</p>
+        )}
+      </div>
     </Window>
+  );
+}
+
+function AddressLookupForm({ onResolved }: { onResolved: (address: string) => void }) {
+  const [draft, setDraft] = useState("");
+  const [query, setQuery] = useState<string | null>(null);
+  const { data: result, error, isPending, refetch } = useResolveUser(query);
+
+  useEffect(() => {
+    if (result?.found && result.address) onResolved(result.address);
+  }, [result, onResolved]);
+
+  return (
+    <form
+      className="open-package-form address-window__lookup"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (draft.trim()) setQuery(draft.trim());
+      }}
+    >
+      <label>
+        Look up a user or address
+        <input
+          type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="@moul, moul, or g1…"
+        />
+      </label>
+      <button type="submit" disabled={!draft.trim()}>
+        Open
+      </button>
+      {query !== null && isPending && (
+        <p className="state-line" aria-busy="true">
+          Looking up &ldquo;{query}&rdquo;…
+        </p>
+      )}
+      {error && (
+        <ErrorState message={`Could not look up "${query}": ${error.message}`} onRetry={() => void refetch()} />
+      )}
+      {result && !result.found && (
+        <p className="state-line">No registered user or address matches &ldquo;{query}&rdquo;.</p>
+      )}
+    </form>
   );
 }
 
 function AddressContent({ address }: { address: string }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
-  const gnowebUrl = sdk.networks.getActive().gnowebUrl;
+  const network = sdk.networks.getActive();
   const [copied, setCopied] = useState(false);
 
   useTrailRecorder({
@@ -59,6 +120,7 @@ function AddressContent({ address }: { address: string }) {
     error: accountError,
     isPending: accountPending,
     dataUpdatedAt,
+    refetch: refetchAccount,
   } = useQuery({
     queryKey: ["account", networkId, address],
     queryFn: async () => {
@@ -105,23 +167,14 @@ function AddressContent({ address }: { address: string }) {
         >
           {copied ? "Copied!" : "Copy"}
         </button>
-        {gnowebUrl && (
-          <a
-            className="address-window__gnoweb-link"
-            href={gnowebAddressUrl(gnowebUrl, address)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            gnoweb ↗
-          </a>
-        )}
       </div>
 
       {!accountPending && !accountError && <Freshness dataUpdatedAt={dataUpdatedAt} />}
       {accountError ? (
-        <p className="state-line" role="alert">
-          Could not load this account: {accountError.message}
-        </p>
+        <ErrorState
+          message={`Could not load this account: ${accountError.message}`}
+          onRetry={() => void refetchAccount()}
+        />
       ) : accountPending ? (
         <p className="state-line" aria-busy="true">
           Loading account…
@@ -157,6 +210,30 @@ function AddressContent({ address }: { address: string }) {
             </p>
           )}
         </>
+      )}
+      {(network.gnowebUrl || network.explorerUrl) && (
+        <p className="address-window__external-links">
+          {network.gnowebUrl && (
+            <a
+              className="address-window__gnoweb-link"
+              href={gnowebAddressUrl(network.gnowebUrl, address)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              See on gnoweb ↗
+            </a>
+          )}
+          {network.explorerUrl && (
+            <a
+              className="address-window__gnoweb-link"
+              href={mygnoscanAddressUrl(network.explorerUrl, address)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              See on mygnoscan ↗
+            </a>
+          )}
+        </p>
       )}
     </div>
   );

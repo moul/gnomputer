@@ -1,19 +1,21 @@
 import { useSdk } from "../sdk-context";
 import { useRealmImports } from "../use-realm-imports";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { ErrorState } from "../shell/error-state";
 
 // Direct dependencies only (spec §9.7's "imports"), parsed from source.
 // Reverse references — what depends on THIS package — would need the
 // indexer's graph, which isn't reachable from the browser (ADR-012/015).
 export function RealmGraph({ packagePath, windowId }: { packagePath: string; windowId: string }) {
   const sdk = useSdk();
-  const { data: imports, error, isPending } = useRealmImports(packagePath);
+  const { data: imports, error, isPending, refetch } = useRealmImports(packagePath);
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load dependencies: {error.message}
-      </p>
+      <ErrorState
+        message={`Could not load dependencies: ${error.message}`}
+        onRetry={() => void refetch()}
+      />
     );
   }
   if (isPending || !imports) {

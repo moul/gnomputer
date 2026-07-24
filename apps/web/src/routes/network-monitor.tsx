@@ -1,15 +1,14 @@
 import { useNetworkStatus } from "../shell/use-network-status";
 import { Freshness } from "../shell/freshness";
 import { openRef } from "../shell/open-ref";
+import { ErrorState } from "../shell/error-state";
 
 export function NetworkMonitor() {
-  const { data, error, isPending, network, dataUpdatedAt } = useNetworkStatus();
+  const { data, error, isPending, network, dataUpdatedAt, refetch } = useNetworkStatus();
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not reach {network.name}: {error.message}
-      </p>
+      <ErrorState message={`Could not reach ${network.name}: ${error.message}`} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {

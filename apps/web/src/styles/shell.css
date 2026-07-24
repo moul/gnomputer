@@ -19,13 +19,19 @@
   transition: opacity 150ms ease;
 }
 
-/* Overview mode (home.tsx): the island stays clickable — clicking any icon
-   both exits overview AND performs that icon's normal action, see
-   island-bar.tsx's onClickCapture — but hovering shouldn't pop open a menu
-   over a desktop that's mid-transition, so it just reads as visually
-   "off" instead. */
-.island[data-dimmed="true"] {
-  opacity: 0.45;
+/* Overview mode (island-bar.tsx): the whole island becomes one button
+   showing the mode's own hint instead of the normal icon row — clicking it
+   exits overview, same as clicking the desktop background. */
+.island--overview {
+  padding: var(--space-2) var(--space-4);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.island--overview:hover {
+  color: var(--text);
 }
 
 .island__brand {
@@ -288,6 +294,29 @@
   background: var(--danger);
 }
 
+.status-dot[data-state="offline"] {
+  background: var(--danger);
+  animation: status-dot-offline-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes status-dot-offline-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.island-menu__hint--offline {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+}
+
 .command-palette {
   position: fixed;
   inset: 0;
@@ -446,48 +475,13 @@ main {
   margin: 0;
 }
 
-.realm-browser__tabs {
-  display: flex;
-  gap: 2px;
-  flex: 0 0 auto;
-  border-bottom: 1px solid var(--border);
-  /* 8 lenses routinely don't fit a narrow window's width — scroll instead
-     of silently clipping tabs past the edge with no way to reach them. */
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+.realm-browser__urlbar input[data-status="loading"] {
+  border-color: var(--accent);
 }
 
-.realm-browser__tabs .realm-browser__tab {
-  flex: 0 0 auto;
-}
-
-.realm-browser__tabs::-webkit-scrollbar {
-  height: 6px;
-}
-
-.realm-browser__tabs::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 999px;
-}
-
-.realm-browser__tab {
-  border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  background: transparent;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: var(--space-2) var(--space-3);
-}
-
-.realm-browser__tab[data-active="true"] {
-  color: var(--text);
-  background: var(--bg-inset);
-  border-color: var(--border);
+.realm-browser__urlbar input[data-status="error"] {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .realm-browser__lens-body {
@@ -508,34 +502,14 @@ main {
   background: var(--bg-inset);
   font-size: 11px;
   color: var(--text-dim);
-}
-
-.realm-browser__statusbar-actions {
-  display: flex;
-  gap: 2px;
-}
-
-.realm-browser__statusbar-actions button {
-  border: none;
-  background: transparent;
-  padding: var(--space-1) var(--space-2);
-  font-size: 11px;
-  color: var(--text-dim);
-}
-
-.realm-browser__statusbar-actions button:hover {
-  background: var(--bg-elevated);
-  color: var(--text);
-}
-
-.realm-browser__statusbar-actions button[data-active="true"] {
-  color: var(--window-accent, var(--accent));
+  min-width: 0;
 }
 
 .realm-browser__statusbar-stats {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  flex: 0 0 auto;
   white-space: nowrap;
 }
 
@@ -543,18 +517,132 @@ main {
   margin: 0;
 }
 
+.realm-browser__refresh {
+  border: none;
+  background: transparent;
+  padding: 0 var(--space-1);
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.realm-browser__refresh:hover {
+  background: transparent;
+  color: var(--accent);
+}
+
+/* Every lens (Render/Source/.../Raw) plus "Open on gnoweb" now lives ONLY
+   here — the footer — collapsing overflow into a "•••" menu (lens-tab-bar.tsx)
+   instead of a separate always-visible tab row above the lens body. */
+.lens-tab-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.lens-tab-bar__measure {
+  position: absolute;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  display: flex;
+  gap: 2px;
+}
+
+.lens-tab-bar__item {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
+}
+
+.lens-tab-bar__item:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.lens-tab-bar__item[data-active="true"] {
+  color: var(--window-accent, var(--accent));
+}
+
+.lens-tab-bar__overflow {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.lens-tab-bar__menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: var(--space-1);
+  min-width: 160px;
+  padding: var(--space-1);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  z-index: 20;
+}
+
+.lens-tab-bar__menu .lens-tab-bar__item {
+  width: 100%;
+  text-align: left;
+}
+
 .realm-browser-home {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .realm-browser-home h3 {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-dim);
+}
+
+.realm-browser-home__section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+
+.realm-browser-home__section-header:hover {
+  background: transparent;
+}
+
+.realm-browser-home__section-header:hover h3 {
+  color: var(--text);
+}
+
+.realm-browser-home__section-caret {
+  flex: 0 0 auto;
+  width: 10px;
+  font-size: 10px;
+  color: var(--text-faint);
+}
+
+.realm-browser-home__section-body {
+  margin-top: var(--space-2);
 }
 
 .realm-browser-home__list {
@@ -871,24 +959,6 @@ main {
   display: none;
 }
 
-.desktop__overview-hint {
-  /* Sits just below the island bar (which is also centered at the very
-     top, z-index:200) — any higher and this would render right behind it. */
-  position: absolute;
-  top: 44px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1;
-  margin: 0;
-  padding: var(--space-1) var(--space-3);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  font-size: 11px;
-  color: var(--text-dim);
-  white-space: nowrap;
-}
-
 .window {
   position: absolute;
   display: flex;
@@ -982,6 +1052,24 @@ main {
   outline-offset: 2px;
 }
 
+/* Wraps titlebar+body so overview mode (window.tsx) can zoom just this
+   part down to a real live thumbnail — explicit width/height at the
+   window's actual real size plus a zoom factor, rather than the outer
+   .window box (which is already sized/positioned to the shrunk target by
+   overview-layout.ts) also being asked to somehow scale its own content.
+   flex-basis:auto (not the flex:1 shorthand's implicit 0%) is what lets
+   that inline height act as this item's size instead of being overridden
+   by flex-grow starting from a zero basis. */
+.window__content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 .window__titlebar {
   position: relative;
   display: flex;
@@ -999,10 +1087,6 @@ main {
   user-select: none;
   touch-action: none;
   touch-action: none;
-}
-
-.window__title::before {
-  content: "▸ ";
 }
 
 .window__title {
@@ -1333,6 +1417,19 @@ main {
   color: var(--danger);
   background: var(--danger-bg);
   border-radius: var(--radius);
+}
+
+.state-line__retry {
+  display: block;
+  margin-top: var(--space-2);
+  border-color: var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+
+.state-line__retry:hover {
+  background: var(--danger);
+  color: var(--bg);
 }
 
 .freshness {
@@ -1768,6 +1865,16 @@ main {
   flex: 0 0 auto;
 }
 
+.address-window__lookup {
+  flex: 0 0 auto;
+}
+
+.address-window__external-links {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+}
+
 .history-window {
   display: flex;
   flex-direction: column;
@@ -1921,10 +2028,6 @@ main {
 :root[data-theme^="modern"] .window__title {
   text-transform: none;
   font-weight: 600;
-}
-
-:root[data-theme^="modern"] .window__title::before {
-  content: none;
 }
 
 :root[data-theme^="modern"] .settings-window__tab {

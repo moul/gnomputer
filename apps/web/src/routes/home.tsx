@@ -1,6 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { WorldExplorer } from "./world-explorer";
 import { Users } from "./users";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
@@ -16,12 +15,13 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
-  // Bumped to v6 when every default geometry grew (v5's sizes read as
-  // cramped once windows actually had real content) — bumping the key is
-  // what makes that visible to existing visitors too, since ensureWindow()
-  // otherwise never touches a window id that's already in a restored
-  // layout (saved positions/sizes always win over a new default).
-  useWindowPersistence("window-layout:home:v6");
+  // Bumped to v7 when Realmnet Explorer merged into Browser (its "realm"
+  // window id is now the sole entry point, and Browser's default geometry
+  // grew again to fit the merged Home tab) — bumping the key is what makes
+  // that visible to existing visitors too, since ensureWindow() otherwise
+  // never touches a window id that's already in a restored layout (saved
+  // positions/sizes always win over a new default).
+  useWindowPersistence("window-layout:home:v7");
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
@@ -45,25 +45,13 @@ export function Home() {
             if (e.target === e.currentTarget) toggleOverview();
           }}
         >
-          {overviewOpen && (
-            <p className="desktop__overview-hint">Overview · click a window to open it</p>
-          )}
           <Window
             id="realm"
             title={realmTitle}
             accent="cyan"
-            defaultGeometry={{ x: 0, y: 0, width: 640, height: 480 }}
+            defaultGeometry={{ x: 0, y: 0, width: 960, height: 700 }}
           >
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
-          </Window>
-          <Window
-            id="world-explorer"
-            title="Realmnet Explorer"
-            accent="cyan"
-            startClosed
-            defaultGeometry={{ x: 140, y: 110, width: 720, height: 560 }}
-          >
-            <WorldExplorer />
           </Window>
           <Window
             id="users"

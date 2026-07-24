@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { ErrorState } from "../shell/error-state";
 
 export function SourceExplorer({ packagePath }: { packagePath: string }) {
   const sdk = useSdk();
@@ -25,6 +26,7 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
     data: files,
     error: filesError,
     isPending: filesPending,
+    refetch: refetchFiles,
   } = useQuery({
     queryKey: ["source-files", networkId, packagePath],
     queryFn: async () => {
@@ -43,6 +45,7 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
     data: source,
     error: sourceError,
     isPending: sourcePending,
+    refetch: refetchSource,
   } = useQuery({
     queryKey: ["source-file", networkId, packagePath, activeFile],
     queryFn: async () => {
@@ -59,9 +62,13 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
   }
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load source: {error.message}
-      </p>
+      <ErrorState
+        message={`Could not load source: ${error.message}`}
+        onRetry={() => {
+          void refetchFiles();
+          void refetchSource();
+        }}
+      />
     );
   }
   if (filesPending || !files) {

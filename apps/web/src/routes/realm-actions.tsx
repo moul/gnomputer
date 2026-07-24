@@ -1,4 +1,5 @@
 import { useRealmSymbols } from "../use-realm-symbols";
+import { ErrorState } from "../shell/error-state";
 
 // The realm's mutating entrypoints (spec §9.6) — a func whose first
 // parameter is `realm` (e.g. `_ realm`, `cur realm`) is Gno's own convention
@@ -7,13 +8,11 @@ import { useRealmSymbols } from "../use-realm-symbols";
 // available yet (browsing as guest), same gap as the Settings > User tab's
 // disabled Connect button.
 export function RealmActions({ packagePath }: { packagePath: string }) {
-  const { data: symbols, error, isPending } = useRealmSymbols(packagePath);
+  const { data: symbols, error, isPending, refetch } = useRealmSymbols(packagePath);
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load actions: {error.message}
-      </p>
+      <ErrorState message={`Could not load actions: ${error.message}`} onRetry={() => void refetch()} />
     );
   }
   if (isPending || !symbols) {

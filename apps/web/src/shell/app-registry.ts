@@ -32,7 +32,6 @@ export const ISLAND_GROUPS: Record<string, IslandGroup> = {
 // come from an in-app "pop out" action, not from repeated icon clicks).
 export const APP_REGISTRY: AppDescriptor[] = [
   { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true },
-  { id: "world-explorer", label: "Realmnet Explorer", icon: "🌍", supportsMultiWindow: false },
   { id: "users", label: "Users", icon: "🧑‍🤝‍🧑", supportsMultiWindow: false },
   { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false, group: "chain" },
   { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false, group: "chain" },

@@ -78,6 +78,14 @@ export function HistoryWindow() {
               }}
             >
               <input
+                type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
                 onBlur={() => void commitRename()}

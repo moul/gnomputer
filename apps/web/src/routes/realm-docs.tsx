@@ -1,4 +1,5 @@
 import { useRealmSymbols } from "../use-realm-symbols";
+import { ErrorState } from "../shell/error-state";
 import type { ExportedSymbol } from "@gnomputer/app-sdk";
 
 // A godoc-style reference generated from the package's own source: every
@@ -6,13 +7,14 @@ import type { ExportedSymbol } from "@gnomputer/app-sdk";
 // (spec §9.3). Most Gno source in the wild has few or no doc comments — the
 // signature itself is still shown, same as godoc does for undocumented code.
 export function RealmDocs({ packagePath }: { packagePath: string }) {
-  const { data: symbols, error, isPending } = useRealmSymbols(packagePath);
+  const { data: symbols, error, isPending, refetch } = useRealmSymbols(packagePath);
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load documentation: {error.message}
-      </p>
+      <ErrorState
+        message={`Could not load documentation: ${error.message}`}
+        onRetry={() => void refetch()}
+      />
     );
   }
   if (isPending || !symbols) {

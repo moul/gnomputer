@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
+import { useLiveEvents } from "../use-live-events";
+import { useRecentlyAddedPackages } from "../use-recently-added-packages";
+import { rankByActivity } from "../rank-by-activity";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
+import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
@@ -18,6 +22,8 @@ import { RealmRaw } from "./realm-raw";
 import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
+import { useBrowserHomeStore } from "../shell/browser-home-store";
+import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
@@ -142,12 +148,24 @@ export function RealmBrowser({
 
 function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
   const [draftPackagePath, setDraftPackagePath] = useState(tab.packagePath);
   const [focused, setFocused] = useState(false);
   const hasPackage = tab.packagePath !== "";
-  const gnowebUrl = sdk.networks.getActive().gnowebUrl;
   const suggestions = useRealmSuggestions(focused, draftPackagePath);
   const suggestionsListId = `realm-suggestions-${windowId}`;
+
+  // Independent from RealmRenderView's own render query below — this only
+  // needs to know whether the committed path resolves at all, and must
+  // reflect that regardless of which lens tab (Source, State, ...) is
+  // actually showing, not only while the Render lens happens to be mounted.
+  const { isFetching, isError } = useQuery({
+    queryKey: ["realm-exists", networkId, tab.packagePath, tab.renderPath],
+    queryFn: () => sdk.rpc.queryRender(tab.packagePath, tab.renderPath, new Date().toISOString()),
+    enabled: hasPackage,
+    retry: false,
+  });
+  const status = !hasPackage ? undefined : isFetching ? "loading" : isError ? "error" : "ok";
 
   useEffect(() => {
     setDraftPackagePath(tab.packagePath);
@@ -169,6 +187,15 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
       <label>
         Realm path
         <input
+          type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-status={status}
           value={draftPackagePath}
           onChange={(e) => setDraftPackagePath(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -183,21 +210,13 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
         </datalist>
       </label>
       <button type="submit">Open</button>
-      {hasPackage && (
-        <button type="button" onClick={() => openInRealmTab(windowId, { packagePath: "" })}>
-          🏠 Home
-        </button>
-      )}
-      {hasPackage && gnowebUrl && (
-        <a
-          className="realm-browser__gnoweb-link"
-          href={gnowebRealmUrl(gnowebUrl, tab.packagePath, tab.renderPath || undefined)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open on gnoweb ↗
-        </a>
-      )}
+      <button
+        type="button"
+        disabled={!hasPackage}
+        onClick={() => openInRealmTab(windowId, { packagePath: "" })}
+      >
+        🏠 Home
+      </button>
     </form>
   );
 }
@@ -205,10 +224,10 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
 interface RenderStats {
   updatedAt: number;
   loadMs: number;
+  refetch: () => void;
 }
 
 function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
-  const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
   const [renderStats, setRenderStats] = useState<RenderStats | null>(null);
   const hasPackage = tab.packagePath !== "";
 
@@ -222,21 +241,6 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
 
   return (
     <>
-      <div className="realm-browser__tabs" role="tablist" aria-label="Realm view">
-        {LENS_TABS.map((lensTab) => (
-          <button
-            key={lensTab.id}
-            type="button"
-            role="tab"
-            aria-selected={tab.lens === lensTab.id}
-            data-active={tab.lens === lensTab.id}
-            className="realm-browser__tab"
-            onClick={() => updateActiveTab(windowId, { lens: lensTab.id })}
-          >
-            {lensTab.label}
-          </button>
-        ))}
-      </div>
       <div className="realm-browser__lens-body">
         {tab.lens === "render" ? (
           <RealmRenderView
@@ -275,31 +279,45 @@ function RealmStatusBar({
   tab: RealmTab;
   renderStats: RenderStats | null;
 }) {
+  const sdk = useSdk();
   const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
+  const gnowebUrl = sdk.networks.getActive().gnowebUrl;
+
+  const items: LensTabBarItem[] = [
+    ...LENS_TABS.map((lensTab) => ({
+      key: lensTab.id,
+      label: lensTab.label,
+      active: tab.lens === lensTab.id,
+      onClick: () => updateActiveTab(windowId, { lens: lensTab.id }),
+    })),
+    ...(gnowebUrl
+      ? [
+          {
+            key: "gnoweb",
+            label: "Open on gnoweb ↗",
+            href: gnowebRealmUrl(gnowebUrl, tab.packagePath, tab.renderPath || undefined),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <footer className="realm-browser__statusbar">
-      <div className="realm-browser__statusbar-actions">
-        <button
-          type="button"
-          data-active={tab.lens === "source"}
-          onClick={() => updateActiveTab(windowId, { lens: "source" })}
-        >
-          Source
-        </button>
-        <button
-          type="button"
-          data-active={tab.lens === "history"}
-          onClick={() => updateActiveTab(windowId, { lens: "history" })}
-        >
-          History
-        </button>
-      </div>
+      <LensTabBar items={items} ariaLabel="Realm view" />
       <div className="realm-browser__statusbar-stats">
         {tab.lens === "render" && renderStats && (
           <>
             <span>Loaded in {renderStats.loadMs}ms</span>
             <Freshness dataUpdatedAt={renderStats.updatedAt} />
+            <button
+              type="button"
+              className="realm-browser__refresh"
+              aria-label="Refresh"
+              title="Refresh"
+              onClick={renderStats.refetch}
+            >
+              ↻
+            </button>
           </>
         )}
       </div>
@@ -332,6 +350,7 @@ function RealmRenderView({
     error,
     isPending,
     dataUpdatedAt,
+    refetch,
   } = useQuery({
     queryKey: ["realm-render", networkId, packagePath, renderPath],
     queryFn: async () => {
@@ -343,14 +362,12 @@ function RealmRenderView({
   });
 
   useEffect(() => {
-    if (data) onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs });
-  }, [data, dataUpdatedAt, onStats]);
+    if (data) onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs, refetch: () => void refetch() });
+  }, [data, dataUpdatedAt, onStats, refetch]);
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load this realm: {error.message}
-      </p>
+      <ErrorState message={`Could not load this realm: ${error.message}`} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {
@@ -369,24 +386,98 @@ function RealmRenderView({
   );
 }
 
+function CollapsibleSection({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title: string;
+  children: ReactNode;
+}) {
+  const collapsed = useBrowserHomeStore((s) => !!s.collapsed[id]);
+  const toggleSection = useBrowserHomeStore((s) => s.toggleSection);
+
+  return (
+    <section className="realm-browser-home__section" data-collapsed={collapsed}>
+      <button
+        type="button"
+        className="realm-browser-home__section-header"
+        onClick={() => toggleSection(id)}
+        aria-expanded={!collapsed}
+      >
+        <span className="realm-browser-home__section-caret" aria-hidden="true">
+          {collapsed ? "▸" : "▾"}
+        </span>
+        <h3>{title}</h3>
+      </button>
+      {!collapsed && <div className="realm-browser-home__section-body">{children}</div>}
+    </section>
+  );
+}
+
+// Realm discovery mostly needs the indexer to enumerate anything beyond a
+// single known package, and that indexer doesn't allow browser access
+// (ADR-012/015, confirmed still true live — see rpc/src/indexer.ts). What's
+// genuinely available without it: a curated list, "recently active" (ranked
+// from live chain events since this window opened) and "recently added"
+// (vm/qpaths polled for packages that weren't there last time, i.e. a real
+// prefix scan over deployed packages — see use-recently-added-packages.ts).
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void }) {
-  const sdk = useSdk();
-  const {
-    data: realms,
-    error,
-    isPending,
-  } = useQuery({
-    queryKey: ["realm-list", sdk.networks.getActive().id],
-    queryFn: async () => (await sdk.indexer.listRealms()).data,
-    retry: false,
-  });
+  const { events } = useLiveEvents(false);
+  const activity = rankByActivity(events);
+  const recentlyAdded = useRecentlyAddedPackages(true);
+  const staffPicks = KNOWN_REALMS.filter((r) => !r.system);
+  const systemRealms = KNOWN_REALMS.filter((r) => r.system);
 
   return (
     <div className="realm-browser-home">
-      <section>
-        <h3>Staff picks</h3>
+      <CollapsibleSection id="recently-active" title="Recently active">
+        {activity.length === 0 ? (
+          <p className="state-line" aria-busy="true">
+            Watching the chain for activity…
+          </p>
+        ) : (
+          <ul className="realm-browser-home__list">
+            {activity.map((row) => (
+              <li key={row.packagePath}>
+                <button type="button" onClick={() => onOpen(row.packagePath)}>
+                  {row.packagePath}
+                  <span className="realm-browser-home__path">
+                    {row.eventCount} recent {row.eventCount === 1 ? "event" : "events"}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="state-line">
+          Ranked from live events seen since this window opened — not a historical or complete
+          ranking, which would need the indexer.
+        </p>
+      </CollapsibleSection>
+
+      <CollapsibleSection id="recently-added" title="Recently added">
+        {recentlyAdded.length === 0 ? (
+          <p className="state-line" aria-busy="true">
+            Watching for newly deployed packages…
+          </p>
+        ) : (
+          <ul className="realm-browser-home__list">
+            {recentlyAdded.map((path) => (
+              <li key={path}>
+                <button type="button" onClick={() => onOpen(path)}>
+                  {path}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CollapsibleSection>
+
+      <CollapsibleSection id="staff-picks" title="Staff picks">
         <ul className="realm-browser-home__list">
-          {KNOWN_REALMS.map((pick) => (
+          {staffPicks.map((pick) => (
             <li key={pick.packagePath}>
               <button type="button" onClick={() => onOpen(pick.packagePath)}>
                 {pick.label}
@@ -395,34 +486,20 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void })
             </li>
           ))}
         </ul>
-      </section>
-      <section>
-        <h3>Community realms</h3>
-        {error ? (
-          <p className="state-line" role="alert">
-            Realm discovery isn't reachable from the browser on this network right now — the
-            indexer doesn't allow direct browser access yet. Try Staff Picks above, or open a
-            realm path directly.
-          </p>
-        ) : isPending ? (
-          <p className="state-line" aria-busy="true">
-            Discovering deployed realms…
-          </p>
-        ) : realms.length === 0 ? (
-          <p className="state-line">No other realms discovered on this network yet.</p>
-        ) : (
-          <ul className="realm-browser-home__list">
-            {realms.map((realm) => (
-              <li key={realm.packagePath}>
-                <button type="button" onClick={() => onOpen(realm.packagePath)}>
-                  {realm.packagePath}
-                  <span className="realm-browser-home__path">deployed at #{realm.blockHeight}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </CollapsibleSection>
+
+      <CollapsibleSection id="system-realms" title="System realms">
+        <ul className="realm-browser-home__list">
+          {systemRealms.map((pick) => (
+            <li key={pick.packagePath}>
+              <button type="button" onClick={() => onOpen(pick.packagePath)}>
+                {pick.label}
+                <span className="realm-browser-home__path">{pick.packagePath}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
     </div>
   );
 }
