@@ -1,6 +1,7 @@
 import { useNetworkStatus } from "../shell/use-network-status";
 import { Freshness } from "../shell/freshness";
 import { openRef } from "../shell/open-ref";
+import { openEmbed } from "../shell/open-embed";
 import { ErrorState } from "../shell/error-state";
 
 export function NetworkMonitor() {
@@ -47,14 +48,7 @@ export function NetworkMonitor() {
       {(network.explorerUrl || network.statusUrl) && (
         <p className="network-monitor__external-links">
           {network.explorerUrl && (
-            <a
-              className="realm-browser__gnoweb-link"
-              href={network.explorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Open in Explorer ↗
-            </a>
+            <ExplorerLinks explorerUrl={network.explorerUrl} />
           )}
           {network.statusUrl && (
             <a
@@ -68,6 +62,19 @@ export function NetworkMonitor() {
           )}
         </p>
       )}
+    </>
+  );
+}
+
+function ExplorerLinks({ explorerUrl }: { explorerUrl: string }) {
+  return (
+    <>
+      <a className="realm-browser__gnoweb-link" href={explorerUrl} target="_blank" rel="noopener noreferrer">
+        Open in Explorer ↗
+      </a>
+      <button type="button" onClick={() => openEmbed(explorerUrl, "Explorer")}>
+        Embed here
+      </button>
     </>
   );
 }

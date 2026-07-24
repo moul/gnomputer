@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { crashReportUrl } from "./bug-report";
 
 // Gnomputer keeps everything it persists — window layout, theme, zoom,
 // network/settings choices, Trails, favorites, the query cache — in one
@@ -12,27 +13,6 @@ function clearStateAndReload() {
   req.onsuccess = () => window.location.reload();
   req.onerror = () => window.location.reload();
   req.onblocked = () => window.location.reload();
-}
-
-function issueUrl(error: Error): string {
-  const title = `Crash: ${error.message || "Unknown error"}`.slice(0, 200);
-  const body = [
-    "**What were you doing when this happened?**",
-    "",
-    "_(fill in — helps reproduce it)_",
-    "",
-    "**Error**",
-    "```",
-    (error.stack || error.message || String(error)).slice(0, 4000),
-    "```",
-    "",
-    "**Build**",
-    `- URL: ${window.location.href}`,
-    `- Build: ${__GIT_HASH__} (${__BUILD_TIME__})`,
-    `- User agent: ${navigator.userAgent}`,
-  ].join("\n");
-  const params = new URLSearchParams({ title, body, labels: "bug" });
-  return `${__GIT_REPO__}/issues/new?${params.toString()}`;
 }
 
 /** `inline`: this crash was caught by a small local ErrorBoundary around
@@ -61,7 +41,7 @@ export function AppErrorFallback({ error, inline = false }: { error: Error; inli
         <button type="button" className="app-error__primary" onClick={clearStateAndReload}>
           Clear state &amp; reload
         </button>
-        <a href={issueUrl(error)} target="_blank" rel="noreferrer">
+        <a href={crashReportUrl(error)} target="_blank" rel="noreferrer">
           Report this error ↗
         </a>
       </div>

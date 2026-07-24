@@ -1000,6 +1000,55 @@ main {
   color: var(--accent);
 }
 
+.gnockpit__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gnockpit__links button {
+  font-size: 11px;
+  padding: 2px var(--space-2);
+}
+
+.embed-window {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+  /* .window__body already adds padding meant for normal document content —
+     cancel it here so the iframe can fill the whole body instead of
+     floating in an inset box. */
+  margin: calc(-1 * var(--space-4));
+}
+
+.embed-window__bar {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+
+.embed-window__url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.embed-window__frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+}
+
 .desktop-shell {
   flex: 1;
   min-height: 0;
@@ -2086,6 +2135,20 @@ main {
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.settings-about__bug-report {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.settings-about__bug-report:hover {
+  color: var(--accent);
+  border-color: var(--accent-dim);
 }
 
 .settings-field select {

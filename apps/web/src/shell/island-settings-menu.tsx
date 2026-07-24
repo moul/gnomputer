@@ -1,8 +1,11 @@
 import { useThemeStore, THEME_LABELS } from "./theme-store";
 import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 import { focusOrReopen } from "./open-ref";
+import { generalBugReportUrl } from "./bug-report";
+import { useSdk } from "../sdk-context";
 
 export function IslandSettingsMenu() {
+  const sdk = useSdk();
   const theme = useThemeStore((s) => s.theme);
   const zoom = useZoomStore((s) => s.zoom);
   const zoomIn = useZoomStore((s) => s.zoomIn);
@@ -32,6 +35,14 @@ export function IslandSettingsMenu() {
       <button type="button" className="island-menu__action" onClick={() => focusOrReopen("settings")}>
         Open Settings →
       </button>
+      <a
+        className="island-menu__action"
+        href={generalBugReportUrl(sdk)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Report a bug ↗
+      </a>
     </div>
   );
 }
