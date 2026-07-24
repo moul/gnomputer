@@ -16,6 +16,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: "pnpm" }
+      - uses: actions/cache@v4
+        with:
+          path: "**/.turbo"
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
 
@@ -26,6 +33,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: "pnpm" }
+      - uses: actions/cache@v4
+        with:
+          path: "**/.turbo"
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
 
@@ -36,6 +50,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: "pnpm" }
+      - uses: actions/cache@v4
+        with:
+          path: "**/.turbo"
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
 
@@ -46,6 +67,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: "pnpm" }
+      - uses: actions/cache@v4
+        with:
+          path: "**/.turbo"
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
@@ -56,6 +84,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: "pnpm" }
+      - uses: actions/cache@v4
+        with:
+          path: "**/.turbo"
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps chromium
         working-directory: apps/web
