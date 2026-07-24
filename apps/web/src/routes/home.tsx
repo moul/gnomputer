@@ -1,6 +1,5 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { RecentBlocks } from "./recent-blocks";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
@@ -16,7 +15,6 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const WINDOW_ACCENTS: Record<string, string> = {
   realm: "cyan",
-  "recent-blocks": "magenta",
   "network-monitor": "green",
   "validator-monitor": "blue",
   "block-explorer": "red",
@@ -28,10 +26,11 @@ const WINDOW_ACCENTS: Record<string, string> = {
 };
 
 export function Home() {
-  // Bumped to v3 when Source merged into the Realm Browser window as a lens
-  // tab instead of its own window — a v2 persisted layout would still carry
-  // a "source" entry that no longer corresponds to anything rendered.
-  useWindowPersistence("window-layout:home:v3");
+  // Bumped to v4 when Recent Blocks merged into Block Explorer as a list
+  // pane instead of its own window — a v3 persisted layout would still
+  // carry a "recent-blocks" entry that no longer corresponds to anything
+  // rendered.
+  useWindowPersistence("window-layout:home:v4");
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
   const packagePath = search.pkg ?? "";
   const renderPath = search.path ?? "";
@@ -56,18 +55,10 @@ export function Home() {
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
           </Window>
           <Window
-            id="recent-blocks"
-            title="Recent Blocks"
-            accent="magenta"
-            defaultGeometry={{ x: 476, y: 0, width: 380, height: 340 }}
-          >
-            <RecentBlocks />
-          </Window>
-          <Window
             id="network-monitor"
             title="Network Monitor"
             accent="green"
-            defaultGeometry={{ x: 872, y: 0, width: 380, height: 340 }}
+            defaultGeometry={{ x: 476, y: 0, width: 380, height: 340 }}
           >
             <NetworkMonitor />
           </Window>
@@ -83,7 +74,7 @@ export function Home() {
             id="block-explorer"
             title="Block Explorer"
             accent="red"
-            defaultGeometry={{ x: 396, y: 356, width: 380, height: 300 }}
+            defaultGeometry={{ x: 396, y: 356, width: 560, height: 340 }}
           >
             <BlockExplorer />
           </Window>

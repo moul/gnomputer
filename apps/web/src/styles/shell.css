@@ -1190,6 +1190,44 @@ main {
 .block-explorer {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.block-explorer__layout {
+  display: flex;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+}
+
+.block-explorer__list-pane {
+  flex: 0 0 190px;
+  border-right: 1px solid var(--border);
+  padding-right: var(--space-3);
+  overflow-y: auto;
+}
+
+.block-explorer__list-pane .activity-list__row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.block-explorer__list-pane .activity-list__row[data-active="true"] {
+  background: var(--bg-inset);
+  border-left: 2px solid var(--window-accent, var(--accent-red));
+}
+
+.block-explorer__list-pane .activity-list__height {
+  flex: 0 0 auto;
+}
+
+.block-explorer__detail-pane {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-4);
 }
 
