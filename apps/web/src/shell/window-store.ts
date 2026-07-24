@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { desktopBounds } from "./desktop-bounds";
+import { ISLAND_CLEARANCE_PX } from "./viewport";
 
 export interface WindowGeometry {
   x: number;
@@ -48,12 +49,29 @@ interface WindowManagerState {
 
 const MIN_WIDTH = 280;
 const MIN_HEIGHT = 180;
+// How far a freshly-opened window's position wanders from dead-center, as a
+// fraction of the available slack on each axis — enough to keep several
+// windows from landing exactly on top of each other, not so much that a new
+// window can show up off in a corner.
+const CENTER_JITTER_RATIO = 0.25;
 
-function randomPosition(size: { width: number; height: number }): { x: number; y: number } {
+function centeredRandomPosition(size: { width: number; height: number }): { x: number; y: number } {
   const bounds = desktopBounds();
   const maxX = Math.max(0, bounds.width - size.width);
-  const maxY = Math.max(0, bounds.height - size.height);
-  return { x: Math.round(Math.random() * maxX), y: Math.round(Math.random() * maxY) };
+  // Never place a window's top edge above the island bar, even though this
+  // is meant to be roughly centered rather than pinned to the very top.
+  const minY = Math.min(ISLAND_CLEARANCE_PX, Math.max(0, bounds.height - size.height));
+  const maxY = Math.max(minY, bounds.height - size.height);
+
+  const centerX = maxX / 2;
+  const centerY = minY + (maxY - minY) / 2;
+  const jitterX = (Math.random() - 0.5) * maxX * CENTER_JITTER_RATIO;
+  const jitterY = (Math.random() - 0.5) * (maxY - minY) * CENTER_JITTER_RATIO;
+
+  return {
+    x: Math.round(Math.min(maxX, Math.max(0, centerX + jitterX))),
+    y: Math.round(Math.min(maxY, Math.max(minY, centerY + jitterY))),
+  };
 }
 
 export const useWindowStore = create<WindowManagerState>((set, get) => ({
@@ -78,7 +96,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     // curated spot — random placement plus overview mode (click the desktop
     // background) replaces needing to remember/tile a specific layout.
     // Maximized windows ignore position entirely, so skip the randomization.
-    const position = startMaximized ? { x: defaults.x, y: defaults.y } : randomPosition(defaults);
+    const position = startMaximized ? { x: defaults.x, y: defaults.y } : centeredRandomPosition(defaults);
     set((state) => ({
       topZIndex: nextZ,
       windows: {
@@ -182,6 +200,11 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
         },
       }));
     } else {
+      // The visual fill is actually done by .window--maximized in CSS
+      // (which also clears the island bar) — these numbers only matter as
+      // the fallback size if this window is ever un-maximized without a
+      // preMaximizeGeometry to restore (shouldn't normally happen, but
+      // stay consistent with the CSS rather than overlapping the island).
       set((state) => ({
         windows: {
           ...state.windows,
@@ -190,9 +213,9 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
             maximized: true,
             preMaximizeGeometry: { x: win.x, y: win.y, width: win.width, height: win.height },
             x: 0,
-            y: 0,
+            y: ISLAND_CLEARANCE_PX,
             width: bounds.width,
-            height: bounds.height,
+            height: Math.max(MIN_HEIGHT, bounds.height - ISLAND_CLEARANCE_PX),
           },
         },
       }));

@@ -9,6 +9,7 @@ import { Home } from "./home";
 import { IslandBar } from "../shell/island-bar";
 import { CommandPalette } from "../shell/command-palette";
 import { AppErrorFallback } from "../shell/app-error-fallback";
+import { ErrorBoundary } from "../shell/error-boundary";
 import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
@@ -23,8 +24,12 @@ function RootLayout() {
   useZoomPersistence();
   return (
     <>
-      <IslandBar />
-      <CommandPalette />
+      <ErrorBoundary>
+        <IslandBar />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <CommandPalette />
+      </ErrorBoundary>
       <main>
         <Outlet />
       </main>

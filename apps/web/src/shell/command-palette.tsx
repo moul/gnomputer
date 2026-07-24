@@ -52,7 +52,16 @@ export function CommandPalette() {
           }}
         >
           <input
+            type="text"
+            name="command-palette-query"
             autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);

@@ -2,7 +2,7 @@ import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import { useWindowStore, type WindowGeometry } from "./window-store";
 import { useThemeStore } from "./theme-store";
 import { iconForWindowId } from "./app-registry";
-import { isMobileViewport } from "./viewport";
+import { isPhoneViewport } from "./viewport";
 import { desktopBounds } from "./desktop-bounds";
 import { useZoomStore } from "./zoom-store";
 import { useShellStore } from "../store";
@@ -55,7 +55,7 @@ export function Window({
     // ensureWindow no-ops for an id that already exists (including one
     // restored from a saved layout), so this never overrides a real user's
     // preference on any device, mobile or not.
-    ensureWindow(id, title, defaultGeometry, { startClosed, startMaximized: isMobileViewport() });
+    ensureWindow(id, title, defaultGeometry, { startClosed, startMaximized: isPhoneViewport() });
     // Geometry is only ever applied once per window id — re-running this with
     // a fresh defaultGeometry object identity on every render must NOT reset a
     // window the user has already dragged or resized. Title updates (e.g. a
