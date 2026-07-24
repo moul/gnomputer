@@ -1,12 +1,27 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
+import { openEmbed } from "../shell/open-embed";
+import type { ValidatorInfo } from "@gnomputer/app-sdk";
+
+type SortKey = "address" | "votingPower" | "proposerPriority";
+type SortDir = "asc" | "desc";
+
+function compareValidators(a: ValidatorInfo, b: ValidatorInfo, key: SortKey): number {
+  if (key === "address") return a.address.localeCompare(b.address);
+  return Number(a[key]) - Number(b[key]);
+}
 
 export function ValidatorMonitor() {
   const sdk = useSdk();
-  const networkId = sdk.networks.getActive().id;
+  const network = sdk.networks.getActive();
+  const networkId = network.id;
+  const [filter, setFilter] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("votingPower");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const { data, error, isPending, dataUpdatedAt, refetch } = useQuery({
     queryKey: ["validator-set", networkId],
@@ -32,8 +47,28 @@ export function ValidatorMonitor() {
     );
   }
 
+  function toggleSort(key: SortKey) {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "address" ? "asc" : "desc");
+    }
+  }
+
   const totalPower = data.validators.reduce((sum, v) => sum + Number(v.votingPower), 0);
-  const sorted = [...data.validators].sort((a, b) => Number(b.votingPower) - Number(a.votingPower));
+  const filtered = filter.trim()
+    ? data.validators.filter((v) => v.address.toLowerCase().includes(filter.trim().toLowerCase()))
+    : data.validators;
+  const sorted = [...filtered].sort((a, b) => {
+    const cmp = compareValidators(a, b, sortKey);
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  function sortIndicator(key: SortKey): string {
+    if (key !== sortKey) return "";
+    return sortDir === "asc" ? " ▲" : " ▼";
+  }
 
   return (
     <div className="validator-monitor">
@@ -42,17 +77,61 @@ export function ValidatorMonitor() {
         {data.validators.length} validators · {totalPower.toLocaleString()} total voting power · at height #
         {data.height.toLocaleString()}
       </p>
-      <ul className="validator-list">
-        {sorted.map((v) => (
-          <li key={v.address} className="validator-list__row">
-            <span className="validator-list__address">
-              <Linkified text={v.address} />
-            </span>
-            <span className="validator-list__power">power {v.votingPower}</span>
-            <span className="validator-list__priority">priority {v.proposerPriority}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="validator-monitor__toolbar">
+        <input
+          type="text"
+          autoComplete="off"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filter by address…"
+        />
+        {network.gnockpitUrl && (
+          <span className="validator-monitor__links">
+            <a href={network.gnockpitUrl} target="_blank" rel="noopener noreferrer">
+              Open Gnockpit ↗
+            </a>
+            <button type="button" onClick={() => openEmbed(network.gnockpitUrl as string, "Gnockpit")}>
+              Embed here
+            </button>
+          </span>
+        )}
+      </div>
+      {sorted.length === 0 ? (
+        <p className="state-line">No validators match &ldquo;{filter}&rdquo;.</p>
+      ) : (
+        <table className="validator-table">
+          <thead>
+            <tr>
+              <th>
+                <button type="button" onClick={() => toggleSort("address")}>
+                  Address{sortIndicator("address")}
+                </button>
+              </th>
+              <th>
+                <button type="button" onClick={() => toggleSort("votingPower")}>
+                  Voting power{sortIndicator("votingPower")}
+                </button>
+              </th>
+              <th>
+                <button type="button" onClick={() => toggleSort("proposerPriority")}>
+                  Proposer priority{sortIndicator("proposerPriority")}
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((v) => (
+              <tr key={v.address}>
+                <td>
+                  <Linkified text={v.address} />
+                </td>
+                <td>{Number(v.votingPower).toLocaleString()}</td>
+                <td>{Number(v.proposerPriority).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
