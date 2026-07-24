@@ -1813,6 +1813,40 @@ main {
   color: var(--warning);
 }
 
+.block-strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+  overflow-x: auto;
+}
+
+.block-strip__square {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  opacity: var(--intensity, 0.25);
+}
+
+.block-strip__square[data-empty="true"] {
+  background: transparent;
+  opacity: 1;
+}
+
+.block-strip__square:hover {
+  border-color: var(--accent);
+}
+
+.block-strip__square[data-active="true"] {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
 .recent-activity {
   height: 100%;
   display: flex;

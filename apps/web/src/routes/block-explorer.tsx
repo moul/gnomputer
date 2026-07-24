@@ -9,6 +9,7 @@ import { formatTimeAgo } from "../format-time-ago";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
+import { BlockStrip } from "./block-strip";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
@@ -91,6 +92,7 @@ export function BlockExplorer() {
     <div className="block-explorer">
       <div className="block-explorer__layout">
         <div className="recent-activity block-explorer__list-pane">
+          <BlockStrip blocks={blocks} selectedHeight={height} onSelect={selectBlock} />
           <div className="recent-activity__toolbar">
             <label className="recent-activity__filter">
               <input type="checkbox" checked={txsOnly} onChange={(e) => setTxsOnly(e.target.checked)} />
