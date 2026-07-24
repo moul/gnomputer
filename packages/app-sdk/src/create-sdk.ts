@@ -38,11 +38,13 @@ import {
   parseImports,
   isChainPackage,
   parseExportedSymbols,
+  parseUserData,
   type ParsedImport,
   type ExportedSymbol,
+  type ParsedUserData,
 } from "@gnomputer/lenses";
 
-export type { ParsedImport, ExportedSymbol };
+export type { ParsedImport, ExportedSymbol, ParsedUserData };
 
 export interface GnomputerSDK {
   networks: {
@@ -64,6 +66,7 @@ export interface GnomputerSDK {
     parseImports: typeof parseImports;
     isChainPackage: typeof isChainPackage;
     parseExportedSymbols: typeof parseExportedSymbols;
+    parseUserData: typeof parseUserData;
   };
   workspaces: {
     get(id: string): Promise<WorkspaceRecord | undefined>;
@@ -128,6 +131,7 @@ export function createGnomputerSDK(
       parseImports,
       isChainPackage,
       parseExportedSymbols,
+      parseUserData,
     },
     workspaces: {
       get: (id) => db.workspaces.get(id),
