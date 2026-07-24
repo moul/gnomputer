@@ -38,6 +38,28 @@ banner links here.
 - Removed: the taskbar minimize button (and the dead state behind it),
   the "gno.land official pages" shortcut list (not consistently deployed
   across networks), the redundant account-lookup form in Settings → User.
+- New Discover app (🔭): Users, Packages (sortable/filterable, real
+  package listing), a gnoscan-style Transactions table (one row per
+  transaction — status, gas, involved packages — distinct from the live
+  per-event Event Explorer), Tokens (native GNOT + the full GRC20
+  registry), and Governance (GovDAO proposals) — all real chain data, no
+  indexer required.
+- Settings: "Report a bug" and "Changelog" are now proper tabs instead of
+  external links — the bug tab lets you pick exactly what context to
+  attach before it opens the GitHub issue; the changelog tab renders this
+  file's real content inline. The island Settings dropdown now has one
+  entry per tab, each with a matching emoji.
+- Fork a realm's open source file straight into a new Editor script, or
+  duplicate an existing one; Browser home has a new "My apps & scripts"
+  section listing your local scripts.
+- A visual block strip in Block Explorer — literal squares for blocks,
+  glow scaled by how busy each one was, click to open its detail.
+- Cypherpunk and Minimal themes pushed further from recolored variants:
+  Cypherpunk gets a blinking terminal caret, a "> " prompt prefix on
+  window titles, and a slow CRT flicker; Minimal drops to square corners
+  and a single neutral chrome color instead of per-app accents.
+- Light themes' window background nudged from pure white to a faint
+  off-white.
 
 ## Earlier
 
