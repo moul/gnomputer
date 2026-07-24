@@ -8,6 +8,7 @@ import {
 import { Home } from "./home";
 import { IslandBar } from "../shell/island-bar";
 import { CommandPalette } from "../shell/command-palette";
+import { AppErrorFallback } from "../shell/app-error-fallback";
 import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
@@ -74,6 +75,11 @@ export const router = createRouter({
   basepath: import.meta.env.BASE_URL,
   stringifySearch,
   parseSearch,
+  // Applies to every route's own error boundary (not just the root
+  // layout's) — a render error thrown by Home or any window content it
+  // mounts is caught here too, which is where an incompatible-persisted-
+  // state crash actually happens.
+  defaultErrorComponent: AppErrorFallback,
 });
 
 declare module "@tanstack/react-router" {
