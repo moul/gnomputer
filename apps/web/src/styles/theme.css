@@ -149,6 +149,66 @@
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
+/* Cypherpunk: ANSI-bright colors on near-black, green-phosphor terminal as
+   the primary reading color — deliberately loud and a little uncomfortable,
+   not a toned-down variant of the ascii-dark palette above. Belongs to the
+   "ascii" chrome family (bracket window controls, monospace UI, all-caps
+   titlebars — see the :root[data-theme^="modern"] overrides further down,
+   which this theme's id deliberately does NOT match). */
+:root[data-theme="ascii-cypherpunk"] {
+  --bg: #030402;
+  --bg-elevated: #0a0f0a;
+  --bg-inset: #060906;
+  --border: #14361c;
+  --border-strong: #1f5c2e;
+  --text: #33ff33;
+  --text-dim: #23b82c;
+  --text-faint: #145c1e;
+  --accent: #33ff33;
+  --accent-dim: #0f4d1a;
+  --accent-cyan: #33ffff;
+  --accent-amber: #ffff33;
+  --accent-magenta: #ff33ff;
+  --accent-green: #33ff33;
+  --accent-blue: #5c7cff;
+  --accent-red: #ff3355;
+  --danger: #ff3355;
+  --danger-bg: #2a0a10;
+  --warning: #ffff33;
+  --warning-bg: #2a2a05;
+  --shadow-modal: 0 0 40px rgba(51, 255, 51, 0.12), 0 16px 48px rgba(0, 0, 0, 0.8);
+}
+
+/* Minimal: near-grayscale and quiet — accents are desaturated just enough
+   to still tell windows/apps apart by color, not to decorate. Belongs to
+   the "modern" chrome family (rounded windows, sans-serif chrome, no ASCII
+   brackets); light-only, since "minimal" reads as one deliberate choice
+   rather than a light/dark pair the way the other three families are. */
+:root[data-theme="modern-minimal"] {
+  --bg: #fcfcfc;
+  --bg-elevated: #ffffff;
+  --bg-inset: #f5f5f5;
+  --border: #e8e8e8;
+  --border-strong: #d4d4d4;
+  --text: #1a1a1a;
+  --text-dim: #6b6b6b;
+  --text-faint: #a3a3a3;
+  --accent: #5b6b7a;
+  --accent-dim: #eef1f4;
+  --accent-cyan: #5b8a99;
+  --accent-amber: #a88a5b;
+  --accent-magenta: #9a7a9a;
+  --accent-green: #6b8f75;
+  --accent-blue: #5b6b7a;
+  --accent-red: #a97070;
+  --danger: #b3564f;
+  --danger-bg: #faf0ef;
+  --warning: #a8823f;
+  --warning-bg: #faf5ea;
+  --ui-font: var(--font-sans);
+  --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
 * {
   box-sizing: border-box;
 }

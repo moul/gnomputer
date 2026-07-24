@@ -167,21 +167,7 @@ export function Window({
             document.body.style.userSelect = "none";
           }}
         >
-          <span className="window__title">
-            <span className="window__title-icon" aria-hidden="true">
-              {iconForWindowId(id)}
-            </span>
-            {title}
-          </span>
           <span className="window__controls">
-            <button
-              type="button"
-              className="window__control"
-              aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
-              onClick={() => toggleMaximize(id, desktopBounds())}
-            >
-              {isModern ? "🟢" : win.maximized ? "[❐]" : "[□]"}
-            </button>
             <button
               type="button"
               className="window__control window__control--close"
@@ -190,6 +176,12 @@ export function Window({
             >
               {isModern ? "🔴" : "[x]"}
             </button>
+          </span>
+          <span className="window__title">
+            <span className="window__title-icon" aria-hidden="true">
+              {iconForWindowId(id)}
+            </span>
+            {title}
           </span>
         </div>
         <div className="window__body">{children}</div>

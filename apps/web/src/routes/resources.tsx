@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { parseRenderMarkup } from "@gnomputer/lenses";
-import { KNOWN_DOCS } from "../known-docs";
-import { MarkdownView } from "../shell/markdown-view";
+import { Markdown } from "../shell/markdown-lazy";
 import { ErrorState } from "../shell/error-state";
+import { buildDocTree, type DocTreeNode } from "../shell/doc-tree";
 
+const REPO_TREE_API = "https://api.github.com/repos/moul/gnomputer/git/trees/main?recursive=1";
 const REPO_RAW_BASE = "https://raw.githubusercontent.com/moul/gnomputer/main";
 const AWESOME_GNO_RAW_URL = "https://raw.githubusercontent.com/gnolang/awesome-gno/main/README.md";
 const AWESOME_GNO_URL = "https://github.com/gnolang/awesome-gno";
@@ -17,18 +17,13 @@ const TABS: { id: ResourcesTab; label: string }[] = [
   { id: "about", label: "About" },
 ];
 
-// Fetched live from GitHub rather than bundled at build time (see
-// known-docs.ts) — both raw.githubusercontent.com URLs used here are
-// confirmed to send Access-Control-Allow-Origin: *, so this works as a
-// genuine live fetch, no proxy needed.
-function useRemoteMarkdown(url: string) {
+function useRemoteText(url: string) {
   return useQuery({
-    queryKey: ["remote-markdown", url],
+    queryKey: ["remote-text", url],
     queryFn: async () => {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const text = await res.text();
-      return parseRenderMarkup(text, "");
+      return res.text();
     },
   });
 }
@@ -62,48 +57,126 @@ export function Resources() {
   );
 }
 
-// Bundled from a hand-picked subset of this repo's own docs/ folder — see
-// known-docs.ts for why only docs/adr/** and docs/product/** are listed.
-// A real, dynamic "browse whatever's actually in docs/" version needs a
-// platform-hosted index this client can enumerate, which doesn't exist yet.
+// The whole docs/ folder, enumerated live via GitHub's recursive git tree
+// API (confirmed CORS-enabled) rather than a hand-picked subset — a real
+// directory listing, not a guess at which files matter.
 function DocsTab() {
-  const [selected, setSelected] = useState(KNOWN_DOCS[0]!.path);
-  const doc = KNOWN_DOCS.find((d) => d.path === selected)!;
-  const { data: nodes, error, isPending, refetch } = useRemoteMarkdown(`${REPO_RAW_BASE}/${selected}`);
+  const [selected, setSelected] = useState<string | null>(null);
+  const {
+    data: tree,
+    error: treeError,
+    isPending: treePending,
+    refetch: refetchTree,
+  } = useQuery({
+    queryKey: ["repo-tree", REPO_TREE_API],
+    queryFn: async () => {
+      const res = await fetch(REPO_TREE_API);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const body = (await res.json()) as { tree: { path: string; type: string }[] };
+      const paths = body.tree.filter((t) => t.type === "blob" && t.path.startsWith("docs/")).map((t) => t.path);
+      return buildDocTree(paths, "docs/");
+    },
+  });
+
+  const {
+    data: content,
+    error: contentError,
+    isPending: contentPending,
+    refetch: refetchContent,
+  } = useRemoteText(selected ? `${REPO_RAW_BASE}/docs/${selected}` : "");
 
   return (
     <div className="resources-docs">
-      <nav aria-label="Docs" className="file-tree">
-        <ul>
-          {KNOWN_DOCS.map((d) => (
-            <li key={d.path}>
-              <button type="button" aria-current={d.path === selected} onClick={() => setSelected(d.path)}>
-                {d.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <div className="resources-docs__body">
-        {error ? (
+      <nav aria-label="Docs" className="file-tree doc-tree">
+        {treeError ? (
           <ErrorState
-            message={`Could not load ${doc.label}: ${error.message}`}
-            onRetry={() => void refetch()}
+            message={`Could not load the docs listing: ${treeError.message}`}
+            onRetry={() => void refetchTree()}
           />
-        ) : isPending || !nodes ? (
+        ) : treePending || !tree ? (
           <p className="state-line" aria-busy="true">
             Loading…
           </p>
         ) : (
-          <MarkdownView nodes={nodes} />
+          <DocTreeView nodes={tree} selected={selected} onSelect={setSelected} />
+        )}
+      </nav>
+      <div className="resources-docs__body">
+        {selected === null ? (
+          <p className="state-line">Pick a file from the tree to read it.</p>
+        ) : contentError ? (
+          <ErrorState
+            message={`Could not load ${selected}: ${contentError.message}`}
+            onRetry={() => void refetchContent()}
+          />
+        ) : contentPending || content === undefined ? (
+          <p className="state-line" aria-busy="true">
+            Loading…
+          </p>
+        ) : (
+          <Markdown text={content} />
         )}
       </div>
     </div>
   );
 }
 
+function DocTreeView({
+  nodes,
+  selected,
+  onSelect,
+}: {
+  nodes: DocTreeNode[];
+  selected: string | null;
+  onSelect: (path: string) => void;
+}) {
+  return (
+    <ul>
+      {nodes.map((node) =>
+        node.type === "folder" ? (
+          <DocTreeFolder key={node.path} node={node} selected={selected} onSelect={onSelect} />
+        ) : (
+          <li key={node.path}>
+            <button
+              type="button"
+              aria-current={node.path === `docs/${selected}`}
+              onClick={() => onSelect(node.path.replace(/^docs\//, ""))}
+            >
+              {node.name}
+            </button>
+          </li>
+        )
+      )}
+    </ul>
+  );
+}
+
+function DocTreeFolder({
+  node,
+  selected,
+  onSelect,
+}: {
+  node: DocTreeNode;
+  selected: string | null;
+  onSelect: (path: string) => void;
+}) {
+  const [open, setOpen] = useState(true);
+  return (
+    <li className="doc-tree__folder">
+      <button type="button" className="doc-tree__folder-toggle" onClick={() => setOpen((o) => !o)}>
+        <span aria-hidden="true">{open ? "▾" : "▸"}</span> {node.name}/
+      </button>
+      {open && (
+        <div className="doc-tree__folder-body">
+          <DocTreeView nodes={node.children ?? []} selected={selected} onSelect={onSelect} />
+        </div>
+      )}
+    </li>
+  );
+}
+
 function AwesomeGnoTab() {
-  const { data: nodes, error, isPending, refetch } = useRemoteMarkdown(AWESOME_GNO_RAW_URL);
+  const { data: text, error, isPending, refetch } = useRemoteText(AWESOME_GNO_RAW_URL);
 
   return (
     <div className="resources-awesome-gno">
@@ -118,12 +191,12 @@ function AwesomeGnoTab() {
           message={`Could not load awesome-gno: ${error.message}`}
           onRetry={() => void refetch()}
         />
-      ) : isPending || !nodes ? (
+      ) : isPending || text === undefined ? (
         <p className="state-line" aria-busy="true">
           Loading…
         </p>
       ) : (
-        <MarkdownView nodes={nodes} />
+        <Markdown text={text} />
       )}
     </div>
   );

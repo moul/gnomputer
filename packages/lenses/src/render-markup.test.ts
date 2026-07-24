@@ -46,6 +46,15 @@ describe("parseRenderMarkup", () => {
     expect(nodes[0]).toMatchObject({ type: "code", lang: undefined });
   });
 
+  it("drops a raw HTML block instead of showing its tags as text", () => {
+    const nodes = parseRenderMarkup(
+      '<div align="center"><img src="./banner.png" /></div>\n\n# Real heading',
+      "gno.land/r/demo/foo"
+    );
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]).toMatchObject({ type: "heading", content: "Real heading" });
+  });
+
   it("unescapes markdown-escaped punctuation in text and link labels", () => {
     const nodes = parseRenderMarkup(
       "Add 11 validator\\(s\\) to the valset",

@@ -97,6 +97,13 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
       continue;
     }
 
+    // A raw HTML block (common in GitHub READMEs — a centered banner image,
+    // a badge wrapped in a <div>/<a>, ...) has no rendering here at all; Gno
+    // Render() output doesn't use this, so this only ever matches content
+    // this parser was never meant to handle. Dropping it silently reads
+    // better than showing the tags themselves as visible text.
+    if (/^<[a-z][a-z0-9-]*[\s/>]/i.test(trimmed)) continue;
+
     const fenceMatch = /^```([a-z]*)\n?/.exec(trimmed);
     if (fenceMatch) {
       const lang = fenceMatch[1];
