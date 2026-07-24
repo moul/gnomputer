@@ -4,6 +4,7 @@ import { useSdk } from "../sdk-context";
 import { CodeEditor } from "../shell/code-editor-lazy";
 import { GNO_TEMPLATES, type GnoTemplate } from "../gno-templates";
 import { ErrorState } from "../shell/error-state";
+import { useEditorSignalStore } from "../shell/editor-store";
 
 const AUTOSAVE_DELAY_MS = 600;
 
@@ -26,6 +27,18 @@ export function Editor() {
   useEffect(() => {
     if (activeId === null && scripts && scripts.length > 0) setActiveId(scripts[0]!.id);
   }, [scripts, activeId]);
+
+  // A fork (or any future "open this script" entry point) sets this from
+  // outside the Editor window — pick it up as soon as the script it points
+  // to has actually loaded, overriding whatever was active before.
+  const pendingScriptId = useEditorSignalStore((s) => s.pendingScriptId);
+  const takePendingScriptId = useEditorSignalStore((s) => s.takePendingScriptId);
+  useEffect(() => {
+    if (pendingScriptId === null || !scripts) return;
+    if (!scripts.some((s) => s.id === pendingScriptId)) return;
+    setActiveId(takePendingScriptId());
+    setShowTemplates(false);
+  }, [pendingScriptId, scripts, takePendingScriptId]);
 
   const active = scripts?.find((s) => s.id === activeId) ?? null;
 
@@ -68,6 +81,13 @@ export function Editor() {
     await sdk.scripts.remove(active.id);
     setActiveId(null);
     await refetch();
+  }
+
+  async function duplicateActive() {
+    if (!active) return;
+    const record = await sdk.scripts.create(`${active.name} (copy)`, active.code);
+    await refetch();
+    setActiveId(record.id);
   }
 
   if (error) {
@@ -118,6 +138,9 @@ export function Editor() {
               <span className="editor-window__name">{active.name}</span>
               <button type="button" onClick={() => void renameActive()}>
                 Rename
+              </button>
+              <button type="button" onClick={() => void duplicateActive()}>
+                Duplicate
               </button>
               <button type="button" onClick={() => void deleteActive()}>
                 Delete
