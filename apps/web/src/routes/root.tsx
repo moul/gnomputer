@@ -6,7 +6,7 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { Home } from "./home";
-import { StatusBar } from "../shell/status-bar";
+import { IslandBar } from "../shell/island-bar";
 import { CommandPalette } from "../shell/command-palette";
 import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
@@ -22,7 +22,7 @@ function RootLayout() {
   useZoomPersistence();
   return (
     <>
-      <StatusBar />
+      <IslandBar />
       <CommandPalette />
       <main>
         <Outlet />

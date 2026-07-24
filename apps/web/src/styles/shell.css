@@ -1,110 +1,151 @@
-.status-bar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
+/* Island bar — replaces the old full-width status bar + taskbar with one
+   floating, centered, icon-only pill (root.tsx renders it fixed-position,
+   so it overlays the desktop instead of reserving a layout row). */
+.island {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-3) var(--space-5);
+  gap: 2px;
+  padding: var(--space-1) var(--space-2);
   background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-modal);
   font-family: var(--ui-font);
 }
 
-@media (max-width: 700px) {
-  .status-bar {
-    padding: var(--space-3);
-  }
-
-  .status-bar__search {
-    margin-left: 0;
-    order: 1;
-  }
-}
-
-.status-bar__left {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.status-bar__brand {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text);
+.island__brand {
   flex: 0 0 auto;
-}
-
-.status-bar__context {
-  color: var(--text-dim);
-  font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-bar__search {
-  margin-left: auto;
+  padding: 0 var(--space-1);
+  font-weight: 700;
   color: var(--text-dim);
 }
 
-.status-bar__right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+.island__divider {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  margin: var(--space-1) 2px;
+  background: var(--border);
 }
 
-.status-bar__icon-button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+.island__icon {
+  position: relative;
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.status-bar__icon-button:hover {
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-
-.status-bar__gear {
-  font-size: 15px;
   padding: var(--space-1) var(--space-2);
+  font-size: 14px;
 }
 
-.status-bar__zoom {
+.island__icon:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.island__icon-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.island__zoom {
   display: inline-flex;
   align-items: center;
   gap: 1px;
+  flex: 0 0 auto;
   border-radius: 999px;
   background: var(--bg-inset);
-  border: 1px solid var(--border);
   padding: 2px;
 }
 
-.status-bar__zoom button {
-  min-width: 26px;
-  padding: var(--space-1) var(--space-2);
-  font-size: 12px;
+.island__zoom button {
+  min-width: 24px;
+  padding: var(--space-1);
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-dim);
   border-radius: 999px;
 }
 
-.status-bar__zoom button:hover:not(:disabled) {
+.island__zoom button:hover:not(:disabled) {
   color: var(--text);
   background: var(--bg-elevated);
 }
 
-.status-bar__zoom button:disabled {
+.island__zoom button:disabled {
   opacity: 0.35;
+}
+
+.island__clock {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.island__clock-popover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 210;
+  min-width: 180px;
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  text-align: left;
+  font-weight: 400;
+}
+
+.island__clock-popover-time {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.island__clock-popover-date {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.island__clock-popover-stats {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--space-2);
+  font-size: 11px;
+}
+
+.island__clock-popover-stats dt {
+  color: var(--text-faint);
+}
+
+.island__clock-popover-stats dd {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  text-align: right;
 }
 
 .status-dot {
@@ -663,174 +704,62 @@ main {
   overflow: auto;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
+  /* Clears the floating island bar (position:fixed, ~52px tall including
+     its own top offset) so a window's y:0 doesn't render underneath it. */
+  padding-top: 56px;
 }
 
-.taskbar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-family: var(--ui-font);
+/* Overview/expose mode: click the desktop background to see every open
+   window at once in a grid, click one to bring it back and focus it. Pure
+   CSS — window x/y/width/height in the store are untouched, so exiting
+   overview (or opening a window from the island, which also closes it)
+   needs no restore step. */
+.desktop[data-overview="true"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-auto-rows: 200px;
+  gap: var(--space-4);
+  padding: 76px var(--space-4) var(--space-4);
+  align-content: start;
+  background: color-mix(in srgb, var(--bg) 85%, black 15%);
 }
 
-/* Stacks the Apps launcher above the tile button instead of spending
-   horizontal room on both — narrow screens need that room for the open-
-   windows list, which no longer wraps (see .taskbar__items below). */
-.taskbar__start-col {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.desktop[data-overview="true"] .window {
+  position: static !important;
+  left: auto !important;
+  top: auto !important;
+  width: auto !important;
+  height: 100% !important;
+  cursor: pointer;
 }
 
-.taskbar__tile-button {
-  flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 700;
-  padding: var(--space-1) var(--space-2);
-  border-radius: 0;
-  color: var(--text-dim);
+.desktop[data-overview="true"] .window__titlebar,
+.desktop[data-overview="true"] .window__resize-handle,
+.desktop[data-overview="true"] .window__body {
+  pointer-events: none;
 }
 
-.taskbar__tile-button:hover {
-  color: var(--text);
-  background: var(--bg-elevated);
+.desktop[data-overview="true"] .window__body {
+  overflow: hidden;
 }
 
-/* A real taskbar doesn't grow taller as more apps open — it stays one row
-   and becomes scrollable/swipeable instead. touch-action:pan-x lets a
-   finger-drag scroll this list horizontally rather than being captured by
-   the desktop's own touch scrolling. */
-.taskbar__items {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--space-2);
-  overflow-x: auto;
-  overflow-y: hidden;
-  touch-action: pan-x;
-  scrollbar-width: thin;
-}
-
-.taskbar__items::-webkit-scrollbar {
-  height: 6px;
-}
-
-.taskbar__items::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 999px;
-}
-
-.taskbar__items .taskbar__item {
-  flex: 0 0 auto;
-}
-
-.taskbar__item {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--taskbar-accent, var(--border-strong));
-  background: var(--bg-elevated);
-}
-
-.taskbar__item button {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--taskbar-accent, var(--text));
-  background: transparent;
-  border: none;
-  border-radius: 0;
-}
-
-.taskbar__item button:first-child {
-  padding: var(--space-1) var(--space-2);
-}
-
-.taskbar__item button:first-child:hover {
-  background: var(--bg-inset);
-}
-
-.taskbar__item-icon {
-  margin-right: var(--space-1);
-}
-
-.taskbar__item[data-minimized="true"] {
-  opacity: 0.7;
-  border-style: dotted;
-}
-
-.taskbar__item[data-focused="true"] {
-  background: var(--bg-inset);
-  box-shadow: inset 0 0 0 1px var(--taskbar-accent, var(--accent));
-}
-
-.taskbar__item-close {
-  padding: var(--space-1);
-  color: var(--text-faint);
-  font-size: 11px;
-}
-
-.taskbar__item-close:hover {
-  color: var(--danger);
-  background: var(--bg-inset);
-}
-
-.taskbar__start {
-  position: relative;
-  flex: 0 0 auto;
-}
-
-.taskbar__start-button {
-  font-size: 11px;
-  font-weight: 700;
-  padding: var(--space-1) var(--space-2);
-}
-
-.taskbar__start-menu {
+.desktop__overview-hint {
+  /* Sits just below the island bar (which is also centered at the very
+     top, z-index:200) — any higher and this would render right behind it. */
   position: absolute;
-  bottom: calc(100% + var(--space-2));
-  left: 0;
-  /* Windows' own z-index (window-store.ts topZIndex) is an unbounded
-     counter that climbs by 1 on every focus/open — over a long session it
-     eventually passes a "normal-looking" z-index like 50, burying this
-     popover behind whatever window is currently on top. Comfortably above
-     any realistic counter growth instead of guessing a ceiling. */
-  z-index: 999999;
-  min-width: 220px;
-  max-height: 320px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2);
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-modal);
+  border-radius: 999px;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
-
-.taskbar__start-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  text-align: left;
-  background: transparent;
-  border: 1px solid transparent;
-  border-left: 2px solid var(--taskbar-accent, var(--border-strong));
-  padding: var(--space-2) var(--space-3);
-  font-size: 12px;
-}
-
-.taskbar__start-item:hover {
-  background: var(--bg-inset);
-}
-
 
 .window {
   position: absolute;
@@ -906,9 +835,9 @@ main {
   height: 100% !important;
 }
 
-/* Hovering a taskbar item highlights the window it points at — a ring
+/* Hovering an island icon highlights the window(s) it points at — a ring
    distinct from the focus box-shadow so both can show at once. */
-.window--taskbar-hover {
+.window--island-hover {
   outline: 2px solid var(--window-accent, var(--accent-cyan));
   outline-offset: 2px;
 }
@@ -1696,8 +1625,8 @@ main {
 
 /* "Modern" theme: a normal-looking desktop instead of the ASCII-art chrome —
    rounded windows, no corner brackets, no all-caps titlebars. Only the shell
-   chrome changes; --ui-font (theme.css) already swaps window/taskbar/status
-   bar text to a sans face for this theme. */
+   chrome changes; --ui-font (theme.css) already swaps window/island text to
+   a sans face for this theme. */
 :root[data-theme^="modern"] .window {
   border-width: 1px;
   border-radius: var(--radius-lg);
@@ -1729,13 +1658,8 @@ main {
   content: none;
 }
 
-:root[data-theme^="modern"] .taskbar__item,
 :root[data-theme^="modern"] .settings-window__tab {
   text-transform: none;
-}
-
-:root[data-theme^="modern"] .taskbar__item {
-  border-radius: 999px;
 }
 
 .entity-link {
@@ -1756,30 +1680,6 @@ main {
   background: transparent;
   color: var(--text);
   text-decoration-style: solid;
-}
-
-.taskbar__clock {
-  flex: 0 0 auto;
-  margin-left: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  line-height: 1.3;
-  font-family: var(--ui-font);
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  padding: 0 var(--space-2);
-}
-
-.taskbar__clock-time {
-  font-size: 12px;
-}
-
-.taskbar__clock-height {
-  font-size: 10px;
-  color: var(--text-dim);
-  font-weight: 500;
 }
 
 .settings-theme-grid {

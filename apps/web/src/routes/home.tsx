@@ -8,33 +8,23 @@ import { BlockExplorer } from "./block-explorer";
 import { EventExplorer } from "./event-explorer";
 import { Gnockpit } from "./gnockpit";
 import { Window } from "../shell/window";
-import { Taskbar } from "../shell/taskbar";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
 import { AddressWindow } from "../shell/address-window";
 import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
-
-const WINDOW_ACCENTS: Record<string, string> = {
-  realm: "cyan",
-  "world-explorer": "cyan",
-  users: "amber",
-  "network-monitor": "green",
-  "validator-monitor": "blue",
-  "block-explorer": "red",
-  settings: "magenta",
-  history: "green",
-  address: "amber",
-  "event-explorer": "blue",
-  gnockpit: "green",
-};
+import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
-  // Bumped to v4 when Recent Blocks merged into Block Explorer as a list
-  // pane instead of its own window — a v3 persisted layout would still
-  // carry a "recent-blocks" entry that no longer corresponds to anything
-  // rendered.
-  useWindowPersistence("window-layout:home:v4");
+  // Bumped to v5 when every app but Browser switched to startClosed by
+  // default (the island bar is now the discovery mechanism — apps open on
+  // click instead of cluttering the desktop from boot) and window position
+  // on first-ever creation became randomized. A v4 persisted layout is
+  // unaffected either way (saved positions/closed-state always win), this
+  // is purely about what a brand-new visitor sees.
+  useWindowPersistence("window-layout:home:v5");
+  const overviewOpen = useWindowStore((s) => s.overviewOpen);
+  const toggleOverview = useWindowStore((s) => s.toggleOverview);
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
   const packagePath = search.pkg ?? "";
   const renderPath = search.path ?? "";
@@ -49,7 +39,16 @@ export function Home() {
   return (
     <div className="home-layout">
       <div className="desktop-shell">
-        <div className="desktop">
+        <div
+          className="desktop"
+          data-overview={overviewOpen}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) toggleOverview();
+          }}
+        >
+          {overviewOpen && (
+            <p className="desktop__overview-hint">Overview · click a window to open it</p>
+          )}
           <Window
             id="realm"
             title={realmTitle}
@@ -80,6 +79,7 @@ export function Home() {
             id="network-monitor"
             title="Network Monitor"
             accent="green"
+            startClosed
             defaultGeometry={{ x: 476, y: 0, width: 380, height: 340 }}
           >
             <NetworkMonitor />
@@ -88,6 +88,7 @@ export function Home() {
             id="validator-monitor"
             title="Validator Monitor"
             accent="blue"
+            startClosed
             defaultGeometry={{ x: 0, y: 356, width: 380, height: 300 }}
           >
             <ValidatorMonitor />
@@ -96,6 +97,7 @@ export function Home() {
             id="block-explorer"
             title="Block Explorer"
             accent="red"
+            startClosed
             defaultGeometry={{ x: 396, y: 356, width: 560, height: 340 }}
           >
             <BlockExplorer />
@@ -123,7 +125,6 @@ export function Home() {
           <AddressWindow />
           <ExtraRealmWindows />
         </div>
-        <Taskbar accents={WINDOW_ACCENTS} />
       </div>
     </div>
   );
