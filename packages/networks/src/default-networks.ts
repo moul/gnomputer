@@ -20,6 +20,12 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     gnowebUrl: "https://topaz.testnets.gno.land",
     indexerGraphqlUrl: "https://indexer.topaz.testnets.gno.land/graphql/query",
     gnockpitUrl: "https://gnockpit.topaz.testnets.gno.land",
+    // mygnoscan, deployed for this network — confirmed reachable live. Its
+    // own /api/* routes send no Access-Control-Allow-Origin header either
+    // (confirmed the same way as indexerGraphqlUrl below), so this is
+    // currently a browser link out, not a fetchable data source.
+    explorerUrl: "https://explorer.topaz.testnets.gno.land",
+    statusUrl: "https://status.topaz.testnets.gno.land",
     environment: "testnet",
     persistence: "rolling",
     trust: "official",

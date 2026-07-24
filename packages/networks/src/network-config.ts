@@ -10,6 +10,7 @@ export const NetworkConfigSchema = z.object({
   indexerGraphqlUrl: z.string().url().optional(),
   gnockpitUrl: z.string().url().optional(),
   explorerUrl: z.string().url().optional(),
+  statusUrl: z.string().url().optional(),
   environment: z.enum(["mainnet", "betanet", "staging", "testnet", "local", "custom"]),
   persistence: z.enum(["persistent", "rolling", "ephemeral", "unknown"]),
   trust: z.enum(["official", "community", "local", "custom"]),

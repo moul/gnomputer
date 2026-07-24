@@ -18,7 +18,7 @@ function formatClock(date: Date): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-export function IslandClock() {
+export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const sdk = useSdk();
   const trailVersion = useShellStore((s) => s.trailVersion);
   const { data, state } = useNetworkStatus();
@@ -48,6 +48,7 @@ export function IslandClock() {
 
   return (
     <IslandPopover
+      disabled={disabled}
       trigger={
         <div className="island__clock">
           <span className="status-dot" data-state={state} aria-hidden="true" />

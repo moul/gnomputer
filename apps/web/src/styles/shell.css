@@ -16,6 +16,16 @@
   border-radius: 999px;
   box-shadow: var(--shadow-modal);
   font-family: var(--ui-font);
+  transition: opacity 150ms ease;
+}
+
+/* Overview mode (home.tsx): the island stays clickable — clicking any icon
+   both exits overview AND performs that icon's normal action, see
+   island-bar.tsx's onClickCapture — but hovering shouldn't pop open a menu
+   over a desktop that's mid-transition, so it just reads as visually
+   "off" instead. */
+.island[data-dimmed="true"] {
+  opacity: 0.45;
 }
 
 .island__brand {
@@ -281,7 +291,10 @@
 .command-palette {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  /* Above the island bar (200) and its popovers (210), and above any window
+     (topZIndex only ever climbs from focus/reopen churn, but should never
+     be able to out-rank a modal regardless). */
+  z-index: 300;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -769,6 +782,12 @@ main {
   font-size: 13px;
 }
 
+.network-monitor__external-links {
+  display: flex;
+  gap: var(--space-4);
+  margin: var(--space-3) 0 0;
+}
+
 .realm-browser__gnoweb-link,
 .address-window__gnoweb-link {
   flex: 0 0 auto;
@@ -820,30 +839,17 @@ main {
 }
 
 /* Overview/expose mode: click the desktop background to see every open
-   window at once, click one to bring it back and focus it. Pure CSS —
-   window x/y/width/height in the store are untouched, so exiting overview
-   (or opening a window from the island, which also closes it) needs no
-   restore step. */
+   window at once, click one to bring it back and focus it. Window
+   x/y/width/height in the store are untouched — overview-layout.ts computes
+   a separate grid target and window.tsx renders THAT instead while active,
+   so entering/exiting is just this same .window animating its real
+   left/top/width/height to/from the grid position (see the transition
+   below), no restore step needed either way. */
 .desktop[data-overview="true"] {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: var(--space-4);
-  padding: 76px var(--space-4) var(--space-4);
   background: color-mix(in srgb, var(--bg) 85%, black 15%);
 }
 
 .desktop[data-overview="true"] .window {
-  position: static !important;
-  left: auto !important;
-  top: auto !important;
-  /* Deliberately `zoom`, not `transform: scale()` — zoom shrinks the
-     rendered box AND its layout footprint together, so every window keeps
-     its own real width/height ratio (no stretching) while still taking up
-     only its scaled-down share of the flex-wrap row. transform:scale would
-     shrink the pixels but leave the full-size box reserved in the layout,
-     defeating the "see them all side by side" point of this mode. */
-  zoom: 0.42;
   cursor: pointer;
 }
 
@@ -892,6 +898,13 @@ main {
   border-radius: 0;
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
   font-family: var(--ui-font);
+  /* Animates entering/exiting overview mode (window.tsx switches left/top/
+     width/height to a computed grid target while it's active, see
+     use-overview-geometry.ts) as a real move+resize instead of a snap.
+     Overridden to "none" via inline style while the user is actively
+     dragging/resizing (window.tsx) so per-pixel pointer updates aren't
+     laggily eased too. */
+  transition: left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease;
 }
 
 .window::before,
