@@ -20,6 +20,7 @@ import { RealmActions } from "./realm-actions";
 import { RealmGraph } from "./realm-graph";
 import { RealmRaw } from "./realm-raw";
 import { KNOWN_REALMS } from "../known-realms";
+import { GNOLAND_OFFICIAL_PAGES } from "../gnoland-official-pages";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
@@ -231,8 +232,8 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   const [renderStats, setRenderStats] = useState<RenderStats | null>(null);
   const hasPackage = tab.packagePath !== "";
 
-  function openPackage(pkg: string) {
-    openInRealmTab(windowId, { packagePath: pkg });
+  function openPackage(pkg: string, renderPath?: string) {
+    openInRealmTab(windowId, { packagePath: pkg, renderPath });
   }
 
   if (!hasPackage) {
@@ -423,7 +424,7 @@ function CollapsibleSection({
 // from live chain events since this window opened) and "recently added"
 // (vm/qpaths polled for packages that weren't there last time, i.e. a real
 // prefix scan over deployed packages — see use-recently-added-packages.ts).
-function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void }) {
+function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
   const { events } = useLiveEvents(false);
   const activity = rankByActivity(events);
   const recentlyAdded = useRecentlyAddedPackages(true);
@@ -432,6 +433,22 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void })
 
   return (
     <div className="realm-browser-home">
+      <CollapsibleSection id="gnoland" title="gno.land">
+        <ul className="realm-browser-home__list">
+          {GNOLAND_OFFICIAL_PAGES.map((page) => (
+            <li key={page.label}>
+              <button type="button" onClick={() => onOpen(page.packagePath, page.renderPath)}>
+                {page.label}
+                <span className="realm-browser-home__path">
+                  {page.packagePath}
+                  {page.renderPath ? `:${page.renderPath}` : ""}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
+
       <CollapsibleSection id="recently-active" title="Recently active">
         {activity.length === 0 ? (
           <p className="state-line" aria-busy="true">
