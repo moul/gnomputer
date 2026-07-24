@@ -46,8 +46,8 @@
 
 /* Fallback for the sliver of time before main.tsx applies the persisted (or
    default) data-theme attribute — practically never hit since index.html
-   ships data-theme="ascii-dark" statically, but kept so an OS-light visitor
-   never flashes the dark palette if that default is ever removed. Scoped to
+   ships data-theme="ascii-light" statically, but kept so an OS-dark visitor
+   never flashes the wrong palette if that default is ever removed. Scoped to
    :not([data-theme]) so it never fights an explicit theme choice. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
