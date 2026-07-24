@@ -12,7 +12,7 @@ export interface AppDescriptor {
 // single-instance app is brought to front, a multi-window one always opens
 // a fresh instance (like clicking an app in a real OS's start menu/dock).
 export const APP_REGISTRY: AppDescriptor[] = [
-  { id: "realm", label: "Realm Browser", icon: "🌐", supportsMultiWindow: true },
+  { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true },
   { id: "world-explorer", label: "World Explorer", icon: "🌍", supportsMultiWindow: false },
   { id: "users", label: "Users", icon: "🧑‍🤝‍🧑", supportsMultiWindow: false },
   { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false },

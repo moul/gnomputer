@@ -3,14 +3,11 @@ import { useWindowStore, type WindowGeometry } from "./window-store";
 import { useThemeStore } from "./theme-store";
 import { iconForWindowId } from "./app-registry";
 import { isMobileViewport } from "./viewport";
+import { desktopBounds } from "./desktop-bounds";
+import { useZoomStore } from "./zoom-store";
+import { useShellStore } from "../store";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
-
-function desktopBounds(): { width: number; height: number } {
-  const el = document.querySelector(".desktop");
-  const rect = el?.getBoundingClientRect();
-  return { width: rect?.width ?? window.innerWidth, height: rect?.height ?? window.innerHeight };
-}
 
 export function Window({
   id,
@@ -42,6 +39,8 @@ export function Window({
   const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
   const isModern = useThemeStore((s) => s.theme.startsWith("modern"));
+  const zoom = useZoomStore((s) => s.zoom);
+  const isHoveredFromTaskbar = useShellStore((s) => s.hoveredWindowId === id);
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
       .filter((w) => !w.closed && !w.minimized)
@@ -70,13 +69,18 @@ export function Window({
   );
 
   useEffect(() => {
+    // .desktop (not <html>) carries the zoom now, and pointermove listeners
+    // here are on `window` — outside that zoom boundary — so real-pixel
+    // mouse movement no longer maps 1:1 to the window's stored x/y/width/
+    // height (all interpreted in .desktop's zoomed local coordinate space).
+    // Dividing by zoom converts the real-pixel delta back to local units.
     function onPointerMove(e: PointerEvent) {
       if (dragState.current) {
         const { startX, startY, originX, originY } = dragState.current;
-        move(id, originX + (e.clientX - startX), originY + (e.clientY - startY));
+        move(id, originX + (e.clientX - startX) / zoom, originY + (e.clientY - startY) / zoom);
       } else if (resizeState.current) {
         const { startX, startY, originW, originH } = resizeState.current;
-        resize(id, originW + (e.clientX - startX), originH + (e.clientY - startY));
+        resize(id, originW + (e.clientX - startX) / zoom, originH + (e.clientY - startY) / zoom);
       }
     }
     function onPointerUp() {
@@ -90,7 +94,7 @@ export function Window({
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [id, move, resize]);
+  }, [id, move, resize, zoom]);
 
   if (!win || win.closed || win.minimized) return null;
 
@@ -107,6 +111,7 @@ export function Window({
   if (isTopmost) classNames.push("window--focused");
   else classNames.push("window--inactive");
   if (win.maximized) classNames.push("window--maximized");
+  if (isHoveredFromTaskbar) classNames.push("window--taskbar-hover");
 
   return (
     <div

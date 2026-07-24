@@ -189,34 +189,50 @@ main {
   height: 100%;
 }
 
+/* Tabstrip + url bar, packed tight with no gap between them (one dense
+   "browser chrome" unit), then a clear border marking where the actual
+   page content starts below. */
+.realm-browser__chrome {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+  padding: var(--space-2) var(--space-2) 0;
+  background: var(--bg-inset);
+  border-bottom: 2px solid var(--border-strong);
+}
+
 .realm-browser__tabstrip {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  align-items: flex-end;
+  gap: 1px;
   flex: 0 0 auto;
-  padding-bottom: var(--space-2);
-  margin-bottom: var(--space-2);
-  border-bottom: 1px solid var(--border);
   overflow-x: auto;
 }
 
+/* Real tabs: flat/square, top corners only, no gap-filled pill shape — the
+   active tab's bottom edge merges into the url bar directly beneath it. */
 .realm-browser__tabstrip-item {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  overflow: hidden;
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--bg);
 }
 
 .realm-browser__tabstrip-item[data-active="true"] {
   border-color: var(--window-accent, var(--accent));
+  background: var(--bg-elevated);
 }
 
 .realm-browser__tabstrip-item button:first-child {
   border: none;
   border-radius: 0;
   background: transparent;
+  padding: var(--space-1) var(--space-2);
   font-size: 11px;
   color: var(--text-dim);
   max-width: 160px;
@@ -227,14 +243,13 @@ main {
 
 .realm-browser__tabstrip-item[data-active="true"] button:first-child {
   color: var(--text);
-  background: var(--bg-inset);
 }
 
 .realm-browser__tab-close {
   border: none;
   border-radius: 0;
   background: transparent;
-  padding: var(--space-1);
+  padding: 0 var(--space-1) 0 0;
   color: var(--text-faint);
   font-size: 11px;
 }
@@ -247,9 +262,24 @@ main {
 .realm-browser__tab-new,
 .realm-browser__tab-popout {
   flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--bg);
   font-size: 12px;
   padding: var(--space-1) var(--space-2);
   color: var(--text-dim);
+}
+
+.realm-browser__urlbar {
+  padding: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+
+.realm-browser__urlbar label {
+  margin: 0;
 }
 
 .realm-browser__tabs {
@@ -300,6 +330,53 @@ main {
   flex: 1;
   min-height: 0;
   overflow: auto;
+}
+
+.realm-browser__statusbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+  padding: var(--space-1) var(--space-3);
+  border-top: 1px solid var(--border);
+  background: var(--bg-inset);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.realm-browser__statusbar-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.realm-browser__statusbar-actions button {
+  border: none;
+  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.realm-browser__statusbar-actions button:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.realm-browser__statusbar-actions button[data-active="true"] {
+  color: var(--window-accent, var(--accent));
+}
+
+.realm-browser__statusbar-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  white-space: nowrap;
+}
+
+.realm-browser__statusbar-stats .freshness {
+  margin: 0;
 }
 
 .realm-browser-home {
@@ -655,13 +732,27 @@ main {
 }
 
 .taskbar__item {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--taskbar-accent, var(--border-strong));
+  background: var(--bg-elevated);
+}
+
+.taskbar__item button {
   font-size: 11px;
   font-weight: 700;
-  padding: var(--space-1) var(--space-2);
-  border-radius: 0;
   color: var(--taskbar-accent, var(--text));
-  background: var(--bg-elevated);
-  border-color: var(--taskbar-accent, var(--border-strong));
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.taskbar__item button:first-child {
+  padding: var(--space-1) var(--space-2);
+}
+
+.taskbar__item button:first-child:hover {
+  background: var(--bg-inset);
 }
 
 .taskbar__item-icon {
@@ -671,6 +762,22 @@ main {
 .taskbar__item[data-minimized="true"] {
   opacity: 0.7;
   border-style: dotted;
+}
+
+.taskbar__item[data-focused="true"] {
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--taskbar-accent, var(--accent));
+}
+
+.taskbar__item-close {
+  padding: var(--space-1);
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
+.taskbar__item-close:hover {
+  color: var(--danger);
+  background: var(--bg-inset);
 }
 
 .taskbar__start {
@@ -797,6 +904,13 @@ main {
   top: 0 !important;
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Hovering a taskbar item highlights the window it points at — a ring
+   distinct from the focus box-shadow so both can show at once. */
+.window--taskbar-hover {
+  outline: 2px solid var(--window-accent, var(--accent-cyan));
+  outline-offset: 2px;
 }
 
 .window__titlebar {
