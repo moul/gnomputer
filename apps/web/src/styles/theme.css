@@ -52,7 +52,7 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     --bg: #f6f7f9;
-    --bg-elevated: #ffffff;
+    --bg-elevated: #f8f9fb;
     --bg-inset: #eef0f3;
     --border: #dde1e6;
     --border-strong: #c4cad2;
@@ -77,7 +77,7 @@
 
 :root[data-theme="ascii-light"] {
   --bg: #f6f7f9;
-  --bg-elevated: #ffffff;
+  --bg-elevated: #f8f9fb;
   --bg-inset: #eef0f3;
   --border: #dde1e6;
   --border-strong: #c4cad2;
@@ -101,7 +101,7 @@
 
 :root[data-theme="modern-light"] {
   --bg: #eef1f6;
-  --bg-elevated: #ffffff;
+  --bg-elevated: #f8f9fb;
   --bg-inset: #f5f7fa;
   --border: #e2e6ed;
   --border-strong: #cdd3dd;
@@ -186,7 +186,7 @@
    rather than a light/dark pair the way the other three families are. */
 :root[data-theme="modern-minimal"] {
   --bg: #fcfcfc;
-  --bg-elevated: #ffffff;
+  --bg-elevated: #f8f9fb;
   --bg-inset: #f5f5f5;
   --border: #e8e8e8;
   --border-strong: #d4d4d4;
