@@ -1,22 +1,7 @@
 import { KNOWN_REALMS } from "../known-realms";
 import { useLiveEvents } from "../use-live-events";
+import { rankByActivity } from "../rank-by-activity";
 import { openRef } from "../shell/open-ref";
-
-interface ActivityRow {
-  packagePath: string;
-  eventCount: number;
-}
-
-export function rankByActivity(events: { pkgPath: string | null }[]): ActivityRow[] {
-  const counts = new Map<string, number>();
-  for (const event of events) {
-    if (!event.pkgPath) continue;
-    counts.set(event.pkgPath, (counts.get(event.pkgPath) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([packagePath, eventCount]) => ({ packagePath, eventCount }))
-    .sort((a, b) => b.eventCount - a.eventCount);
-}
 
 // Browsing "the world" the spec describes (§17.2: realms, packages,
 // namespaces, authors, dependency graphs, recently deployed code) mostly
