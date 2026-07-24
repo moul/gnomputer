@@ -7,6 +7,9 @@ export interface RenderNode {
   ref?: EntityRef;
   renderPath?: string;
   children?: RenderNode[];
+  /** The fenced code block's language hint (```go, ```bash, ...), when
+   * present — undefined for a bare ``` fence or any other node type. */
+  lang?: string;
 }
 
 interface ResolvedLink {
@@ -94,8 +97,14 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
       continue;
     }
 
-    if (/^```/.test(trimmed)) {
-      nodes.push({ type: "code", content: trimmed.replace(/^```[a-z]*\n?/, "").replace(/```$/, "") });
+    const fenceMatch = /^```([a-z]*)\n?/.exec(trimmed);
+    if (fenceMatch) {
+      const lang = fenceMatch[1];
+      nodes.push({
+        type: "code",
+        content: trimmed.replace(/^```[a-z]*\n?/, "").replace(/```$/, ""),
+        lang: lang ? lang : undefined,
+      });
       continue;
     }
 

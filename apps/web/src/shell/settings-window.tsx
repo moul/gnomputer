@@ -38,14 +38,14 @@ export function SettingsWindow() {
       defaultGeometry={{ x: 60, y: 60, width: 420, height: 420 }}
     >
       <div className="settings-window">
-        <div className="settings-window__tabs" role="tablist" aria-label="Settings sections">
+        <div className="window-tabbar" role="tablist" aria-label="Settings sections">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               role="tab"
               aria-selected={activeTab === tab.id}
-              className="settings-window__tab"
+              className="window-tab"
               data-active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
             >
@@ -53,7 +53,7 @@ export function SettingsWindow() {
             </button>
           ))}
         </div>
-        <div className="settings-window__body">
+        <div className="window-tabbody">
           {activeTab === "network" && <SettingsNetworkTab />}
           {activeTab === "user" && <SettingsUserTab />}
           {activeTab === "theme" && <SettingsThemeTab />}

@@ -6,6 +6,7 @@ import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
 import { EventExplorer } from "./event-explorer";
 import { Gnockpit } from "./gnockpit";
+import { Resources } from "./resources";
 import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
@@ -61,6 +62,15 @@ export function Home() {
             defaultGeometry={{ x: 180, y: 140, width: 520, height: 440 }}
           >
             <Users />
+          </Window>
+          <Window
+            id="resources"
+            title="Resources"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 220, y: 160, width: 640, height: 500 }}
+          >
+            <Resources />
           </Window>
           <Window
             id="network-monitor"

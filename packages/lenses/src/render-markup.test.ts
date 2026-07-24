@@ -36,6 +36,16 @@ describe("parseRenderMarkup", () => {
     expect(link.renderPath).toBe("?page=2");
   });
 
+  it("captures a fenced code block's language hint", () => {
+    const nodes = parseRenderMarkup("```go\nfunc main() {}\n```", "gno.land/r/demo/foo");
+    expect(nodes[0]).toMatchObject({ type: "code", lang: "go", content: "func main() {}\n" });
+  });
+
+  it("leaves lang undefined for a bare fence", () => {
+    const nodes = parseRenderMarkup("```\nplain text\n```", "gno.land/r/demo/foo");
+    expect(nodes[0]).toMatchObject({ type: "code", lang: undefined });
+  });
+
   it("unescapes markdown-escaped punctuation in text and link labels", () => {
     const nodes = parseRenderMarkup(
       "Add 11 validator\\(s\\) to the valset",

@@ -15,43 +15,52 @@ const highlightStyle = HighlightStyle.define([
   { tag: [tags.string, tags.character], color: "var(--accent-green)" },
   { tag: [tags.number, tags.bool, tags.null], color: "var(--accent-amber)" },
   { tag: tags.comment, color: "var(--text-faint)", fontStyle: "italic" },
-  { tag: [tags.function(tags.variableName), tags.function(tags.definition(tags.variableName))],
-    color: "var(--accent-blue)" },
+  {
+    tag: [tags.function(tags.variableName), tags.function(tags.definition(tags.variableName))],
+    color: "var(--accent-blue)",
+  },
   { tag: [tags.typeName, tags.className], color: "var(--accent-cyan)" },
   { tag: tags.operator, color: "var(--text-dim)" },
   { tag: [tags.variableName, tags.propertyName], color: "var(--text)" },
   { tag: tags.punctuation, color: "var(--text-dim)" },
 ]);
 
-const theme = EditorView.theme({
-  "&": {
-    color: "var(--text)",
-    backgroundColor: "var(--bg-inset)",
-    height: "100%",
-    fontSize: "13px",
-  },
-  ".cm-content": {
-    fontFamily: "var(--font-mono)",
-    caretColor: "var(--text)",
-  },
-  ".cm-gutters": {
-    backgroundColor: "var(--bg-inset)",
-    color: "var(--text-faint)",
-    border: "none",
-  },
-  ".cm-activeLine": { backgroundColor: "var(--bg-elevated)" },
-  ".cm-activeLineGutter": { backgroundColor: "var(--bg-elevated)" },
-  "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-    backgroundColor: "var(--accent-dim)",
-  },
-  "&.cm-focused": { outline: "none" },
-});
+// `fill` (Source lens, the Editor app) sizes to a flex parent's own height;
+// an embedded code block within a longer scrolling document (a realm's
+// Render() output, a docs page) has no such parent, so it caps its own
+// height and scrolls internally past that instead of collapsing to 0.
+function makeTheme(fill: boolean) {
+  return EditorView.theme({
+    "&": {
+      color: "var(--text)",
+      backgroundColor: "var(--bg-inset)",
+      fontSize: "13px",
+      ...(fill ? { height: "100%" } : { maxHeight: "400px" }),
+    },
+    ".cm-content": {
+      fontFamily: "var(--font-mono)",
+      caretColor: "var(--text)",
+    },
+    ".cm-gutters": {
+      backgroundColor: "var(--bg-inset)",
+      color: "var(--text-faint)",
+      border: "none",
+    },
+    ".cm-activeLine": { backgroundColor: "var(--bg-elevated)" },
+    ".cm-activeLineGutter": { backgroundColor: "var(--bg-elevated)" },
+    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
+      backgroundColor: "var(--accent-dim)",
+    },
+    "&.cm-focused": { outline: "none" },
+  });
+}
 
 export function CodeEditor({
   value,
   onChange,
   readOnly = false,
   language = "go",
+  fill = true,
 }: {
   value: string;
   onChange?: (value: string) => void;
@@ -64,6 +73,10 @@ export function CodeEditor({
    * files remounts a fresh editor instead of trying to hot-swap the
    * language of a live instance. */
   language?: "go" | "text";
+  /** False for a code block embedded inside a longer scrolling document
+   * (a realm's Render() output, a docs page) rather than filling a
+   * dedicated pane (the Source lens, the Editor app). */
+  fill?: boolean;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -79,7 +92,7 @@ export function CodeEditor({
     const extensions: Extension[] = [
       readOnly ? minimalSetup : basicSetup,
       ...(language === "go" ? [go(), syntaxHighlighting(highlightStyle)] : []),
-      theme,
+      makeTheme(fill),
       EditorView.editable.of(!readOnly),
       EditorView.lineWrapping,
     ];
@@ -104,8 +117,9 @@ export function CodeEditor({
     // Deliberately mount-once (empty deps): `value` updates after this point
     // are applied via the sync effect below (so external changes, e.g.
     // switching which file is open, replace the doc without tearing down
-    // and losing focus/undo history on every render). `readOnly`/`onChange`
-    // genuinely changing at runtime isn't a case this component supports.
+    // and losing focus/undo history on every render). `readOnly`/`onChange`/
+    // `language`/`fill` genuinely changing at runtime isn't a case this
+    // component supports.
   }, []);
 
   useEffect(() => {

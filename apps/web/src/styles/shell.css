@@ -1411,6 +1411,13 @@ main {
   height: 100%;
 }
 
+.render-code-block {
+  margin: var(--space-3) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
 .state-line {
   padding: var(--space-4);
   color: var(--text-dim);
@@ -1683,13 +1690,60 @@ main {
   margin-top: var(--space-3);
 }
 
-.settings-window {
+.settings-window,
+.resources-window {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.settings-window__tabs {
+.resources-docs {
+  display: flex;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.resources-docs__body {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.resources-awesome-gno,
+.resources-about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.resources-about h2 {
+  margin: 0;
+}
+
+.resources-about__tagline {
+  margin: 0;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.resources-about__repo-link {
+  align-self: flex-start;
+}
+
+.markdown-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.markdown-view h3 {
+  margin: var(--space-2) 0 0;
+}
+
+/* Shared by every tabbed window (Settings, Resources) — not scoped under
+   any particular window's own class, so a new tabbed window just reuses
+   these instead of redefining the same tab-strip look each time. */
+.window-tabbar {
   display: flex;
   gap: 2px;
   padding: var(--space-2) var(--space-2) 0;
@@ -1697,7 +1751,7 @@ main {
   flex: 0 0 auto;
 }
 
-.settings-window__tab {
+.window-tab {
   border: 1px solid transparent;
   border-bottom: none;
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
@@ -1710,13 +1764,13 @@ main {
   padding: var(--space-2) var(--space-3);
 }
 
-.settings-window__tab[data-active="true"] {
+.window-tab[data-active="true"] {
   color: var(--text);
   background: var(--bg-inset);
   border-color: var(--border);
 }
 
-.settings-window__body {
+.window-tabbody {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -2034,7 +2088,7 @@ main {
   font-weight: 600;
 }
 
-:root[data-theme^="modern"] .settings-window__tab {
+:root[data-theme^="modern"] .window-tab {
   text-transform: none;
 }
 
