@@ -31,7 +31,9 @@ export type {
   BlockEvents,
 };
 import { openDatabase, type WorkspaceRecord, type FavoriteRecord } from "@gnomputer/storage";
-import { createTrailApi, type TrailAPI } from "@gnomputer/trails";
+import { createTrailApi, type TrailAPI, type TrailSummary } from "@gnomputer/trails";
+
+export type { TrailSummary };
 import {
   availableLenses,
   parseRenderMarkup,

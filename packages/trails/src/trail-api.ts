@@ -1,5 +1,13 @@
 import type { GnomputerDB, TrailStepRecord } from "@gnomputer/storage";
 
+export interface TrailSummary {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  stepCount: number;
+}
+
 export interface TrailAPI {
   start(name: string): Promise<string>;
   addStep(trailId: string, refUri: string, label: string): Promise<void>;
@@ -7,6 +15,14 @@ export interface TrailAPI {
   getSteps(trailId: string): Promise<TrailStepRecord[]>;
   getActiveTrailId(): Promise<string | null>;
   ensureActiveTrailId(defaultName: string): Promise<string>;
+  /** Every Trail ever started, most recently updated first — "Clear
+   * history" has always started a fresh Trail without deleting the old
+   * one (db.trails rows accumulate), this just makes those past Trails
+   * reachable instead of silently orphaned. */
+  listTrails(): Promise<TrailSummary[]>;
+  /** Switches the active Trail to an existing one (e.g. from listTrails),
+   * without creating a new Trail the way start() does. */
+  setActiveTrail(trailId: string): Promise<void>;
 }
 
 const ACTIVE_TRAIL_META_KEY = "activeTrailId";
@@ -82,6 +98,21 @@ export function createTrailApi(db: GnomputerDB): TrailAPI {
     async getActiveTrailId() {
       const meta = await db.meta.get(ACTIVE_TRAIL_META_KEY);
       return meta?.value ?? null;
+    },
+
+    async listTrails() {
+      const trails = await db.trails.toArray();
+      const withCounts = await Promise.all(
+        trails.map(async (trail) => ({
+          ...trail,
+          stepCount: await db.trailSteps.where("trailId").equals(trail.id).count(),
+        }))
+      );
+      return withCounts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    },
+
+    setActiveTrail(trailId) {
+      return serialize(() => setActiveTrailId(trailId));
     },
   };
 }

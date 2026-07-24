@@ -1463,6 +1463,83 @@ main {
   height: 100%;
 }
 
+.history-window__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.history-window__trail-name {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-1) var(--space-2);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-window__trail-name:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.history-window__rename-form input {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-window__new-trail {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.history-window__trail-list {
+  flex: 0 0 auto;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  max-height: 90px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-window__trail-list button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.history-window__trail-list button[data-active="true"] {
+  color: var(--text);
+  border-left-color: var(--window-accent, var(--accent-green));
+  background: var(--bg-inset);
+}
+
+.history-window__trail-list button:hover {
+  background: var(--bg-inset);
+}
+
+.history-window__trail-steps {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
 .history-list {
   list-style: none;
   margin: 0;
@@ -1473,6 +1550,12 @@ main {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* A subtle breadcrumb feel (spec §4.2) — each step reads as a link in a
+   path, not just a bare list row. */
+.history-list li {
+  border-left: 2px solid var(--border);
 }
 
 .history-list button {
@@ -1495,13 +1578,6 @@ main {
 .history-list button:hover {
   background: var(--bg-inset);
   border-color: var(--border);
-}
-
-.history-window__clear {
-  flex: 0 0 auto;
-  font-size: 11px;
-  color: var(--text-faint);
-  align-self: flex-start;
 }
 
 /* "Modern" theme: a normal-looking desktop instead of the ASCII-art chrome —
