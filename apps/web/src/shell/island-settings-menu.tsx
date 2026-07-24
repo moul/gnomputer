@@ -1,12 +1,9 @@
 import { useThemeStore, THEME_LABELS } from "./theme-store";
 import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
-import { focusOrReopen } from "./open-ref";
 import { openSettings } from "./open-settings";
-import { generalBugReportUrl } from "./bug-report";
-import { useSdk } from "../sdk-context";
+import { SETTINGS_TABS } from "./settings-window";
 
 export function IslandSettingsMenu() {
-  const sdk = useSdk();
   const theme = useThemeStore((s) => s.theme);
   const zoom = useZoomStore((s) => s.zoom);
   const zoomIn = useZoomStore((s) => s.zoomIn);
@@ -33,28 +30,16 @@ export function IslandSettingsMenu() {
           </button>
         </div>
       </div>
-      <button type="button" className="island-menu__action" onClick={() => focusOrReopen("settings")}>
-        Open Settings →
-      </button>
-      <button type="button" className="island-menu__action" onClick={() => openSettings("about")}>
-        About Gnomputer →
-      </button>
-      <a
-        className="island-menu__action"
-        href={`${__GIT_REPO__}/blob/main/CHANGELOG.md`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Changelog ↗
-      </a>
-      <a
-        className="island-menu__action"
-        href={generalBugReportUrl(sdk)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Report a bug ↗
-      </a>
+      {SETTINGS_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          className="island-menu__action"
+          onClick={() => openSettings(tab.id)}
+        >
+          {tab.emoji} {tab.label} →
+        </button>
+      ))}
     </div>
   );
 }

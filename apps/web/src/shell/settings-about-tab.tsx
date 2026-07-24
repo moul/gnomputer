@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSdk } from "../sdk-context";
 import { useRequestStatsStore } from "./request-stats-store";
 import { formatTimeAgo } from "../format-time-ago";
-import { generalBugReportUrl } from "./bug-report";
 
 function formatUptime(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -34,7 +33,11 @@ export function SettingsAboutTab() {
           </a>
         </dd>
         <dt>Commit</dt>
-        <dd>{__GIT_HASH__}</dd>
+        <dd>
+          <a href={`${__GIT_REPO__}/commit/${__GIT_HASH__}`} target="_blank" rel="noreferrer">
+            {__GIT_HASH__}
+          </a>
+        </dd>
         <dt>Build date</dt>
         <dd>
           {new Date(__BUILD_TIME__).toLocaleString()} ({formatTimeAgo(__BUILD_TIME__, now)})
@@ -49,14 +52,6 @@ export function SettingsAboutTab() {
         <dt>Active network</dt>
         <dd>{sdk.networks.getActive().name}</dd>
       </dl>
-      <a
-        className="settings-about__bug-report"
-        href={generalBugReportUrl(sdk)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Report a bug ↗
-      </a>
     </div>
   );
 }

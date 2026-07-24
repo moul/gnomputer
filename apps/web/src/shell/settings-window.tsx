@@ -4,21 +4,25 @@ import { SettingsNetworkTab } from "./settings-network-tab";
 import { SettingsUserTab } from "./settings-user-tab";
 import { SettingsThemeTab } from "./settings-theme-tab";
 import { SettingsAboutTab } from "./settings-about-tab";
+import { SettingsBugTab } from "./settings-bug-tab";
+import { SettingsChangelogTab } from "./settings-changelog-tab";
 import { useTrailRecorder } from "../use-trail-recorder";
 
-const TABS: { id: SettingsTab; label: string }[] = [
-  { id: "network", label: "Network" },
-  { id: "user", label: "User" },
-  { id: "theme", label: "Theme" },
-  { id: "about", label: "About" },
+// Single source of truth for a tab's emoji + label — the island Settings
+// dropdown (island-settings-menu.tsx) mirrors this list so every dropdown
+// entry matches its in-window tab exactly, one entry each, no duplicates.
+export const SETTINGS_TABS: { id: SettingsTab; emoji: string; label: string }[] = [
+  { id: "network", emoji: "📡", label: "Network" },
+  { id: "user", emoji: "👤", label: "User" },
+  { id: "theme", emoji: "🎨", label: "Theme" },
+  { id: "about", emoji: "ℹ️", label: "About" },
+  { id: "bug", emoji: "🐛", label: "Report a bug" },
+  { id: "changelog", emoji: "📜", label: "Changelog" },
 ];
 
-const TAB_LABEL: Record<SettingsTab, string> = {
-  network: "Network",
-  user: "User",
-  theme: "Theme",
-  about: "About",
-};
+const TAB_LABEL: Record<SettingsTab, string> = Object.fromEntries(
+  SETTINGS_TABS.map((t) => [t.id, t.label]),
+) as Record<SettingsTab, string>;
 
 export function SettingsWindow() {
   const activeTab = useSettingsUiStore((s) => s.activeTab);
@@ -39,7 +43,7 @@ export function SettingsWindow() {
     >
       <div className="settings-window">
         <div className="window-tabbar" role="tablist" aria-label="Settings sections">
-          {TABS.map((tab) => (
+          {SETTINGS_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -49,7 +53,7 @@ export function SettingsWindow() {
               data-active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
             >
-              {tab.label}
+              {tab.emoji} {tab.label}
             </button>
           ))}
         </div>
@@ -58,6 +62,8 @@ export function SettingsWindow() {
           {activeTab === "user" && <SettingsUserTab />}
           {activeTab === "theme" && <SettingsThemeTab />}
           {activeTab === "about" && <SettingsAboutTab />}
+          {activeTab === "bug" && <SettingsBugTab />}
+          {activeTab === "changelog" && <SettingsChangelogTab />}
         </div>
       </div>
     </Window>
