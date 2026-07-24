@@ -2,15 +2,25 @@ import { useThemeStore, THEME_LABELS, type ThemeId } from "./theme-store";
 import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 
 // Display order for the grid — deliberately not THEME_ORDER (the cycle-button
-// order): ASCII on top, Clean (modern) on the bottom, Light on the left,
-// Dark on the right, so the 2x2 layout reads as two clear axes.
-const THEME_GRID_ORDER: ThemeId[] = ["ascii-light", "ascii-dark", "modern-light", "modern-dark"];
+// order): ASCII on top, Clean (modern) in the middle, both as light/dark
+// pairs so that block reads as two clear axes; the two standalone opinionated
+// themes (each a deliberate one-off, not part of a light/dark pair) go last.
+const THEME_GRID_ORDER: ThemeId[] = [
+  "ascii-light",
+  "ascii-dark",
+  "modern-light",
+  "modern-dark",
+  "ascii-cypherpunk",
+  "modern-minimal",
+];
 
 const THEME_PREVIEW: Record<ThemeId, string> = {
   "ascii-dark": "◐",
   "ascii-light": "◑",
   "modern-light": "◈",
   "modern-dark": "◆",
+  "ascii-cypherpunk": "▓",
+  "modern-minimal": "○",
 };
 
 const THEME_DESCRIPTION: Record<ThemeId, string> = {
@@ -18,6 +28,8 @@ const THEME_DESCRIPTION: Record<ThemeId, string> = {
   "ascii-light": "Same ASCII look, light background.",
   "modern-light": "Rounded windows, no ASCII glyphs, light background.",
   "modern-dark": "Rounded windows, no ASCII glyphs, dark background.",
+  "ascii-cypherpunk": "ANSI-bright green-on-black terminal, loud on purpose.",
+  "modern-minimal": "Near-grayscale and quiet, light background.",
 };
 
 export function SettingsThemeTab() {
