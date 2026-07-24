@@ -25,6 +25,7 @@ import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
+import { CodeEditor } from "../shell/code-editor-lazy";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
@@ -530,7 +531,16 @@ function RenderNodeView({ node, windowId }: { node: RenderNode; windowId: string
         </h2>
       );
     case "code":
-      return <pre>{node.content}</pre>;
+      return (
+        <div className="render-code-block">
+          <CodeEditor
+            value={node.content ?? ""}
+            readOnly
+            fill={false}
+            language={node.lang === undefined || node.lang === "go" || node.lang === "gno" ? "go" : "text"}
+          />
+        </div>
+      );
     case "link":
       return <GnoLink node={node} windowId={windowId} />;
     case "paragraph":
