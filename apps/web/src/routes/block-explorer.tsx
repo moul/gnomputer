@@ -52,7 +52,7 @@ export function BlockExplorer() {
 
   useTrailRecorder({
     uri: `gno://${networkId}/block/${height ?? ""}`,
-    label: height !== null ? `Block #${height}` : "Block Explorer",
+    label: height !== null ? `Block #${height.toLocaleString()}` : "Block Explorer",
   });
 
   const {
@@ -122,7 +122,7 @@ export function BlockExplorer() {
                     className="activity-list__height"
                     onClick={() => selectBlock(b.height)}
                   >
-                    #{b.height}
+                    #{b.height.toLocaleString()}
                   </button>
                   <span className="activity-list__txs">
                     {b.numTxs} {b.numTxs === 1 ? "transaction" : "transactions"}
@@ -200,7 +200,7 @@ export function BlockExplorer() {
               <Freshness dataUpdatedAt={dataUpdatedAt} />
               <dl className="account-fields">
                 <dt>Height</dt>
-                <dd>#{block.height}</dd>
+                <dd>#{block.height.toLocaleString()}</dd>
                 <dt>Time</dt>
                 <dd>{block.time}</dd>
                 <dt>Transactions</dt>

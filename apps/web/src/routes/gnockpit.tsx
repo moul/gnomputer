@@ -50,7 +50,7 @@ export function Gnockpit() {
         <dt>Chain ID</dt>
         <dd>{status.data.chainId}</dd>
         <dt>Latest height</dt>
-        <dd>#{status.data.latestHeight}</dd>
+        <dd>#{status.data.latestHeight.toLocaleString()}</dd>
         <dt>RPC latency</dt>
         <dd>{status.data.latencyMs}ms</dd>
         <dt>Validators</dt>
@@ -59,7 +59,7 @@ export function Gnockpit() {
             ? "Loading…"
             : validators.error
               ? "Not available"
-              : `${validators.data.validators.length} · ${totalPower} total voting power`}
+              : `${validators.data.validators.length} · ${totalPower!.toLocaleString()} total voting power`}
         </dd>
       </dl>
       {network.gnockpitUrl ? (

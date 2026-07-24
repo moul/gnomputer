@@ -29,7 +29,7 @@ export function RealmHistory({ packagePath }: { packagePath: string }) {
                   className="event-list__height"
                   onClick={(e) => openRef(`gno://_/block/${event.height}`, { x: e.clientX, y: e.clientY })}
                 >
-                  #{event.height}
+                  #{event.height.toLocaleString()}
                 </button>
                 <span className="event-list__type">{event.type}</span>
               </div>
