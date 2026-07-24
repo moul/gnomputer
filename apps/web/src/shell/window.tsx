@@ -38,9 +38,11 @@ export function Window({
   const minimize = useWindowStore((s) => s.minimize);
   const toggleMaximize = useWindowStore((s) => s.toggleMaximize);
   const win = useWindowStore((s) => s.windows[id]);
+  const overviewOpen = useWindowStore((s) => s.overviewOpen);
+  const closeOverview = useWindowStore((s) => s.closeOverview);
   const isModern = useThemeStore((s) => s.theme.startsWith("modern"));
   const zoom = useZoomStore((s) => s.zoom);
-  const isHoveredFromTaskbar = useShellStore((s) => s.hoveredWindowId === id);
+  const isHoveredFromIsland = useShellStore((s) => s.hoveredWindowIds.includes(id));
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
       .filter((w) => !w.closed && !w.minimized)
@@ -111,7 +113,7 @@ export function Window({
   if (isTopmost) classNames.push("window--focused");
   else classNames.push("window--inactive");
   if (win.maximized) classNames.push("window--maximized");
-  if (isHoveredFromTaskbar) classNames.push("window--taskbar-hover");
+  if (isHoveredFromIsland) classNames.push("window--island-hover");
 
   return (
     <div
@@ -120,7 +122,13 @@ export function Window({
       role="region"
       aria-label={title}
       style={style}
-      onPointerDown={() => focus(id)}
+      onPointerDown={() => {
+        // In overview mode, everything but this outer element has
+        // pointer-events:none (styles/shell.css), so this fires for a click
+        // anywhere on the window — "pick this one" exits overview too.
+        if (overviewOpen) closeOverview();
+        focus(id);
+      }}
     >
       <div
         className="window__titlebar"
