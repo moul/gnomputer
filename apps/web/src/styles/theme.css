@@ -28,6 +28,9 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  /* Mirrors ISLAND_CLEARANCE_PX in shell/viewport.ts — CSS can't import a
+     TS constant, so this has to be kept in sync by hand. */
+  --island-clearance: 56px;
   --font-sans:
     -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono:

@@ -35,14 +35,20 @@ function issueUrl(error: Error): string {
   return `${__GIT_REPO__}/issues/new?${params.toString()}`;
 }
 
-export function AppErrorFallback({ error }: { error: Error }) {
+/** `inline`: this crash was caught by a small local ErrorBoundary around
+ * one piece of chrome (island bar, command palette) — the rest of the app
+ * is still alive underneath, so this must NOT force a full-viewport
+ * takeover the way the router's route-level fallback does, or it would
+ * shove the still-working desktop out of view below the fold. */
+export function AppErrorFallback({ error, inline = false }: { error: Error; inline?: boolean }) {
   const [show, setShow] = useState(false);
 
-  return (
+  const card = (
     <div className="app-error">
+      <span className="app-error__brand">Gnomputer</span>
       <div className="app-error__header">
         <strong>Something went wrong!</strong>
-        <button type="button" onClick={() => setShow((s) => !s)}>
+        <button type="button" className="app-error__toggle" onClick={() => setShow((s) => !s)}>
           {show ? "Hide Error" : "Show Error"}
         </button>
       </div>
@@ -52,7 +58,7 @@ export function AppErrorFallback({ error }: { error: Error }) {
         </pre>
       )}
       <div className="app-error__actions">
-        <button type="button" onClick={clearStateAndReload}>
+        <button type="button" className="app-error__primary" onClick={clearStateAndReload}>
           Clear state &amp; reload
         </button>
         <a href={issueUrl(error)} target="_blank" rel="noreferrer">
@@ -66,4 +72,7 @@ export function AppErrorFallback({ error }: { error: Error }) {
       </p>
     </div>
   );
+
+  if (inline) return <div className="app-error-inline">{card}</div>;
+  return <div className="app-error-page">{card}</div>;
 }

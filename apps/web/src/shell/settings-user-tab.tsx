@@ -30,6 +30,11 @@ export function SettingsUserTab() {
         <label>
           Look up an account
           <input
+            type="text"
+            autoComplete="off"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
             value={draftAddress}
             onChange={(e) => setDraftAddress(e.target.value)}
             placeholder="g1..."

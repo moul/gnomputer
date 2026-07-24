@@ -63,7 +63,16 @@ export function Users() {
       >
         <label>
           Look up a user
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="test1 or g1…" />
+          <input
+            type="text"
+            autoComplete="off"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="test1 or g1…"
+          />
         </label>
         <button type="submit" disabled={!draft.trim()}>
           Search
