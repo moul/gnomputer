@@ -2,7 +2,6 @@ import type { WindowRecord } from "./window-store";
 
 export interface FamilyFocusActions {
   focus: (id: string) => void;
-  restore: (id: string) => void;
   reopen: (id: string) => void;
 }
 
@@ -24,9 +23,7 @@ export function focusFamilyOrOpenDefault(
     if (!best || w.zIndex > best.zIndex) best = { id, zIndex: w.zIndex };
   }
   if (best) {
-    const w = windows[best.id]!;
-    if (w.minimized) actions.restore(best.id);
-    else actions.focus(best.id);
+    actions.focus(best.id);
     return best.id;
   }
   actions.reopen(defaultId);

@@ -59,7 +59,6 @@ const ISLAND_ICONS = buildIslandIcons();
 export function IslandBar() {
   const windows = useWindowStore((s) => s.windows);
   const focus = useWindowStore((s) => s.focus);
-  const restore = useWindowStore((s) => s.restore);
   const reopen = useWindowStore((s) => s.reopen);
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const closeOverview = useWindowStore((s) => s.closeOverview);
@@ -85,7 +84,6 @@ export function IslandBar() {
       }
       const focusedId = focusFamilyOrOpenDefault(familyIds, icon.defaultId, windows, {
         focus,
-        restore,
         reopen,
       });
       scrollToWindow(focusedId);
@@ -93,7 +91,6 @@ export function IslandBar() {
     }
     const focusedId = focusFamilyOrOpenDefault(icon.memberIds, icon.defaultId, windows, {
       focus,
-      restore,
       reopen,
     });
     scrollToWindow(focusedId);

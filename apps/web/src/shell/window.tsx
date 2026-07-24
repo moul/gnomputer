@@ -45,7 +45,7 @@ export function Window({
   const isHoveredFromIsland = useShellStore((s) => s.hoveredWindowIds.includes(id));
   const isTopmost = useWindowStore((s) => {
     const zIndexes = Object.values(s.windows)
-      .filter((w) => !w.closed && !w.minimized)
+      .filter((w) => !w.closed)
       .map((w) => w.zIndex);
     return win !== undefined && win.zIndex === Math.max(...zIndexes);
   });
@@ -100,7 +100,7 @@ export function Window({
 
   const overviewGeometry = useOverviewGeometry(id);
 
-  if (!win || win.closed || win.minimized) return null;
+  if (!win || win.closed) return null;
 
   const geo = overviewGeometry ?? win;
   const isInteracting = dragState.current !== null || resizeState.current !== null;

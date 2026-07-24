@@ -14,7 +14,6 @@ export interface WindowRecord extends WindowGeometry {
   title: string;
   zIndex: number;
   closed: boolean;
-  minimized: boolean;
   maximized: boolean;
   preMaximizeGeometry: WindowGeometry | null;
 }
@@ -38,7 +37,7 @@ interface WindowManagerState {
   resize: (id: string, width: number, height: number) => void;
   close: (id: string) => void;
   /** Closes every currently-open window at once (overview mode's "close all
-   * windows" button) — leaves closed/minimized windows untouched. */
+   * windows" button) — leaves already-closed windows untouched. */
   closeAll: () => void;
   /** Deletes the window entirely rather than marking it closed — for
    * dynamically-created windows (e.g. a popped-out realm browser instance)
@@ -50,8 +49,6 @@ interface WindowManagerState {
    * the cursor instead of always dead-center. No-ops for a maximized window,
    * same as move(). */
   placeNear: (id: string, client: { x: number; y: number }) => void;
-  minimize: (id: string) => void;
-  restore: (id: string) => void;
   toggleMaximize: (id: string, bounds: { width: number; height: number }) => void;
 }
 
@@ -134,7 +131,6 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
           title,
           zIndex: nextZ,
           closed: options?.startClosed ?? false,
-          minimized: false,
           maximized: startMaximized,
           preMaximizeGeometry: null,
         },
@@ -211,22 +207,9 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     set((state) => ({
       windows: {
         ...state.windows,
-        [id]: { ...state.windows[id]!, closed: false, minimized: false },
+        [id]: { ...state.windows[id]!, closed: false },
       },
     }));
-  },
-
-  minimize: (id) => {
-    const win = get().windows[id];
-    if (!win) return;
-    set((state) => ({ windows: { ...state.windows, [id]: { ...win, minimized: true } } }));
-  },
-
-  restore: (id) => {
-    const win = get().windows[id];
-    if (!win) return;
-    get().focus(id);
-    set((state) => ({ windows: { ...state.windows, [id]: { ...win, minimized: false } } }));
   },
 
   toggleMaximize: (id, bounds) => {
@@ -271,7 +254,7 @@ export function useFocusedWindow(): { id: string; title: string } | null {
     useShallow((s) => {
       let top: { id: string; title: string; zIndex: number } | null = null;
       for (const [id, w] of Object.entries(s.windows)) {
-        if (w.closed || w.minimized) continue;
+        if (w.closed) continue;
         if (!top || w.zIndex > top.zIndex) top = { id, title: w.title, zIndex: w.zIndex };
       }
       return top ? { id: top.id, title: top.title } : null;

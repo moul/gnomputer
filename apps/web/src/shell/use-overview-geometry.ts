@@ -13,7 +13,7 @@ export function useOverviewGeometry(id: string): OverviewRect | null {
   if (!overviewOpen) return null;
 
   const entries = Object.entries(windows)
-    .filter(([, w]) => !w.closed && !w.minimized)
+    .filter(([, w]) => !w.closed)
     .sort((a, b) => b[1].zIndex - a[1].zIndex)
     .map(([entryId, w]) => ({ id: entryId, width: w.width, height: w.height }));
 

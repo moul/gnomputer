@@ -17,7 +17,7 @@ export function focusOrReopen(id: string, origin?: ClickOrigin) {
   const win = useWindowStore.getState().windows[id];
   if (!win) return;
   if (origin) useWindowStore.getState().placeNear(id, origin);
-  if (win.closed || win.minimized) useWindowStore.getState().reopen(id);
+  if (win.closed) useWindowStore.getState().reopen(id);
   else useWindowStore.getState().focus(id);
 }
 
