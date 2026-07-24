@@ -1,12 +1,40 @@
 import { useEffect, useRef } from "react";
 import { useSdk } from "../sdk-context";
-import { useRealmTabsStore, type RealmTab } from "./realm-tabs-store";
+import { useRealmTabsStore, type RealmTab, type RealmLens } from "./realm-tabs-store";
 
 const STORAGE_KEY = "realm-tabs";
+
+const REALM_LENSES: RealmLens[] = ["render", "source", "docs", "state", "history", "actions", "graph", "raw"];
 
 interface PersistedRealmTabs {
   windows: Record<string, { tabs: RealmTab[]; activeTabId: string }>;
   extraWindowIds: string[];
+}
+
+export function isRealmTab(value: unknown): value is RealmTab {
+  if (typeof value !== "object" || value === null) return false;
+  const t = value as Record<string, unknown>;
+  return (
+    typeof t.id === "string" &&
+    typeof t.packagePath === "string" &&
+    typeof t.renderPath === "string" &&
+    typeof t.lens === "string" &&
+    (REALM_LENSES as string[]).includes(t.lens)
+  );
+}
+
+/** Keeps only entries whose shape still matches what this app version
+ * expects — an old/renamed field from a previous schema falls back to
+ * defaults for just that entry rather than crashing the desktop or
+ * restoring a half-valid tab set. */
+export function filterValidRealmTabWindows(parsed: unknown): PersistedRealmTabs["windows"] {
+  if (typeof parsed !== "object" || parsed === null) return {};
+  const entries = Object.entries(parsed as Record<string, unknown>).filter(([, v]) => {
+    if (typeof v !== "object" || v === null) return false;
+    const win = v as Record<string, unknown>;
+    return typeof win.activeTabId === "string" && Array.isArray(win.tabs) && win.tabs.every(isRealmTab);
+  });
+  return Object.fromEntries(entries) as PersistedRealmTabs["windows"];
 }
 
 function maxSuffix(id: string, prefix: string): number {
@@ -24,10 +52,15 @@ export function useRealmTabsPersistence() {
       const raw = await sdk.uiState.get(STORAGE_KEY);
       if (!cancelled && raw) {
         try {
-          const saved = JSON.parse(raw) as PersistedRealmTabs;
+          const parsed: unknown = JSON.parse(raw);
+          const savedWindows = filterValidRealmTabWindows((parsed as Partial<PersistedRealmTabs>)?.windows);
+          const savedExtraIds = (parsed as Partial<PersistedRealmTabs>)?.extraWindowIds;
           useRealmTabsStore.setState((state) => {
-            const windows = { ...state.windows, ...saved.windows };
-            const extraWindowIds = saved.extraWindowIds ?? state.extraWindowIds;
+            const windows = { ...state.windows, ...savedWindows };
+            const extraWindowIds =
+              Array.isArray(savedExtraIds) && savedExtraIds.every((id) => typeof id === "string")
+                ? savedExtraIds
+                : state.extraWindowIds;
             // Same class of bug as window zIndex: the tab/window id sequence
             // counters aren't part of what's restored, so they'd reset low
             // and could mint an id that collides with one still present in
