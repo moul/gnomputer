@@ -2692,8 +2692,48 @@ main {
     to bottom,
     rgba(51, 255, 51, 0) 0px,
     rgba(51, 255, 51, 0) 2px,
-    rgba(51, 255, 51, 0.025) 3px
+    rgba(51, 255, 51, 0.04) 3px
   );
+  animation: cypherpunk-flicker 6s linear infinite;
+}
+
+/* A CRT vignette darkening the desktop's corners, separate from the
+   scanline layer so the two textures can animate independently. */
+:root[data-theme="ascii-cypherpunk"] .desktop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+@keyframes cypherpunk-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.85;
+  }
+  98% {
+    opacity: 1;
+  }
+  99% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes cypherpunk-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 :root[data-theme="ascii-cypherpunk"] .window {
@@ -2713,8 +2753,29 @@ main {
   text-shadow: 0 0 6px currentColor;
 }
 
+/* A terminal-prompt "> " before every window title, with a blinking block
+   caret after the island clock — the two spots this theme reads most like
+   an actual terminal rather than a recolored window manager. */
+:root[data-theme="ascii-cypherpunk"] .window__title::before {
+  content: "> ";
+  opacity: 0.7;
+}
+
+:root[data-theme="ascii-cypherpunk"] .island__clock::after {
+  content: "▋";
+  margin-left: 2px;
+  animation: cypherpunk-caret 1s step-end infinite;
+}
+
 :root[data-theme="ascii-cypherpunk"] .island {
   box-shadow: var(--shadow-modal), 0 0 0 1px rgba(51, 255, 51, 0.2);
+}
+
+:root[data-theme="ascii-cypherpunk"] button:focus-visible,
+:root[data-theme="ascii-cypherpunk"] input:focus-visible,
+:root[data-theme="ascii-cypherpunk"] textarea:focus-visible,
+:root[data-theme="ascii-cypherpunk"] select:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 12px 2px var(--accent);
 }
 
 /* Minimal: distinct from modern-dark/light by being quieter, not just
@@ -2724,10 +2785,19 @@ main {
 :root[data-theme="modern-minimal"] .window {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   border-color: var(--border);
+  /* Every other theme colors each window's titlebar/border/tab-underline
+     by app (--window-accent, set inline per Window instance) — minimal
+     drops that instead of just muting it, so windows read as identical
+     quiet chrome distinguished only by title and content. The !important
+     is load-bearing: --window-accent is set via inline style, which
+     otherwise always wins over an author rule at any selector specificity. */
+  --window-accent: var(--text-dim) !important;
 }
 
+/* No accent-colored per-window ring — every window reads the same quiet
+   neutral, distinguished by title and content alone rather than color. */
 :root[data-theme="modern-minimal"] .window--focused {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--window-accent, var(--accent-cyan));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--border-strong);
 }
 
 :root[data-theme="modern-minimal"] .window__titlebar {
@@ -2743,6 +2813,22 @@ main {
 :root[data-theme="modern-minimal"] .island {
   box-shadow: none;
   border-color: var(--border);
+}
+
+/* Square off the pill-shaped island icons (hard-coded 999px, so the
+   theme's --radius: 0 override doesn't reach them) and drain their color —
+   minimal reads as quiet everywhere, not just in window chrome. */
+:root[data-theme="modern-minimal"] .island__icon {
+  border-radius: 0;
+  filter: grayscale(1);
+}
+
+:root[data-theme="modern-minimal"] .island__icon:hover {
+  filter: grayscale(0.4);
+}
+
+:root[data-theme="modern-minimal"] .island__icon-dot {
+  background: var(--text-dim);
 }
 
 .entity-link {
