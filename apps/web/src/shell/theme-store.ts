@@ -22,7 +22,7 @@ function applyTheme(theme: ThemeId) {
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: "ascii-dark",
+  theme: "ascii-light",
   setTheme: (theme) => {
     applyTheme(theme);
     set({ theme });
