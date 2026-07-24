@@ -17,6 +17,7 @@ import { RealmGraph } from "./realm-graph";
 import { RealmRaw } from "./realm-raw";
 import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
+import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import type { RenderNode } from "@gnomputer/lenses";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
@@ -142,8 +143,11 @@ export function RealmBrowser({
 function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   const sdk = useSdk();
   const [draftPackagePath, setDraftPackagePath] = useState(tab.packagePath);
+  const [focused, setFocused] = useState(false);
   const hasPackage = tab.packagePath !== "";
   const gnowebUrl = sdk.networks.getActive().gnowebUrl;
+  const suggestions = useRealmSuggestions(focused);
+  const suggestionsListId = `realm-suggestions-${windowId}`;
 
   useEffect(() => {
     setDraftPackagePath(tab.packagePath);
@@ -167,8 +171,16 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
         <input
           value={draftPackagePath}
           onChange={(e) => setDraftPackagePath(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          list={suggestionsListId}
           placeholder="gno.land/r/sys/names"
         />
+        <datalist id={suggestionsListId}>
+          {suggestions.map((s) => (
+            <option key={s.packagePath} value={s.packagePath} label={s.label} />
+          ))}
+        </datalist>
       </label>
       <button type="submit">Open</button>
       {hasPackage && (

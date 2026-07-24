@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rankByActivity } from "./world-explorer";
+import { rankByActivity } from "./rank-by-activity";
 
 describe("rankByActivity", () => {
   it("tallies event counts per pkgPath, most active first", () => {

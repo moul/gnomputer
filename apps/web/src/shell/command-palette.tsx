@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useShellStore } from "../store";
 import { matchWholeEntity } from "./entity-patterns";
 import { openEntityMatch } from "./open-ref";
+import { useRealmSuggestions } from "./use-realm-suggestions";
 
 export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen } = useShellStore();
   const [query, setQuery] = useState("");
   const [notFound, setNotFound] = useState(false);
+  const suggestions = useRealmSuggestions(commandPaletteOpen);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -62,6 +64,7 @@ export function CommandPalette() {
             data-1p-ignore="true"
             data-lpignore="true"
             data-bwignore="true"
+            list="command-palette-suggestions"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -69,6 +72,11 @@ export function CommandPalette() {
             }}
             placeholder="g1 address, #block, r/realm/path…"
           />
+          <datalist id="command-palette-suggestions">
+            {suggestions.map((s) => (
+              <option key={s.packagePath} value={s.packagePath} label={s.label} />
+            ))}
+          </datalist>
         </form>
         {notFound && (
           <p className="command-palette__hint">
