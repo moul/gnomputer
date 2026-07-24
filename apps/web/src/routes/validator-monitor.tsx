@@ -39,8 +39,8 @@ export function ValidatorMonitor() {
     <div className="validator-monitor">
       <Freshness dataUpdatedAt={dataUpdatedAt} />
       <p className="state-line">
-        {data.validators.length} validators · {totalPower} total voting power · at height #
-        {data.height}
+        {data.validators.length} validators · {totalPower.toLocaleString()} total voting power · at height #
+        {data.height.toLocaleString()}
       </p>
       <ul className="validator-list">
         {sorted.map((v) => (

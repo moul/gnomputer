@@ -32,7 +32,7 @@ export function NetworkMonitor() {
             className="network-monitor__height-link"
             onClick={(e) => openRef(`gno://_/block/${data.latestHeight}`, { x: e.clientX, y: e.clientY })}
           >
-            #{data.latestHeight}
+            #{data.latestHeight.toLocaleString()}
           </button>
         </dd>
         <dt>RPC latency</dt>

@@ -265,15 +265,17 @@
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--text);
+  color: var(--accent);
   font-family: var(--font-mono);
   font-weight: 700;
+  text-decoration: underline;
+  text-decoration-style: dotted;
 }
 
 .island-menu__inline-link:hover {
   background: transparent;
   color: var(--accent);
-  text-decoration: underline;
+  text-decoration-style: solid;
 }
 
 .island__clock-popover-time {
@@ -1789,7 +1791,9 @@ main {
   border: none;
   padding: 0;
   font-family: var(--font-mono);
-  color: var(--text);
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
   flex: 0 0 90px;
   text-align: left;
 }
@@ -1797,7 +1801,7 @@ main {
 .activity-list__height:hover {
   background: transparent;
   color: var(--accent);
-  text-decoration: underline;
+  text-decoration-style: solid;
 }
 
 .activity-list__txs {
@@ -1834,13 +1838,15 @@ main {
   border: none;
   padding: 0;
   font-family: var(--font-mono);
-  color: var(--text);
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
 }
 
 .network-monitor__height-link:hover {
   background: transparent;
   color: var(--accent);
-  text-decoration: underline;
+  text-decoration-style: solid;
 }
 
 .users-app {
@@ -2610,7 +2616,9 @@ main {
   border: none;
   padding: 0;
   font-family: var(--font-mono);
-  color: var(--text);
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
   flex: 0 0 auto;
 }
 

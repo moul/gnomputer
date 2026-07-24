@@ -6,15 +6,19 @@ const CHECK_INTERVAL_MS = 5 * 60 * 1000;
 
 interface VersionFile {
   hash: string;
+  buildTime: string;
 }
 
-/** True once version.json (vite.config.ts's writeVersionJson()) reports a
- * git hash different from this tab's own __GIT_HASH__ — i.e. a newer build
- * has been deployed since this tab loaded. Polls on an interval and again
- * whenever the tab regains focus, so a deploy that happened while the tab
- * was backgrounded is caught without waiting for the next tick. */
-export function useVersionCheck(): boolean {
-  const [newVersionAvailable, setNewVersionAvailable] = useState(false);
+/** The deployed version.json's contents once it reports a git hash
+ * different from this tab's own __GIT_HASH__ (i.e. a newer build has been
+ * deployed since this tab loaded), or null otherwise. Polls on an interval
+ * and again whenever the tab regains focus, so a deploy that happened
+ * while the tab was backgrounded is caught without waiting for the next
+ * tick. Returns the new build's own hash/buildTime (not just a boolean) so
+ * the update banner can show what's actually new, not just that something
+ * is. */
+export function useVersionCheck(): VersionFile | null {
+  const [newVersion, setNewVersion] = useState<VersionFile | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +30,7 @@ export function useVersionCheck(): boolean {
         if (!res.ok) return;
         const data = (await res.json()) as VersionFile;
         if (!cancelled && data.hash && data.hash !== __GIT_HASH__) {
-          setNewVersionAvailable(true);
+          setNewVersion(data);
         }
       } catch {
         // Offline or a transient network hiccup — this is purely
@@ -48,5 +52,5 @@ export function useVersionCheck(): boolean {
     };
   }, []);
 
-  return newVersionAvailable;
+  return newVersion;
 }

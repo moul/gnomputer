@@ -27,7 +27,7 @@ export function EventExplorer() {
                   className="event-list__height"
                   onClick={(e) => openRef(`gno://_/block/${event.height}`, { x: e.clientX, y: e.clientY })}
                 >
-                  #{event.height}
+                  #{event.height.toLocaleString()}
                 </button>
                 <span className="event-list__type">{event.type}</span>
                 {event.pkgPath && <span className="event-list__pkg">{event.pkgPath}</span>}

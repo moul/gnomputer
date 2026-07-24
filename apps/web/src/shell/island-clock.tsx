@@ -85,7 +85,7 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
                 className="island-menu__inline-link"
                 onClick={(e) => openRef(`gno://_/block/${data.latestHeight}`, { x: e.clientX, y: e.clientY })}
               >
-                #{data.latestHeight}
+                #{data.latestHeight.toLocaleString()}
               </button>
             ) : (
               "—"

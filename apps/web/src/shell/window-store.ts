@@ -60,30 +60,31 @@ const MIN_HEIGHT = 180;
 // window can show up off in a corner.
 const CENTER_JITTER_RATIO = 0.25;
 
-// Never place a window's top edge above the island bar. Shared by every
-// placement strategy below (centered-random, near-click) so none of them can
-// tuck a window under the island or off the edge of the desktop.
+// The island's bottom edge is an invisible wall — nothing (initial
+// placement, drag, resize-driven reflow) may ever put a window's top edge
+// above it, full stop, even if the window is taller than the available
+// desktop height below that line (better to let it run off the bottom,
+// where it's still draggable/scrollable, than hide the titlebar behind the
+// island where it can't be interacted with at all).
 function clampWindowOrigin(x: number, y: number, size: { width: number; height: number }): { x: number; y: number } {
   const bounds = desktopBounds();
   const maxX = Math.max(0, bounds.width - size.width);
-  const minY = Math.min(ISLAND_CLEARANCE_PX, Math.max(0, bounds.height - size.height));
-  const maxY = Math.max(minY, bounds.height - size.height);
+  const maxY = Math.max(ISLAND_CLEARANCE_PX, bounds.height - size.height);
   return {
     x: Math.round(Math.min(maxX, Math.max(0, x))),
-    y: Math.round(Math.min(maxY, Math.max(minY, y))),
+    y: Math.round(Math.min(maxY, Math.max(ISLAND_CLEARANCE_PX, y))),
   };
 }
 
 function centeredRandomPosition(size: { width: number; height: number }): { x: number; y: number } {
   const bounds = desktopBounds();
   const maxX = Math.max(0, bounds.width - size.width);
-  const minY = Math.min(ISLAND_CLEARANCE_PX, Math.max(0, bounds.height - size.height));
-  const maxY = Math.max(minY, bounds.height - size.height);
+  const maxY = Math.max(ISLAND_CLEARANCE_PX, bounds.height - size.height);
 
   const centerX = maxX / 2;
-  const centerY = minY + (maxY - minY) / 2;
+  const centerY = ISLAND_CLEARANCE_PX + (maxY - ISLAND_CLEARANCE_PX) / 2;
   const jitterX = (Math.random() - 0.5) * maxX * CENTER_JITTER_RATIO;
-  const jitterY = (Math.random() - 0.5) * (maxY - minY) * CENTER_JITTER_RATIO;
+  const jitterY = (Math.random() - 0.5) * (maxY - ISLAND_CLEARANCE_PX) * CENTER_JITTER_RATIO;
 
   return clampWindowOrigin(centerX + jitterX, centerY + jitterY, size);
 }
@@ -103,7 +104,14 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
   topZIndex: 1,
   overviewOpen: false,
 
-  toggleOverview: () => set((s) => ({ overviewOpen: !s.overviewOpen })),
+  toggleOverview: () =>
+    set((s) => {
+      if (s.overviewOpen) return { overviewOpen: false };
+      // Nothing to compare/expose with 0 or 1 window open — entering
+      // overview would just show one tile (or none) with no point to it.
+      const openCount = Object.values(s.windows).filter((w) => !w.closed).length;
+      return openCount >= 2 ? { overviewOpen: true } : {};
+    }),
   closeOverview: () => set({ overviewOpen: false }),
 
   ensureWindow: (id, title, defaults, options) => {
@@ -152,7 +160,7 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     const win = get().windows[id];
     if (!win || win.maximized) return;
     set((state) => ({
-      windows: { ...state.windows, [id]: { ...win, x: Math.max(0, x), y: Math.max(0, y) } },
+      windows: { ...state.windows, [id]: { ...win, x: Math.max(0, x), y: Math.max(ISLAND_CLEARANCE_PX, y) } },
     }));
   },
 

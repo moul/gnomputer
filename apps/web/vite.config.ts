@@ -73,7 +73,15 @@ export default defineConfig({
     react(),
     writeVersionJson(),
     VitePWA({
-      registerType: "autoUpdate",
+      // "prompt" (not "autoUpdate") because we ARE prompting — the update
+      // banner's Refresh button calls updateServiceWorker() (use-sw-update.ts,
+      // via virtual:pwa-register/react) rather than silently swapping the
+      // active version out from under a tab with unsaved state. injectRegister
+      // is off because that hook does its own navigator.serviceWorker.register()
+      // call — the auto-injected registerSW.js script (the default) would
+      // otherwise register a second, uncoordinated time.
+      registerType: "prompt",
+      injectRegister: false,
       workbox: {
         // Without these, an updated service worker installs but stays
         // "waiting" until every open tab is fully closed — the classic PWA

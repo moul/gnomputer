@@ -20,7 +20,6 @@ import { RealmActions } from "./realm-actions";
 import { RealmGraph } from "./realm-graph";
 import { RealmRaw } from "./realm-raw";
 import { KNOWN_REALMS } from "../known-realms";
-import { GNOLAND_OFFICIAL_PAGES } from "../gnoland-official-pages";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
@@ -434,22 +433,6 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
 
   return (
     <div className="realm-browser-home">
-      <CollapsibleSection id="gnoland" title="gno.land">
-        <ul className="realm-browser-home__list">
-          {GNOLAND_OFFICIAL_PAGES.map((page) => (
-            <li key={page.label}>
-              <button type="button" onClick={() => onOpen(page.packagePath, page.renderPath)}>
-                {page.label}
-                <span className="realm-browser-home__path">
-                  {page.packagePath}
-                  {page.renderPath ? `:${page.renderPath}` : ""}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </CollapsibleSection>
-
       <CollapsibleSection id="recently-active" title="Recently active">
         {activity.length === 0 ? (
           <p className="state-line" aria-busy="true">
