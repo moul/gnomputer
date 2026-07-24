@@ -8,7 +8,7 @@ export function CommandPalette() {
   const { commandPaletteOpen, setCommandPaletteOpen } = useShellStore();
   const [query, setQuery] = useState("");
   const [notFound, setNotFound] = useState(false);
-  const suggestions = useRealmSuggestions(commandPaletteOpen);
+  const suggestions = useRealmSuggestions(commandPaletteOpen, query);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

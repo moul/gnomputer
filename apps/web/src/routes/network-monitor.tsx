@@ -45,6 +45,30 @@ export function NetworkMonitor() {
         <dt>Persistence</dt>
         <dd>{network.persistence}</dd>
       </dl>
+      {(network.explorerUrl || network.statusUrl) && (
+        <p className="network-monitor__external-links">
+          {network.explorerUrl && (
+            <a
+              className="realm-browser__gnoweb-link"
+              href={network.explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open in Explorer ↗
+            </a>
+          )}
+          {network.statusUrl && (
+            <a
+              className="realm-browser__gnoweb-link"
+              href={network.statusUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Status page ↗
+            </a>
+          )}
+        </p>
+      )}
     </>
   );
 }

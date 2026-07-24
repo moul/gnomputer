@@ -12,6 +12,7 @@ import validatorsFixture from "./__fixtures__/validators.json";
 import qevalUsernameFixture from "./__fixtures__/qeval-username.json";
 import qevalUsernameNilFixture from "./__fixtures__/qeval-username-nil.json";
 import blockResultsFixture from "./__fixtures__/block-results.json";
+import qpathsFixture from "./__fixtures__/qpaths.json";
 
 const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -63,6 +64,7 @@ function abciQueryFixture(params: { path?: string; data?: string } | undefined) 
     const decoded = params?.data ? atob(params.data) : "";
     return decoded.includes(UNFUNDED_ADDRESS) ? qevalUsernameNilFixture : qevalUsernameFixture;
   }
+  if (path.startsWith("vm/qpaths")) return qpathsFixture;
   return qrenderFixture;
 }
 
@@ -180,6 +182,14 @@ describe("createRpcClient", () => {
       "2026-07-22T00:00:00.000Z"
     );
     expect(env.data.trim().startsWith("(nil")).toBe(true);
+  });
+
+  it("wraps listPackagesByPrefix in a DataEnvelope with the decoded, newline-split paths", async () => {
+    const client = createRpcClient(test13);
+    const env = await client.listPackagesByPrefix("gno.land/r/", 50, "2026-07-22T00:00:00.000Z");
+    expect(env.source).toBe("rpc");
+    expect(env.schema).toBe("gnomputer.rpc.package-paths.v1");
+    expect(env.data).toEqual(["gno.land/r/gnoland/blog", "gno.land/r/sys/users", "gno.land/r/gov/dao"]);
   });
 
   it("wraps getBlockEvents with real per-tx ABCI events (no indexer, no CORS wall)", async () => {

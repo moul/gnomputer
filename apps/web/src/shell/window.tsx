@@ -5,6 +5,7 @@ import { iconForWindowId } from "./app-registry";
 import { isPhoneViewport } from "./viewport";
 import { desktopBounds } from "./desktop-bounds";
 import { useZoomStore } from "./zoom-store";
+import { useOverviewGeometry } from "./use-overview-geometry";
 import { useShellStore } from "../store";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
@@ -98,15 +99,24 @@ export function Window({
     };
   }, [id, move, resize, zoom]);
 
+  const overviewGeometry = useOverviewGeometry(id);
+
   if (!win || win.closed || win.minimized) return null;
 
+  const geo = overviewGeometry ?? win;
+  const isInteracting = dragState.current !== null || resizeState.current !== null;
   const style: CSSProperties & Record<`--${string}`, string> = {
-    left: win.x,
-    top: win.y,
-    width: win.width,
-    height: win.height,
+    left: geo.x,
+    top: geo.y,
+    width: geo.width,
+    height: geo.height,
     zIndex: win.zIndex,
     "--window-accent": `var(--accent-${accent})`,
+    // The move/resize animation (shell.css) has to stay off while the user
+    // is actively dragging or resizing — every pointermove already updates
+    // win.x/y/width/height directly, and animating each of those tiny steps
+    // would make the window visibly lag behind the cursor.
+    transition: isInteracting ? "none" : undefined,
   };
 
   const classNames = ["window"];
@@ -122,6 +132,17 @@ export function Window({
       role="region"
       aria-label={title}
       style={style}
+      onClick={(e) => {
+        // Overview mode exits via this element's own onPointerDown below,
+        // not by the desktop background's own click-to-toggle handler
+        // (home.tsx) — always stop this click here so that handler never
+        // sees it. Without this, a window that relocates between
+        // pointerdown and click (exactly what happens when closeOverview()
+        // snaps it back to its real position) can leave the click's actual
+        // target sitting over bare desktop by the time it fires, which
+        // re-opens overview mode a beat after this window closed it.
+        e.stopPropagation();
+      }}
       onPointerDown={() => {
         // In overview mode, everything but this outer element has
         // pointer-events:none (styles/shell.css), so this fires for a click

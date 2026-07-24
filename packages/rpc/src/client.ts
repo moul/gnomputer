@@ -75,6 +75,11 @@ export interface RpcClient {
    * "gno.land/r/gnoland/blog"). Throws on a VM-level error (bad syntax,
    * unknown identifier, panic) — the caller shows that message as-is. */
   evalExpression(packagePath: string, expression: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** Real, live package-path enumeration via vm/qpaths — a genuine prefix
+   * scan over deployed packages (store.FindPathsByPrefix on the node side),
+   * unlike the indexer (CORS-blocked from the browser on every network
+   * checked so far, see indexer.ts). Empty prefix matches everything. */
+  listPackagesByPrefix(prefix: string, limit: number, fetchedAt: string): Promise<DataEnvelope<string[]>>;
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
   getBlockEvents(height: number, fetchedAt: string): Promise<DataEnvelope<BlockEvents>>;
   getAccountInfo(address: string, fetchedAt: string): Promise<DataEnvelope<AccountInfo>>;
@@ -178,6 +183,22 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.eval.v1",
+      });
+    },
+
+    async listPackagesByPrefix(prefix, limit, fetchedAt) {
+      const client = await getClient();
+      const raw = await abciQueryString(client, `vm/qpaths?limit=${limit}`, prefix);
+      const paths = raw.split("\n").filter((p) => p !== "");
+      return wrapEnvelope({
+        ref: baseRef,
+        data: paths,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.package-paths.v1",
       });
     },
 

@@ -146,7 +146,7 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   const [focused, setFocused] = useState(false);
   const hasPackage = tab.packagePath !== "";
   const gnowebUrl = sdk.networks.getActive().gnowebUrl;
-  const suggestions = useRealmSuggestions(focused);
+  const suggestions = useRealmSuggestions(focused, draftPackagePath);
   const suggestionsListId = `realm-suggestions-${windowId}`;
 
   useEffect(() => {
