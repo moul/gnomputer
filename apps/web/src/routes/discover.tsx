@@ -1,7 +1,7 @@
 import { useDiscoverStore, type DiscoverTab } from "../shell/discover-store";
 import { useStorePersistence } from "../shell/use-store-persistence";
 import { Users } from "./users";
-import { EventExplorer } from "./event-explorer";
+import { TransactionExplorer } from "./transaction-explorer";
 import { DiscoverPackages } from "./discover-packages";
 import { DiscoverTokens } from "./discover-tokens";
 import { DiscoverGovernance } from "./discover-governance";
@@ -44,7 +44,7 @@ export function Discover() {
       <div className="window-tabbody">
         {tab === "users" && <Users />}
         {tab === "packages" && <DiscoverPackages />}
-        {tab === "transactions" && <EventExplorer />}
+        {tab === "transactions" && <TransactionExplorer />}
         {tab === "tokens" && <DiscoverTokens />}
         {tab === "governance" && <DiscoverGovernance />}
       </div>

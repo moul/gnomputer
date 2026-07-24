@@ -4,7 +4,7 @@ const CHAIN_APPS: { id: string; icon: string; label: string }[] = [
   { id: "network-monitor", icon: "📡", label: "Network Monitor" },
   { id: "validator-monitor", icon: "🛡️", label: "Validator Monitor" },
   { id: "block-explorer", icon: "🧱", label: "Blocks" },
-  { id: "event-explorer", icon: "🔔", label: "Transactions" },
+  { id: "event-explorer", icon: "🔔", label: "Event Explorer" },
   { id: "gnockpit", icon: "📊", label: "Gnockpit" },
 ];
 
