@@ -107,7 +107,7 @@ export function Users() {
               <button
                 type="button"
                 className="users-app__address-link"
-                onClick={() => openRef(`gno://_/address/${result.address}`)}
+                onClick={(e) => openRef(`gno://_/address/${result.address}`, { x: e.clientX, y: e.clientY })}
               >
                 {result.address}
               </button>

@@ -50,7 +50,7 @@ export const APP_REGISTRY: AppDescriptor[] = [
   { id: "history", label: "History", icon: "🕘", supportsMultiWindow: false, hiddenFromIsland: true },
   // The generic "look up any address" viewer, opened contextually from
   // entity links (openRef) rather than from an island icon of its own.
-  { id: "address", label: "User Info", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "address", label: "Accounts", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
 ];
 
 const ICON_BY_ID = new Map(APP_REGISTRY.map((app) => [app.id, app.icon]));

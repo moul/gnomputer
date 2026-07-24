@@ -7,6 +7,7 @@ import { Freshness } from "./freshness";
 import { Window } from "./window";
 import { ErrorState } from "./error-state";
 import { useAddressWindowStore } from "./address-window-store";
+import { useStorePersistence } from "./use-store-persistence";
 import { gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
 
 function formatBalance(coins: string): string {
@@ -18,13 +19,14 @@ function formatBalance(coins: string): string {
 }
 
 export function AddressWindow() {
+  useStorePersistence("ui-state:address-window", useAddressWindowStore);
   const address = useAddressWindowStore((s) => s.currentAddress);
   const setCurrentAddress = useAddressWindowStore((s) => s.setCurrentAddress);
 
   return (
     <Window
       id="address"
-      title={address ? `Address · ${address}` : "Address"}
+      title={address ? `Accounts · ${address}` : "Accounts"}
       accent="cyan"
       startClosed
       defaultGeometry={{ x: 80, y: 80, width: 420, height: 420 }}

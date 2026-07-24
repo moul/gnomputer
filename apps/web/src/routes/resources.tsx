@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Markdown } from "../shell/markdown-lazy";
 import { ErrorState } from "../shell/error-state";
 import { buildDocTree, type DocTreeNode } from "../shell/doc-tree";
+import { useResourcesStore, type ResourcesTab } from "../shell/resources-store";
+import { useStorePersistence } from "../shell/use-store-persistence";
 
-const REPO_TREE_API = "https://api.github.com/repos/moul/gnomputer/git/trees/main?recursive=1";
-const REPO_RAW_BASE = "https://raw.githubusercontent.com/moul/gnomputer/main";
+const REPO_TREE_API = "https://api.github.com/repos/gnolang/gno/git/trees/master?recursive=1";
+const REPO_RAW_BASE = "https://raw.githubusercontent.com/gnolang/gno/master";
 const AWESOME_GNO_RAW_URL = "https://raw.githubusercontent.com/gnolang/awesome-gno/main/README.md";
 const AWESOME_GNO_URL = "https://github.com/gnolang/awesome-gno";
-
-type ResourcesTab = "docs" | "awesome-gno" | "about";
 
 const TABS: { id: ResourcesTab; label: string }[] = [
   { id: "docs", label: "Docs" },
@@ -29,7 +29,9 @@ function useRemoteText(url: string) {
 }
 
 export function Resources() {
-  const [tab, setTab] = useState<ResourcesTab>("docs");
+  useStorePersistence("ui-state:resources", useResourcesStore);
+  const tab = useResourcesStore((s) => s.tab);
+  const setTab = useResourcesStore((s) => s.setTab);
 
   return (
     <div className="resources-window">
@@ -61,7 +63,8 @@ export function Resources() {
 // API (confirmed CORS-enabled) rather than a hand-picked subset — a real
 // directory listing, not a guess at which files matter.
 function DocsTab() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const selected = useResourcesStore((s) => s.selectedDoc);
+  const setSelected = useResourcesStore((s) => s.setSelectedDoc);
   const {
     data: tree,
     error: treeError,

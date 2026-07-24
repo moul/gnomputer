@@ -135,7 +135,7 @@ export function HistoryWindow() {
               .reverse()
               .map((step, i) => (
                 <li key={`${step.refUri}-${i}`}>
-                  <button type="button" onClick={() => openRef(step.refUri)}>
+                  <button type="button" onClick={(e) => openRef(step.refUri, { x: e.clientX, y: e.clientY })}>
                     <span className="history-list__icon" aria-hidden="true">
                       {iconForRefUri(step.refUri)}
                     </span>

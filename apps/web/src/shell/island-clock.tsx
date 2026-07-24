@@ -83,7 +83,7 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
               <button
                 type="button"
                 className="island-menu__inline-link"
-                onClick={() => openRef(`gno://_/block/${data.latestHeight}`)}
+                onClick={(e) => openRef(`gno://_/block/${data.latestHeight}`, { x: e.clientX, y: e.clientY })}
               >
                 #{data.latestHeight}
               </button>
@@ -101,7 +101,7 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
           <ul className="island-menu__list">
             {recentSteps.map((step, i) => (
               <li key={`${step.refUri}-${i}`}>
-                <button type="button" onClick={() => openRef(step.refUri)}>
+                <button type="button" onClick={(e) => openRef(step.refUri, { x: e.clientX, y: e.clientY })}>
                   <span aria-hidden="true">{iconForRefUri(step.refUri)}</span>
                   {step.label}
                 </button>

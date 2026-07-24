@@ -15,3 +15,19 @@ export function desktopBounds(): { width: number; height: number } {
   const realHeight = rect?.height ?? window.innerHeight;
   return { width: realWidth / zoom, height: realHeight / zoom };
 }
+
+/** Converts a real screen point (a click's clientX/clientY) into .desktop's
+ * own local (zoomed, scrolled) coordinate space — the same space window x/y
+ * is stored in — so a newly-opened window can be placed near where the user
+ * actually clicked instead of always landing dead-center. */
+export function clientToDesktopLocal(clientX: number, clientY: number): { x: number; y: number } {
+  const el = document.querySelector(".desktop");
+  const rect = el?.getBoundingClientRect();
+  const zoom = useZoomStore.getState().zoom;
+  const scrollLeft = el instanceof HTMLElement ? el.scrollLeft : 0;
+  const scrollTop = el instanceof HTMLElement ? el.scrollTop : 0;
+  return {
+    x: (clientX - (rect?.left ?? 0)) / zoom + scrollLeft,
+    y: (clientY - (rect?.top ?? 0)) / zoom + scrollTop,
+  };
+}

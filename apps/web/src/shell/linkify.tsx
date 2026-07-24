@@ -30,7 +30,7 @@ export function Linkified({ text }: { text: string }) {
             type="button"
             className="entity-link"
             data-kind={part.kind}
-            onClick={() => openEntityMatch(part.kind, part.text)}
+            onClick={(e) => openEntityMatch(part.kind, part.text, { x: e.clientX, y: e.clientY })}
           >
             {part.text}
           </button>
