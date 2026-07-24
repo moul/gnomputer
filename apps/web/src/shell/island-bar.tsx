@@ -1,19 +1,14 @@
-import { useEffect, useState } from "react";
 import { useWindowStore } from "./window-store";
 import { useRealmTabsStore } from "./realm-tabs-store";
-import { useNetworkStatus } from "./use-network-status";
 import { APP_REGISTRY, ISLAND_GROUPS } from "./app-registry";
 import { focusFamilyOrOpenDefault, realmFamilyIds } from "./focus-family";
-import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
+import { openSettings } from "./open-settings";
+import { IslandPopover } from "./island-popover";
+import { IslandSettingsMenu } from "./island-settings-menu";
+import { IslandProfileMenu } from "./island-profile-menu";
+import { IslandChainMenu } from "./island-chain-menu";
+import { IslandClock } from "./island-clock";
 import { useShellStore } from "../store";
-
-function pad(n: number): string {
-  return n.toString().padStart(2, "0");
-}
-
-function formatClock(date: Date): string {
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-}
 
 // One entry per island icon — apps sharing a `group` (app-registry.ts)
 // collapse into a single icon here, so 11 registered apps read as ~7
@@ -31,6 +26,7 @@ function buildIslandIcons(): IslandIcon[] {
   const seenGroups = new Set<string>();
   const icons: IslandIcon[] = [];
   for (const app of APP_REGISTRY) {
+    if (app.hiddenFromIsland) continue;
     if (app.group) {
       if (seenGroups.has(app.group)) continue;
       seenGroups.add(app.group);
@@ -68,18 +64,6 @@ export function IslandBar() {
   const createNewRealmWindow = useRealmTabsStore((s) => s.createNewWindow);
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
   const setHoveredWindowIds = useShellStore((s) => s.setHoveredWindowIds);
-  const zoom = useZoomStore((s) => s.zoom);
-  const zoomIn = useZoomStore((s) => s.zoomIn);
-  const zoomOut = useZoomStore((s) => s.zoomOut);
-  const resetZoom = useZoomStore((s) => s.resetZoom);
-  const { data, state } = useNetworkStatus();
-  const [now, setNow] = useState(() => new Date());
-  const [clockHover, setClockHover] = useState(false);
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   function scrollToWindow(id: string) {
     document
@@ -123,6 +107,8 @@ export function IslandBar() {
     return icon.supportsMultiWindow ? realmFamilyIds(windows) : icon.memberIds;
   }
 
+  const settingsOpen = windows["settings"] !== undefined && !windows["settings"]!.closed;
+
   return (
     <div className="island" role="toolbar" aria-label="Apps">
       <span className="island__brand" aria-hidden="true">
@@ -138,58 +124,59 @@ export function IslandBar() {
         🔍
       </button>
       <span className="island__divider" aria-hidden="true" />
-      {ISLAND_ICONS.map((icon) => (
-        <button
-          key={icon.key}
-          type="button"
-          className="island__icon"
-          data-open={isOpen(icon)}
-          title={icon.label}
-          aria-label={icon.label}
-          onClick={() => openIcon(icon)}
-          onMouseEnter={() => setHoveredWindowIds(hoverIds(icon))}
-          onMouseLeave={() => setHoveredWindowIds([])}
-        >
-          {icon.icon}
-          {isOpen(icon) && <span className="island__icon-dot" aria-hidden="true" />}
-        </button>
-      ))}
-      <span className="island__divider" aria-hidden="true" />
-      <div className="island__zoom" role="group" aria-label="Zoom">
-        <button type="button" onClick={zoomOut} disabled={zoom <= ZOOM_MIN} aria-label="Zoom out">
-          −
-        </button>
-        <button type="button" onClick={resetZoom} title="Reset zoom" aria-label="Reset zoom">
-          {Math.round(zoom * 100)}%
-        </button>
-        <button type="button" onClick={zoomIn} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in">
-          +
-        </button>
-      </div>
-      <div
-        className="island__clock"
-        onMouseEnter={() => setClockHover(true)}
-        onMouseLeave={() => setClockHover(false)}
+      {ISLAND_ICONS.map((icon) => {
+        const trigger = (
+          <button
+            type="button"
+            className="island__icon"
+            data-open={isOpen(icon)}
+            title={icon.label}
+            aria-label={icon.label}
+            onClick={() => openIcon(icon)}
+            onMouseEnter={() => setHoveredWindowIds(hoverIds(icon))}
+            onMouseLeave={() => setHoveredWindowIds([])}
+          >
+            {icon.icon}
+            {isOpen(icon) && <span className="island__icon-dot" aria-hidden="true" />}
+          </button>
+        );
+        if (icon.key === "settings") {
+          return (
+            <IslandPopover key={icon.key} trigger={trigger}>
+              <IslandSettingsMenu />
+            </IslandPopover>
+          );
+        }
+        if (icon.key === "chain") {
+          return (
+            <IslandPopover key={icon.key} trigger={trigger}>
+              <IslandChainMenu />
+            </IslandPopover>
+          );
+        }
+        return <span key={icon.key}>{trigger}</span>;
+      })}
+      <IslandPopover
+        trigger={
+          <button
+            type="button"
+            className="island__icon"
+            data-open={settingsOpen}
+            title="Profile"
+            aria-label="Profile"
+            onClick={() => openSettings("user")}
+            onMouseEnter={() => setHoveredWindowIds(["settings"])}
+            onMouseLeave={() => setHoveredWindowIds([])}
+          >
+            👤
+            {settingsOpen && <span className="island__icon-dot" aria-hidden="true" />}
+          </button>
+        }
       >
-        <span className="status-dot" data-state={state} aria-hidden="true" />
-        {formatClock(now)}
-        {clockHover && (
-          <div className="island__clock-popover" role="tooltip">
-            <div className="island__clock-popover-time">{formatClock(now)}</div>
-            <div className="island__clock-popover-date">
-              {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-            </div>
-            <dl className="island__clock-popover-stats">
-              <dt>Chain</dt>
-              <dd>{data?.chainId ?? "—"}</dd>
-              <dt>Height</dt>
-              <dd>{data ? `#${data.latestHeight}` : "—"}</dd>
-              <dt>Latency</dt>
-              <dd>{data ? `${data.latencyMs}ms` : "—"}</dd>
-            </dl>
-          </div>
-        )}
-      </div>
+        <IslandProfileMenu />
+      </IslandPopover>
+      <span className="island__divider" aria-hidden="true" />
+      <IslandClock />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useNetworkStatus } from "../shell/use-network-status";
 import { Freshness } from "../shell/freshness";
+import { openRef } from "../shell/open-ref";
 
 export function NetworkMonitor() {
   const { data, error, isPending, network, dataUpdatedAt } = useNetworkStatus();
@@ -26,7 +27,15 @@ export function NetworkMonitor() {
         <dt>Chain ID</dt>
         <dd>{data.chainId}</dd>
         <dt>Latest height</dt>
-        <dd>#{data.latestHeight}</dd>
+        <dd>
+          <button
+            type="button"
+            className="network-monitor__height-link"
+            onClick={() => openRef(`gno://_/block/${data.latestHeight}`)}
+          >
+            #{data.latestHeight}
+          </button>
+        </dd>
         <dt>RPC latency</dt>
         <dd>{data.latencyMs}ms</dd>
         <dt>RPC endpoint</dt>
