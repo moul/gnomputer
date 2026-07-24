@@ -7,6 +7,7 @@ import { IslandPopover } from "./island-popover";
 import { IslandSettingsMenu } from "./island-settings-menu";
 import { IslandProfileMenu } from "./island-profile-menu";
 import { IslandChainMenu } from "./island-chain-menu";
+import { IslandBrowserMenu } from "./island-browser-menu";
 import { IslandClock } from "./island-clock";
 import { useShellStore } from "../store";
 
@@ -65,6 +66,7 @@ export function IslandBar() {
   const closeAllWindows = useWindowStore((s) => s.closeAll);
   const createNewRealmWindow = useRealmTabsStore((s) => s.createNewWindow);
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
+  const setShortcutsHelpOpen = useShellStore((s) => s.setShortcutsHelpOpen);
   const setHoveredWindowIds = useShellStore((s) => s.setHoveredWindowIds);
 
   function scrollToWindow(id: string) {
@@ -137,9 +139,6 @@ export function IslandBar() {
 
   return (
     <div className="island" role="toolbar" aria-label="Apps">
-      <span className="island__brand" aria-hidden="true">
-        ⌘
-      </span>
       <button
         type="button"
         className="island__icon"
@@ -148,6 +147,15 @@ export function IslandBar() {
         onClick={() => setCommandPaletteOpen(true)}
       >
         🔍
+      </button>
+      <button
+        type="button"
+        className="island__icon"
+        aria-label="Show keyboard shortcuts (Cmd+/ or ?)"
+        title="Keyboard shortcuts (⌘/ or ?)"
+        onClick={() => setShortcutsHelpOpen(true)}
+      >
+        ?
       </button>
       <span className="island__divider" aria-hidden="true" />
       {ISLAND_ICONS.map((icon) => {
@@ -177,6 +185,18 @@ export function IslandBar() {
           return (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandChainMenu />
+            </IslandPopover>
+          );
+        }
+        // The Browser icon can have several windows open at once (pop out a
+        // tab) — a click only ever reaches whichever was focused most
+        // recently, so hovering lists every open one (title included) once
+        // there's at least one to show. Zero open windows has nothing to
+        // list, so it stays a plain click-to-open.
+        if (icon.key === "realm" && realmFamilyIds(windows).some((id) => windows[id] && !windows[id]!.closed)) {
+          return (
+            <IslandPopover key={icon.key} trigger={trigger}>
+              <IslandBrowserMenu />
             </IslandPopover>
           );
         }

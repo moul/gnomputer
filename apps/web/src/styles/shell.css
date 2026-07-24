@@ -77,13 +77,6 @@
   color: var(--text);
 }
 
-.island__brand {
-  flex: 0 0 auto;
-  padding: 0 var(--space-1);
-  font-weight: 700;
-  color: var(--text-dim);
-}
-
 .island__divider {
   flex: 0 0 auto;
   width: 1px;
@@ -400,6 +393,62 @@
   padding: 0 var(--space-4) var(--space-3);
   font-size: 12px;
   color: var(--text-dim);
+}
+
+.shortcuts-help {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(4, 6, 9, 0.6);
+}
+
+.shortcuts-help__panel {
+  width: min(420px, 90vw);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: var(--space-4);
+}
+
+.shortcuts-help__title {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.shortcuts-help__list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shortcuts-help__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.shortcuts-help__row dt {
+  flex: 0 0 auto;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.shortcuts-help__row dd {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
 }
 
 main {
@@ -959,6 +1008,15 @@ main {
 
 .desktop {
   position: relative;
+  /* Establishes its own stacking context (position + an explicit z-index,
+     not "auto") so a window's own zIndex — unbounded, it just keeps
+     incrementing every time any window is focused over a long session —
+     can never escape above the island bar, its hover popovers, the
+     command palette, or the update banner. Without this, enough focus
+     clicks in one session eventually push a window's zIndex past those
+     fixed-position elements' own (e.g. 200-300), painting it on top of
+     chrome that's meant to always float above the desktop. */
+  z-index: 0;
   flex: 1;
   min-height: 320px;
   overflow: auto;
