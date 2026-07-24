@@ -23,15 +23,36 @@
    showing the mode's own hint instead of the normal icon row — clicking it
    exits overview, same as clicking the desktop background. */
 .island--overview {
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-2);
+  gap: var(--space-3);
+}
+
+.island__overview-hint {
+  background: transparent;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--ui-font);
   font-size: 12px;
   font-weight: 700;
   color: var(--text-dim);
   cursor: pointer;
 }
 
-.island--overview:hover {
+.island__overview-hint:hover {
+  background: transparent;
   color: var(--text);
+}
+
+.island__overview-close-all {
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.island__overview-close-all:hover {
+  background: var(--danger-bg);
 }
 
 .island__brand {
@@ -1029,10 +1050,6 @@ main {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--window-accent, var(--accent-cyan));
 }
 
-.window--inactive {
-  opacity: 0.78;
-}
-
 /* .window is position:absolute inside .desktop — for an absolutely
    positioned box, top/left are measured from the PADDING edge of the
    containing block, which sits flush with .desktop's own border, not
@@ -1128,6 +1145,35 @@ main {
 
 .window__control--close:hover {
   color: var(--danger);
+}
+
+/* Overview mode's per-window close affordance — sits just below the window
+   thumbnail (rather than inside it, where .window__controls is hidden and
+   .window__body has pointer-events:none) so a window can be dismissed
+   without leaving overview mode. */
+.window__overview-close {
+  position: absolute;
+  left: 50%;
+  bottom: -28px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.window__overview-close:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 .window__body {

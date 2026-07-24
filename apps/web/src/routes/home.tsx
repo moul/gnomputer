@@ -43,7 +43,16 @@ export function Home() {
         <div
           className="desktop"
           data-overview={overviewOpen}
-          onClick={(e) => {
+          onPointerDown={(e) => {
+            // pointerdown, not click — a window clicked while in overview
+            // mode relocates (snaps back to its real position) between
+            // pointerdown and click, so by the time click fires the cursor
+            // may be sitting over bare desktop instead of the window,
+            // making e.target === e.currentTarget true here again and
+            // reopening overview a beat after the window closed it.
+            // pointerdown fires before that relocation, so target hit-
+            // testing here still reflects what was actually under the
+            // cursor when the user pressed down.
             if (e.target === e.currentTarget) toggleOverview();
           }}
         >

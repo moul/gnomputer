@@ -27,7 +27,7 @@ export function RealmHistory({ packagePath }: { packagePath: string }) {
                 <button
                   type="button"
                   className="event-list__height"
-                  onClick={() => openRef(`gno://_/block/${event.height}`)}
+                  onClick={(e) => openRef(`gno://_/block/${event.height}`, { x: e.clientX, y: e.clientY })}
                 >
                   #{event.height}
                 </button>

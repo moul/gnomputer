@@ -30,7 +30,7 @@ export function NetworkMonitor() {
           <button
             type="button"
             className="network-monitor__height-link"
-            onClick={() => openRef(`gno://_/block/${data.latestHeight}`)}
+            onClick={(e) => openRef(`gno://_/block/${data.latestHeight}`, { x: e.clientX, y: e.clientY })}
           >
             #{data.latestHeight}
           </button>

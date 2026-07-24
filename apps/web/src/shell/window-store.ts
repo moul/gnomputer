@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
-import { desktopBounds } from "./desktop-bounds";
+import { desktopBounds, clientToDesktopLocal } from "./desktop-bounds";
 import { ISLAND_CLEARANCE_PX } from "./viewport";
 
 export interface WindowGeometry {
@@ -37,11 +37,19 @@ interface WindowManagerState {
   move: (id: string, x: number, y: number) => void;
   resize: (id: string, width: number, height: number) => void;
   close: (id: string) => void;
+  /** Closes every currently-open window at once (overview mode's "close all
+   * windows" button) — leaves closed/minimized windows untouched. */
+  closeAll: () => void;
   /** Deletes the window entirely rather than marking it closed — for
    * dynamically-created windows (e.g. a popped-out realm browser instance)
    * that shouldn't leave an orphaned entry behind once destroyed. */
   remove: (id: string) => void;
   reopen: (id: string) => void;
+  /** Moves a window to open near a screen point (a link click's clientX/Y) —
+   * used when a click opens/reopens a singleton window, so it lands under
+   * the cursor instead of always dead-center. No-ops for a maximized window,
+   * same as move(). */
+  placeNear: (id: string, client: { x: number; y: number }) => void;
   minimize: (id: string) => void;
   restore: (id: string) => void;
   toggleMaximize: (id: string, bounds: { width: number; height: number }) => void;
@@ -55,11 +63,23 @@ const MIN_HEIGHT = 180;
 // window can show up off in a corner.
 const CENTER_JITTER_RATIO = 0.25;
 
+// Never place a window's top edge above the island bar. Shared by every
+// placement strategy below (centered-random, near-click) so none of them can
+// tuck a window under the island or off the edge of the desktop.
+function clampWindowOrigin(x: number, y: number, size: { width: number; height: number }): { x: number; y: number } {
+  const bounds = desktopBounds();
+  const maxX = Math.max(0, bounds.width - size.width);
+  const minY = Math.min(ISLAND_CLEARANCE_PX, Math.max(0, bounds.height - size.height));
+  const maxY = Math.max(minY, bounds.height - size.height);
+  return {
+    x: Math.round(Math.min(maxX, Math.max(0, x))),
+    y: Math.round(Math.min(maxY, Math.max(minY, y))),
+  };
+}
+
 function centeredRandomPosition(size: { width: number; height: number }): { x: number; y: number } {
   const bounds = desktopBounds();
   const maxX = Math.max(0, bounds.width - size.width);
-  // Never place a window's top edge above the island bar, even though this
-  // is meant to be roughly centered rather than pinned to the very top.
   const minY = Math.min(ISLAND_CLEARANCE_PX, Math.max(0, bounds.height - size.height));
   const maxY = Math.max(minY, bounds.height - size.height);
 
@@ -68,10 +88,17 @@ function centeredRandomPosition(size: { width: number; height: number }): { x: n
   const jitterX = (Math.random() - 0.5) * maxX * CENTER_JITTER_RATIO;
   const jitterY = (Math.random() - 0.5) * (maxY - minY) * CENTER_JITTER_RATIO;
 
-  return {
-    x: Math.round(Math.min(maxX, Math.max(0, centerX + jitterX))),
-    y: Math.round(Math.min(maxY, Math.max(minY, centerY + jitterY))),
-  };
+  return clampWindowOrigin(centerX + jitterX, centerY + jitterY, size);
+}
+
+function nearClientPosition(client: { x: number; y: number }, size: { width: number; height: number }): {
+  x: number;
+  y: number;
+} {
+  const local = clientToDesktopLocal(client.x, client.y);
+  // Center the window on the click rather than pinning its top-left corner
+  // there, so it visually opens "at" the cursor instead of below-right of it.
+  return clampWindowOrigin(local.x - size.width / 2, local.y - size.height / 2, size);
 }
 
 export const useWindowStore = create<WindowManagerState>((set, get) => ({
@@ -152,6 +179,21 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     const win = get().windows[id];
     if (!win) return;
     set((state) => ({ windows: { ...state.windows, [id]: { ...win, closed: true } } }));
+  },
+
+  placeNear: (id, client) => {
+    const win = get().windows[id];
+    if (!win || win.maximized) return;
+    const { x, y } = nearClientPosition(client, win);
+    set((state) => ({ windows: { ...state.windows, [id]: { ...win, x, y } } }));
+  },
+
+  closeAll: () => {
+    set((state) => ({
+      windows: Object.fromEntries(
+        Object.entries(state.windows).map(([id, w]) => [id, w.closed ? w : { ...w, closed: true }])
+      ),
+    }));
   },
 
   remove: (id) => {

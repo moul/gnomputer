@@ -63,6 +63,7 @@ export function IslandBar() {
   const reopen = useWindowStore((s) => s.reopen);
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const closeOverview = useWindowStore((s) => s.closeOverview);
+  const closeAllWindows = useWindowStore((s) => s.closeAll);
   const createNewRealmWindow = useRealmTabsStore((s) => s.createNewWindow);
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
   const setHoveredWindowIds = useShellStore((s) => s.setHoveredWindowIds);
@@ -119,13 +120,21 @@ export function IslandBar() {
   // here just exits overview, same as clicking the desktop background.
   if (overviewOpen) {
     return (
-      <button
-        type="button"
-        className="island island--overview"
-        onClick={() => closeOverview()}
-      >
-        Overview · click a window to open it
-      </button>
+      <div className="island island--overview">
+        <button type="button" className="island__overview-hint" onClick={() => closeOverview()}>
+          Overview · click a window to open it
+        </button>
+        <button
+          type="button"
+          className="island__overview-close-all"
+          onClick={() => {
+            closeAllWindows();
+            closeOverview();
+          }}
+        >
+          Close all windows
+        </button>
+      </div>
     );
   }
 

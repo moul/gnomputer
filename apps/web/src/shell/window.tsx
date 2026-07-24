@@ -131,21 +131,17 @@ export function Window({
       role="region"
       aria-label={title}
       style={style}
-      onClick={(e) => {
-        // Overview mode exits via this element's own onPointerDown below,
-        // not by the desktop background's own click-to-toggle handler
-        // (home.tsx) — always stop this click here so that handler never
-        // sees it. Without this, a window that relocates between
-        // pointerdown and click (exactly what happens when closeOverview()
-        // snaps it back to its real position) can leave the click's actual
-        // target sitting over bare desktop by the time it fires, which
-        // re-opens overview mode a beat after this window closed it.
-        e.stopPropagation();
-      }}
-      onPointerDown={() => {
+      onPointerDown={(e) => {
         // In overview mode, everything but this outer element has
         // pointer-events:none (styles/shell.css), so this fires for a click
         // anywhere on the window — "pick this one" exits overview too.
+        // stopPropagation here (not on the later click) matters: the window
+        // relocates the instant closeOverview() runs, snapping back to its
+        // real position before the paired click event ever fires — by then
+        // the desktop background's own pointerdown-to-toggle handler
+        // (home.tsx) would see the cursor sitting over bare desktop and
+        // reopen overview a beat after this window just closed it.
+        e.stopPropagation();
         if (overviewOpen) closeOverview();
         focus(id);
       }}
@@ -186,6 +182,21 @@ export function Window({
         </div>
         <div className="window__body">{children}</div>
       </div>
+      {overviewGeometry && (
+        <button
+          type="button"
+          className="window__overview-close"
+          aria-label={`Close ${title}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onClose) onClose();
+            else close(id);
+          }}
+        >
+          ✕
+        </button>
+      )}
       {!win.maximized && (
         <div
           className="window__resize-handle"
