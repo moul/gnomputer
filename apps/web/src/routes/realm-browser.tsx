@@ -24,6 +24,8 @@ import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
 import { RenderNodeView } from "../shell/render-node-view";
+import { useEditorSignalStore } from "../shell/editor-store";
+import { focusOrReopen } from "../shell/open-ref";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
@@ -423,14 +425,44 @@ function CollapsibleSection({
 // (vm/qpaths polled for packages that weren't there last time, i.e. a real
 // prefix scan over deployed packages — see use-recently-added-packages.ts).
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
+  const sdk = useSdk();
   const { events } = useLiveEvents(false);
   const activity = rankByActivity(events);
   const recentlyAdded = useRecentlyAddedPackages(true);
   const staffPicks = KNOWN_REALMS.filter((r) => !r.system);
   const systemRealms = KNOWN_REALMS.filter((r) => r.system);
 
+  const { data: myScripts } = useQuery({
+    queryKey: ["editor-scripts"],
+    queryFn: () => sdk.scripts.list(),
+  });
+
+  function openScript(id: string) {
+    useEditorSignalStore.getState().openScript(id);
+    focusOrReopen("editor");
+  }
+
   return (
     <div className="realm-browser-home">
+      <CollapsibleSection id="my-scripts" title="My apps & scripts">
+        {!myScripts || myScripts.length === 0 ? (
+          <p className="state-line">
+            Nothing here yet — write one in Editor, or fork a realm's source into it.
+          </p>
+        ) : (
+          <ul className="realm-browser-home__list">
+            {myScripts.map((script) => (
+              <li key={script.id}>
+                <button type="button" onClick={() => openScript(script.id)}>
+                  {script.name}
+                  <span className="realm-browser-home__path">Local script — open in Editor</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CollapsibleSection>
+
       <CollapsibleSection id="recently-active" title="Recently active">
         {activity.length === 0 ? (
           <p className="state-line" aria-busy="true">
