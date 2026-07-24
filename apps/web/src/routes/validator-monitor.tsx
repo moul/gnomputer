@@ -99,7 +99,7 @@ export function ValidatorMonitor() {
       {sorted.length === 0 ? (
         <p className="state-line">No validators match &ldquo;{filter}&rdquo;.</p>
       ) : (
-        <table className="validator-table">
+        <table className="data-table">
           <thead>
             <tr>
               <th>

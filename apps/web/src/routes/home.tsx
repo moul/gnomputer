@@ -1,6 +1,6 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { Users } from "./users";
+import { Discover } from "./discover";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
@@ -18,13 +18,12 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
-  // Bumped to v7 when Realmnet Explorer merged into Browser (its "realm"
-  // window id is now the sole entry point, and Browser's default geometry
-  // grew again to fit the merged Home tab) — bumping the key is what makes
-  // that visible to existing visitors too, since ensureWindow() otherwise
-  // never touches a window id that's already in a restored layout (saved
-  // positions/sizes always win over a new default).
-  useWindowPersistence("window-layout:home:v7");
+  // Bumped to v8 when Users became a Discover tab instead of its own
+  // window ("users" id retired, "discover" added) — bumping the key is
+  // what makes that visible to existing visitors too, since ensureWindow()
+  // otherwise never touches a window id that's already in a restored
+  // layout (saved positions/sizes always win over a new default).
+  useWindowPersistence("window-layout:home:v8");
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
@@ -66,13 +65,13 @@ export function Home() {
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
           </Window>
           <Window
-            id="users"
-            title="Users"
+            id="discover"
+            title="Discover"
             accent="amber"
             startClosed
-            defaultGeometry={{ x: 180, y: 140, width: 520, height: 440 }}
+            defaultGeometry={{ x: 180, y: 140, width: 640, height: 480 }}
           >
-            <Users />
+            <Discover />
           </Window>
           <Window
             id="resources"
