@@ -1394,17 +1394,21 @@ main {
 
 .source-viewer {
   flex: 1;
-  padding: var(--space-4);
-  overflow: auto;
+  display: flex;
+  overflow: hidden;
   min-width: 0;
   height: 100%;
 }
 
-.source-viewer pre {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  white-space: pre;
+.code-editor {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.code-editor .cm-editor,
+.code-editor .cm-scroller {
+  height: 100%;
 }
 
 .state-line {

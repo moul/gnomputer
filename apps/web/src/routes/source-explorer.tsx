@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { ErrorState } from "../shell/error-state";
+import { CodeEditor } from "../shell/code-editor-lazy";
 
 export function SourceExplorer({ packagePath }: { packagePath: string }) {
   const sdk = useSdk();
@@ -102,7 +103,12 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
             Loading file…
           </p>
         ) : (
-          <pre>{source}</pre>
+          <CodeEditor
+            key={activeFile}
+            value={source ?? ""}
+            readOnly
+            language={activeFile?.endsWith(".gno") || activeFile?.endsWith(".go") ? "go" : "text"}
+          />
         )}
       </div>
     </div>
