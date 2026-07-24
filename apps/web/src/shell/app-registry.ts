@@ -32,7 +32,11 @@ export const ISLAND_GROUPS: Record<string, IslandGroup> = {
 // come from an in-app "pop out" action, not from repeated icon clicks).
 export const APP_REGISTRY: AppDescriptor[] = [
   { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true },
-  { id: "users", label: "Users", icon: "🧑‍🤝‍🧑", supportsMultiWindow: false },
+  // The approachable, everyone-oriented counterpart to the Chain group —
+  // users, packages, transactions, tokens, and governance, as tabs of one
+  // window (discover.tsx) rather than separate icons. Users used to be its
+  // own icon; it's a Discover tab now.
+  { id: "discover", label: "Discover", icon: "🔭", supportsMultiWindow: false },
   { id: "resources", label: "Resources", icon: "📚", supportsMultiWindow: false },
   { id: "editor", label: "Editor", icon: "📝", supportsMultiWindow: false },
   { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false, group: "chain" },

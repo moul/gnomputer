@@ -1976,7 +1976,7 @@ main {
   white-space: nowrap;
 }
 
-.validator-table {
+.data-table {
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -1987,19 +1987,19 @@ main {
   width: calc(100% - var(--space-4) * 2);
 }
 
-.validator-table thead {
+.data-table thead {
   position: sticky;
   top: 0;
   background: var(--bg-elevated);
 }
 
-.validator-table th {
+.data-table th {
   text-align: left;
   padding: 0;
   border-bottom: 1px solid var(--border-strong);
 }
 
-.validator-table th button {
+.data-table th button {
   width: 100%;
   text-align: left;
   padding: var(--space-2);
@@ -2013,18 +2013,18 @@ main {
   letter-spacing: 0.03em;
 }
 
-.validator-table th button:hover {
+.data-table th button:hover {
   background: var(--bg-inset);
   color: var(--text);
 }
 
-.validator-table td {
+.data-table td {
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--border);
   color: var(--text);
 }
 
-.validator-table tbody tr:hover {
+.data-table tbody tr:hover {
   background: var(--bg-inset);
 }
 
@@ -2091,10 +2091,67 @@ main {
 }
 
 .settings-window,
-.resources-window {
+.resources-window,
+.discover-window {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.discover-packages,
+.discover-tokens,
+.discover-governance {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--space-3);
+}
+
+.discover-packages__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.discover-packages__toolbar input {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-width: 200px;
+}
+
+.data-table__link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  font-family: var(--font-mono);
+}
+
+.data-table__link:hover {
+  background: transparent;
+  text-decoration-style: solid;
+}
+
+.discover-tokens__render,
+.discover-governance__render {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.discover-tokens__render h2,
+.discover-governance__render h2 {
+  font-size: 14px;
+  margin: var(--space-3) 0 var(--space-2);
+}
+
+.discover-tokens__render h2:first-child,
+.discover-governance__render h2:first-child {
+  margin-top: 0;
 }
 
 .resources-docs {

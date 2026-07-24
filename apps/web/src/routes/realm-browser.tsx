@@ -5,7 +5,6 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { useLiveEvents } from "../use-live-events";
 import { useRecentlyAddedPackages } from "../use-recently-added-packages";
 import { rankByActivity } from "../rank-by-activity";
-import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
@@ -24,8 +23,7 @@ import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
-import { CodeEditor } from "../shell/code-editor-lazy";
-import type { RenderNode } from "@gnomputer/lenses";
+import { RenderNodeView } from "../shell/render-node-view";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
@@ -502,69 +500,5 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
         </ul>
       </CollapsibleSection>
     </div>
-  );
-}
-
-function RenderNodeView({ node, windowId }: { node: RenderNode; windowId: string }) {
-  switch (node.type) {
-    case "heading":
-      return (
-        <h2>
-          <Linkified text={node.content ?? ""} />
-        </h2>
-      );
-    case "code":
-      return (
-        <div className="render-code-block">
-          <CodeEditor
-            value={node.content ?? ""}
-            readOnly
-            fill={false}
-            language={node.lang === undefined || node.lang === "go" || node.lang === "gno" ? "go" : "text"}
-          />
-        </div>
-      );
-    case "link":
-      return <GnoLink node={node} windowId={windowId} />;
-    case "paragraph":
-      return (
-        <p>
-          {node.content !== undefined ? (
-            <Linkified text={node.content} />
-          ) : (
-            node.children?.map((c, i) => <RenderNodeView key={i} node={c} windowId={windowId} />)
-          )}
-        </p>
-      );
-    default:
-      return (
-        <span>
-          <Linkified text={node.content ?? ""} />
-        </span>
-      );
-  }
-}
-
-function GnoLink({ node, windowId }: { node: RenderNode; windowId: string }) {
-  if (node.ref?.packagePath) {
-    const packagePath = node.ref.packagePath;
-    const renderPath = node.renderPath ?? "";
-    return (
-      <a
-        href={`/?pkg=${encodeURIComponent(packagePath)}${renderPath ? `&path=${encodeURIComponent(renderPath)}` : ""}`}
-        onClick={(e) => {
-          e.preventDefault();
-          openInRealmTab(windowId, { packagePath, renderPath });
-        }}
-      >
-        {node.content}
-      </a>
-    );
-  }
-
-  return (
-    <a href={node.href} target="_blank" rel="noopener noreferrer">
-      {node.content}
-    </a>
   );
 }
