@@ -31,8 +31,20 @@ describe("ensureWindow", () => {
     const bounds = desktopBounds();
     expect(win.x).toBeGreaterThanOrEqual(0);
     expect(win.x).toBeLessThanOrEqual(Math.max(0, bounds.width - DEFAULTS.width));
-    expect(win.y).toBeGreaterThanOrEqual(0);
+    expect(win.y).toBeGreaterThanOrEqual(ISLAND_CLEARANCE_PX);
     expect(win.y).toBeLessThanOrEqual(Math.max(0, bounds.height - DEFAULTS.height));
+  });
+
+  it("never places a window's top edge above the island clearance, even when the window is taller than the available desktop height", () => {
+    // Regression test: the old clamp let minY collapse to 0 whenever
+    // bounds.height - size.height went negative (a window taller than the
+    // viewport), tucking the whole titlebar behind the island where it
+    // couldn't be dragged or closed.
+    const bounds = desktopBounds();
+    const tooTall = { x: 0, y: 0, width: 300, height: bounds.height + 500 };
+    useWindowStore.getState().ensureWindow("tall", "Tall", tooTall);
+    const win = useWindowStore.getState().windows.tall!;
+    expect(win.y).toBeGreaterThanOrEqual(ISLAND_CLEARANCE_PX);
   });
 
   it("respects startClosed and startMaximized options", () => {
@@ -216,10 +228,29 @@ describe("toggleMaximize", () => {
 });
 
 describe("toggleOverview and closeOverview", () => {
-  it("toggleOverview flips overviewOpen each call", () => {
+  it("flips overviewOpen each call once at least 2 windows are open", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().ensureWindow("b", "Beta", DEFAULTS);
     expect(useWindowStore.getState().overviewOpen).toBe(false);
     useWindowStore.getState().toggleOverview();
     expect(useWindowStore.getState().overviewOpen).toBe(true);
+    useWindowStore.getState().toggleOverview();
+    expect(useWindowStore.getState().overviewOpen).toBe(false);
+  });
+
+  it("does not enter overview with fewer than 2 open windows — nothing to expose", () => {
+    expect(useWindowStore.getState().overviewOpen).toBe(false);
+    useWindowStore.getState().toggleOverview();
+    expect(useWindowStore.getState().overviewOpen).toBe(false);
+
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().toggleOverview();
+    expect(useWindowStore.getState().overviewOpen).toBe(false);
+  });
+
+  it("does not count closed windows toward the 2-window minimum", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().ensureWindow("b", "Beta", DEFAULTS, { startClosed: true });
     useWindowStore.getState().toggleOverview();
     expect(useWindowStore.getState().overviewOpen).toBe(false);
   });
