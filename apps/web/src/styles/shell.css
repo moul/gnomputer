@@ -2421,6 +2421,74 @@ main {
   text-transform: none;
 }
 
+/* Cypherpunk: distinct from ascii-dark by more than color — a CRT/terminal
+   feel via a scanline texture across the desktop and a phosphor glow on
+   windows and on-brand text. Layered on top of the ascii family's existing
+   bracket chrome (kept — brackets and monospace already suit a terminal
+   aesthetic), not a replacement for it. */
+:root[data-theme="ascii-cypherpunk"] .desktop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(51, 255, 51, 0) 0px,
+    rgba(51, 255, 51, 0) 2px,
+    rgba(51, 255, 51, 0.025) 3px
+  );
+}
+
+:root[data-theme="ascii-cypherpunk"] .window {
+  box-shadow: 0 0 24px rgba(51, 255, 51, 0.15), 0 14px 36px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="ascii-cypherpunk"] .window--focused {
+  box-shadow:
+    0 0 32px rgba(51, 255, 51, 0.3),
+    0 14px 36px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+:root[data-theme="ascii-cypherpunk"] .window__title,
+:root[data-theme="ascii-cypherpunk"] .island__clock,
+:root[data-theme="ascii-cypherpunk"] .island__icon-dot {
+  text-shadow: 0 0 6px currentColor;
+}
+
+:root[data-theme="ascii-cypherpunk"] .island {
+  box-shadow: var(--shadow-modal), 0 0 0 1px rgba(51, 255, 51, 0.2);
+}
+
+/* Minimal: distinct from modern-dark/light by being quieter, not just
+   desaturated — flatten the chrome the modern family otherwise adds
+   (shadows, borders, a differentiated titlebar) rather than reusing it at
+   lower contrast. */
+:root[data-theme="modern-minimal"] .window {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-color: var(--border);
+}
+
+:root[data-theme="modern-minimal"] .window--focused {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+:root[data-theme="modern-minimal"] .window__titlebar {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+:root[data-theme="modern-minimal"] .window__title-icon {
+  filter: grayscale(1) opacity(0.7);
+}
+
+:root[data-theme="modern-minimal"] .island {
+  box-shadow: none;
+  border-color: var(--border);
+}
+
 .entity-link {
   display: inline;
   background: transparent;
