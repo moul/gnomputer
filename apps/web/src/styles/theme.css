@@ -207,6 +207,13 @@
   --warning-bg: #faf5ea;
   --ui-font: var(--font-sans);
   --shadow-modal: 0 8px 24px rgba(0, 0, 0, 0.06);
+  /* Square corners everywhere and a plain, uncolored focus outline — every
+     other theme keeps rounded chrome and an accent-colored focus ring;
+     minimal drops both instead of just toning them down. */
+  --radius-sm: 0;
+  --radius: 0;
+  --radius-lg: 0;
+  --focus-ring: 0 0 0 1px var(--text-dim);
 }
 
 * {
