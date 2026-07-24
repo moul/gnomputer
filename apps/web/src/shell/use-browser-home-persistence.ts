@@ -1,37 +1,29 @@
-import { useEffect, useRef } from "react";
-import { useSdk } from "../sdk-context";
 import { useBrowserHomeStore } from "./browser-home-store";
+import { useStorePersistence } from "./use-store-persistence";
 
 const STORAGE_KEY = "browser-home-collapsed";
 
+function isRecordOfBooleans(value: unknown): value is Record<string, boolean> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    Object.values(value).every((v) => typeof v === "boolean")
+  );
+}
+
+function deserialize(raw: string): { collapsed: Record<string, boolean> } | null {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return isRecordOfBooleans(parsed) ? { collapsed: parsed } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function useBrowserHomePersistence() {
-  const sdk = useSdk();
-  const hydrated = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const saved = await sdk.uiState.get(STORAGE_KEY);
-      if (!cancelled && saved) {
-        try {
-          const parsed = JSON.parse(saved) as Record<string, boolean>;
-          useBrowserHomeStore.setState({ collapsed: parsed });
-        } catch {
-          // Corrupt stored value — fall back to every section expanded.
-        }
-      }
-      hydrated.current = true;
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [sdk]);
-
-  useEffect(() => {
-    const unsubscribe = useBrowserHomeStore.subscribe((state) => {
-      if (!hydrated.current) return;
-      void sdk.uiState.set(STORAGE_KEY, JSON.stringify(state.collapsed));
-    });
-    return unsubscribe;
-  }, [sdk]);
+  useStorePersistence(STORAGE_KEY, useBrowserHomeStore, {
+    serialize: (state) => JSON.stringify(state.collapsed),
+    deserialize,
+  });
 }

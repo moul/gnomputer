@@ -2,6 +2,31 @@ import { useEffect, useRef } from "react";
 import { useSdk } from "../sdk-context";
 import { useWindowStore, type WindowRecord } from "./window-store";
 
+export function isWindowRecord(value: unknown): value is WindowRecord {
+  if (typeof value !== "object" || value === null) return false;
+  const w = value as Record<string, unknown>;
+  return (
+    typeof w.x === "number" &&
+    typeof w.y === "number" &&
+    typeof w.width === "number" &&
+    typeof w.height === "number" &&
+    typeof w.title === "string" &&
+    typeof w.zIndex === "number" &&
+    typeof w.closed === "boolean" &&
+    typeof w.maximized === "boolean"
+  );
+}
+
+/** Keeps only entries that actually still look like a WindowRecord — an
+ * old/renamed field shape from a previous schema shouldn't crash the
+ * desktop or restore a window into a broken half-initialized state, and
+ * dropping just the malformed entries (rather than the whole layout) means
+ * one stale id doesn't cost every other window its saved position too. */
+export function filterValidWindows(parsed: unknown): Record<string, WindowRecord> {
+  if (typeof parsed !== "object" || parsed === null) return {};
+  return Object.fromEntries(Object.entries(parsed).filter(([, v]) => isWindowRecord(v)));
+}
+
 export function useWindowPersistence(storageKey: string) {
   const sdk = useSdk();
   const hydrated = useRef(false);
@@ -13,7 +38,7 @@ export function useWindowPersistence(storageKey: string) {
       if (cancelled) return;
       if (raw) {
         try {
-          const saved = JSON.parse(raw) as Record<string, WindowRecord>;
+          const saved = filterValidWindows(JSON.parse(raw));
           // Windows mounted before this async load resolved already ran
           // ensureWindow() with their hardcoded defaults — the saved layout
           // must win for any id it covers, so it goes second in the spread.
