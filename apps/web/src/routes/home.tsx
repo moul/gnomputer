@@ -1,5 +1,6 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
+import { WorldExplorer } from "./world-explorer";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
@@ -15,6 +16,7 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 
 const WINDOW_ACCENTS: Record<string, string> = {
   realm: "cyan",
+  "world-explorer": "cyan",
   "network-monitor": "green",
   "validator-monitor": "blue",
   "block-explorer": "red",
@@ -53,6 +55,15 @@ export function Home() {
             defaultGeometry={{ x: 0, y: 0, width: 460, height: 340 }}
           >
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
+          </Window>
+          <Window
+            id="world-explorer"
+            title="World Explorer"
+            accent="cyan"
+            startClosed
+            defaultGeometry={{ x: 140, y: 110, width: 420, height: 380 }}
+          >
+            <WorldExplorer />
           </Window>
           <Window
             id="network-monitor"

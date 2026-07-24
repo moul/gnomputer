@@ -15,14 +15,8 @@ import { RealmHistory } from "./realm-history";
 import { RealmActions } from "./realm-actions";
 import { RealmGraph } from "./realm-graph";
 import { RealmRaw } from "./realm-raw";
+import { KNOWN_REALMS } from "../known-realms";
 import type { RenderNode } from "@gnomputer/lenses";
-
-const STAFF_PICKS = [
-  { label: "Users", packagePath: "gno.land/r/sys/users" },
-  { label: "Boards2", packagePath: "gno.land/r/gnoland/boards2" },
-  { label: "Blog", packagePath: "gno.land/r/gnoland/blog" },
-  { label: "GovDAO", packagePath: "gno.land/r/gov/dao" },
-];
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
@@ -309,7 +303,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string) => void })
       <section>
         <h3>Staff picks</h3>
         <ul className="realm-browser-home__list">
-          {STAFF_PICKS.map((pick) => (
+          {KNOWN_REALMS.map((pick) => (
             <li key={pick.packagePath}>
               <button type="button" onClick={() => onOpen(pick.packagePath)}>
                 {pick.label}

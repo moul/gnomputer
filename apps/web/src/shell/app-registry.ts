@@ -13,6 +13,7 @@ export interface AppDescriptor {
 // a fresh instance (like clicking an app in a real OS's start menu/dock).
 export const APP_REGISTRY: AppDescriptor[] = [
   { id: "realm", label: "Realm Browser", icon: "🌐", supportsMultiWindow: true },
+  { id: "world-explorer", label: "World Explorer", icon: "🌍", supportsMultiWindow: false },
   { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false },
   { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false },
   { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false },
