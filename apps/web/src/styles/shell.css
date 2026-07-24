@@ -87,7 +87,6 @@
 }
 
 .island__clock {
-  position: relative;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -99,12 +98,21 @@
   white-space: nowrap;
 }
 
-.island__clock-popover {
+/* Wraps every hoverable island trigger + its popover (island-popover.tsx) —
+   just a relative-positioning anchor, sized to its trigger since the
+   popover itself is absolutely positioned and out of flow. */
+.island__popover-host {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+.island__popover {
   position: absolute;
   top: calc(100% + var(--space-2));
   right: 0;
   z-index: 210;
-  min-width: 180px;
+  min-width: 200px;
   padding: var(--space-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
@@ -112,6 +120,108 @@
   box-shadow: var(--shadow-modal);
   text-align: left;
   font-weight: 400;
+  font-size: 12px;
+}
+
+.island__popover[data-align="left"] {
+  left: 0;
+  right: auto;
+}
+
+.island-menu__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.island-menu__title--sub {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.island-menu__hint {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.island-menu__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.island-menu__row-label {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.island-menu__list {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.island-menu__list button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  text-align: left;
+}
+
+.island-menu__list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.island-menu__action {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: left;
+  background: transparent;
+  border: none;
+}
+
+.island-menu__action:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+.island-menu__inline-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.island-menu__inline-link:hover {
+  background: transparent;
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .island__clock-popover-time {
@@ -1315,6 +1425,20 @@ main {
 .account-fields dd {
   margin: 0;
   font-family: var(--font-mono);
+}
+
+.network-monitor__height-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.network-monitor__height-link:hover {
+  background: transparent;
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .users-app {

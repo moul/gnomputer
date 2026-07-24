@@ -7,5 +7,5 @@ test("guest can boot the shared computer with no wallet prompt", async ({ page }
 
   await page.getByLabel("Profile").click();
   await page.getByRole("tab", { name: "User" }).click();
-  await expect(page.getByText(/browsing without a wallet/i)).toBeVisible();
+  await expect(page.locator("#window-settings").getByText(/browsing without a wallet/i)).toBeVisible();
 });

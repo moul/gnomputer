@@ -16,13 +16,12 @@ import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
-  // Bumped to v5 when every app but Browser switched to startClosed by
-  // default (the island bar is now the discovery mechanism — apps open on
-  // click instead of cluttering the desktop from boot) and window position
-  // on first-ever creation became randomized. A v4 persisted layout is
-  // unaffected either way (saved positions/closed-state always win), this
-  // is purely about what a brand-new visitor sees.
-  useWindowPersistence("window-layout:home:v5");
+  // Bumped to v6 when every default geometry grew (v5's sizes read as
+  // cramped once windows actually had real content) — bumping the key is
+  // what makes that visible to existing visitors too, since ensureWindow()
+  // otherwise never touches a window id that's already in a restored
+  // layout (saved positions/sizes always win over a new default).
+  useWindowPersistence("window-layout:home:v6");
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
@@ -53,16 +52,16 @@ export function Home() {
             id="realm"
             title={realmTitle}
             accent="cyan"
-            defaultGeometry={{ x: 0, y: 0, width: 460, height: 340 }}
+            defaultGeometry={{ x: 0, y: 0, width: 640, height: 480 }}
           >
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
           </Window>
           <Window
             id="world-explorer"
-            title="World Explorer"
+            title="Realmnet Explorer"
             accent="cyan"
             startClosed
-            defaultGeometry={{ x: 140, y: 110, width: 420, height: 380 }}
+            defaultGeometry={{ x: 140, y: 110, width: 720, height: 560 }}
           >
             <WorldExplorer />
           </Window>
@@ -71,7 +70,7 @@ export function Home() {
             title="Users"
             accent="amber"
             startClosed
-            defaultGeometry={{ x: 180, y: 140, width: 400, height: 340 }}
+            defaultGeometry={{ x: 180, y: 140, width: 520, height: 440 }}
           >
             <Users />
           </Window>
@@ -80,7 +79,7 @@ export function Home() {
             title="Network Monitor"
             accent="green"
             startClosed
-            defaultGeometry={{ x: 476, y: 0, width: 380, height: 340 }}
+            defaultGeometry={{ x: 476, y: 0, width: 460, height: 400 }}
           >
             <NetworkMonitor />
           </Window>
@@ -89,7 +88,7 @@ export function Home() {
             title="Validator Monitor"
             accent="blue"
             startClosed
-            defaultGeometry={{ x: 0, y: 356, width: 380, height: 300 }}
+            defaultGeometry={{ x: 0, y: 356, width: 460, height: 360 }}
           >
             <ValidatorMonitor />
           </Window>
@@ -98,7 +97,7 @@ export function Home() {
             title="Block Explorer"
             accent="red"
             startClosed
-            defaultGeometry={{ x: 396, y: 356, width: 560, height: 340 }}
+            defaultGeometry={{ x: 396, y: 356, width: 720, height: 460 }}
           >
             <BlockExplorer />
           </Window>
@@ -107,7 +106,7 @@ export function Home() {
             title="Event Explorer"
             accent="blue"
             startClosed
-            defaultGeometry={{ x: 120, y: 100, width: 480, height: 400 }}
+            defaultGeometry={{ x: 120, y: 100, width: 600, height: 460 }}
           >
             <EventExplorer />
           </Window>
@@ -116,7 +115,7 @@ export function Home() {
             title="Gnockpit"
             accent="green"
             startClosed
-            defaultGeometry={{ x: 160, y: 130, width: 380, height: 320 }}
+            defaultGeometry={{ x: 160, y: 130, width: 480, height: 380 }}
           >
             <Gnockpit />
           </Window>

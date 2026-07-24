@@ -1,4 +1,5 @@
 import { useThemeStore, THEME_LABELS, type ThemeId } from "./theme-store";
+import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 
 // Display order for the grid — deliberately not THEME_ORDER (the cycle-button
 // order): ASCII on top, Clean (modern) on the bottom, Light on the left,
@@ -22,6 +23,10 @@ const THEME_DESCRIPTION: Record<ThemeId, string> = {
 export function SettingsThemeTab() {
   const theme = useThemeStore((s) => s.theme);
   const setTheme = useThemeStore((s) => s.setTheme);
+  const zoom = useZoomStore((s) => s.zoom);
+  const zoomIn = useZoomStore((s) => s.zoomIn);
+  const zoomOut = useZoomStore((s) => s.zoomOut);
+  const resetZoom = useZoomStore((s) => s.resetZoom);
 
   return (
     <div className="settings-tab">
@@ -42,6 +47,19 @@ export function SettingsThemeTab() {
             <span className="settings-theme-option__description">{THEME_DESCRIPTION[id]}</span>
           </button>
         ))}
+      </div>
+
+      <p className="settings-section-label">Zoom</p>
+      <div className="island__zoom">
+        <button type="button" onClick={zoomOut} disabled={zoom <= ZOOM_MIN} aria-label="Zoom out">
+          −
+        </button>
+        <button type="button" onClick={resetZoom} title="Reset zoom" aria-label="Reset zoom">
+          {Math.round(zoom * 100)}%
+        </button>
+        <button type="button" onClick={zoomIn} disabled={zoom >= ZOOM_MAX} aria-label="Zoom in">
+          +
+        </button>
       </div>
     </div>
   );

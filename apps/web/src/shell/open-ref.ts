@@ -7,7 +7,7 @@ import { isSettingsTab } from "./settings-store";
 import { useAddressWindowStore } from "./address-window-store";
 import type { EntityKind } from "./entity-patterns";
 
-function focusOrReopen(id: string) {
+export function focusOrReopen(id: string) {
   const win = useWindowStore.getState().windows[id];
   if (!win) return;
   if (win.closed || win.minimized) useWindowStore.getState().reopen(id);

@@ -1,6 +1,6 @@
 import { KNOWN_REALMS } from "../known-realms";
 import { useLiveEvents } from "../use-live-events";
-import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { openRef } from "../shell/open-ref";
 
 interface ActivityRow {
   packagePath: string;
@@ -30,7 +30,10 @@ export function WorldExplorer() {
   const activity = rankByActivity(events);
 
   function open(packagePath: string) {
-    openInRealmTab("realm", { packagePath });
+    // openRef also focuses/reopens the Browser window itself — necessary
+    // here since this is a *different* already-open window (Realmnet
+    // Explorer) navigating a target window that may be closed or minimized.
+    openRef(`gno://_/realm/${packagePath}`);
   }
 
   return (
