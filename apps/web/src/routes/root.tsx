@@ -15,6 +15,7 @@ import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
 import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
+import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 
 function RootLayout() {
   useThemePersistence();
@@ -22,6 +23,7 @@ function RootLayout() {
   useSettingsTabPersistence();
   useRealmTabsPersistence();
   useZoomPersistence();
+  useBrowserHomePersistence();
   return (
     <>
       <ErrorBoundary>

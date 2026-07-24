@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
+import { ErrorState } from "../shell/error-state";
 
 // The exact ABCI call and raw response text behind the Render lens — "Raw"
 // exists specifically so nothing is hidden behind an interpreted view.
@@ -13,6 +14,7 @@ export function RealmRaw({ packagePath, renderPath }: { packagePath: string; ren
     error,
     isPending,
     dataUpdatedAt,
+    refetch,
   } = useQuery({
     queryKey: ["realm-render-raw", networkId, packagePath, renderPath],
     queryFn: async () => {
@@ -23,9 +25,10 @@ export function RealmRaw({ packagePath, renderPath }: { packagePath: string; ren
 
   if (error) {
     return (
-      <p className="state-line" role="alert">
-        Could not load the raw response: {error.message}
-      </p>
+      <ErrorState
+        message={`Could not load the raw response: ${error.message}`}
+        onRetry={() => void refetch()}
+      />
     );
   }
   if (isPending) {

@@ -16,3 +16,9 @@ export function gnowebRealmUrl(gnowebUrl: string, packagePath: string, renderPat
 export function gnowebAddressUrl(gnowebUrl: string, address: string): string {
   return `${gnowebUrl}/u/${address}`;
 }
+
+// mygnoscan's address-page convention — confirmed live against the deployed
+// topaz instance (network-config.ts's explorerUrl).
+export function mygnoscanAddressUrl(explorerUrl: string, address: string): string {
+  return `${explorerUrl}/address/${address}`;
+}

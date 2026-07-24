@@ -47,6 +47,14 @@ export function RealmState({ packagePath }: { packagePath: string }) {
         }}
       >
         <input
+          type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder='Render("") or an exported var name'
@@ -66,9 +74,18 @@ export function RealmState({ packagePath }: { packagePath: string }) {
                 {packagePath}.{entry.expression}
               </div>
               {entry.error ? (
-                <pre className="realm-state__error" role="alert">
-                  {entry.error}
-                </pre>
+                <>
+                  <pre className="realm-state__error" role="alert">
+                    {entry.error}
+                  </pre>
+                  <button
+                    type="button"
+                    className="state-line__retry"
+                    onClick={() => void evaluate(entry.expression)}
+                  >
+                    Try again
+                  </button>
+                </>
               ) : (
                 <pre className="realm-state__result">{entry.result}</pre>
               )}

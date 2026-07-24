@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { openRef } from "../shell/open-ref";
+import { useResolveUser } from "../use-resolve-user";
+import { ErrorState } from "../shell/error-state";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 
@@ -19,6 +21,7 @@ export function Users() {
     data: stats,
     error: statsError,
     isPending: statsPending,
+    refetch: refetchStats,
   } = useQuery({
     queryKey: ["users-stats", sdk.networks.getActive().id],
     queryFn: async () => {
@@ -36,24 +39,23 @@ export function Users() {
     data: result,
     error: lookupError,
     isPending: lookupPending,
-  } = useQuery({
-    queryKey: ["users-lookup", sdk.networks.getActive().id, query],
-    queryFn: async () => {
-      const env = await sdk.rpc.evalExpression(USERS_PACKAGE, `ResolveAny("${query}")`, new Date().toISOString());
-      return sdk.lenses.parseUserData(env.data);
-    },
-    enabled: query !== null && query !== "",
-  });
+    refetch: refetchLookup,
+  } = useResolveUser(query);
 
   return (
     <div className="users-app">
-      <p className="state-line">
-        {statsPending
-          ? "Loading directory stats…"
-          : statsError
-            ? `Could not load directory stats: ${statsError.message}`
+      {statsError ? (
+        <ErrorState
+          message={`Could not load directory stats: ${statsError.message}`}
+          onRetry={() => void refetchStats()}
+        />
+      ) : (
+        <p className="state-line" aria-busy={statsPending}>
+          {statsPending
+            ? "Loading directory stats…"
             : `${stats?.addresses ?? "?"} addresses · ${stats?.names ?? "?"} names registered on ${USERS_PACKAGE}.`}
-      </p>
+        </p>
+      )}
       <form
         className="open-package-form"
         onSubmit={(e) => {
@@ -71,7 +73,7 @@ export function Users() {
             data-bwignore="true"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="test1 or g1…"
+            placeholder="@moul, moul, or g1…"
           />
         </label>
         <button type="submit" disabled={!draft.trim()}>
@@ -89,9 +91,10 @@ export function Users() {
           Looking up &ldquo;{query}&rdquo;…
         </p>
       ) : lookupError ? (
-        <p className="state-line" role="alert">
-          Could not look up &ldquo;{query}&rdquo;: {lookupError.message}
-        </p>
+        <ErrorState
+          message={`Could not look up "${query}": ${lookupError.message}`}
+          onRetry={() => void refetchLookup()}
+        />
       ) : !result?.found ? (
         <p className="state-line">No registered user matches &ldquo;{query}&rdquo;.</p>
       ) : (

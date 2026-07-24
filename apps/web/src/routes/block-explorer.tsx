@@ -8,6 +8,7 @@ import { useLiveActivity } from "../use-live-activity";
 import { formatTimeAgo } from "../format-time-ago";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
+import { ErrorState } from "../shell/error-state";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
@@ -59,6 +60,7 @@ export function BlockExplorer() {
     error,
     isPending,
     dataUpdatedAt,
+    refetch,
   } = useQuery({
     queryKey: ["block-detail", networkId, height],
     queryFn: async () => {
@@ -147,6 +149,14 @@ export function BlockExplorer() {
             <label>
               Block height
               <input
+                type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
                 value={draftHeight}
                 onChange={(e) => setDraftHeight(e.target.value)}
                 disabled={latest}
@@ -177,9 +187,10 @@ export function BlockExplorer() {
           </form>
 
           {error ? (
-            <p className="state-line" role="alert">
-              Could not load block #{height}: {error.message}
-            </p>
+            <ErrorState
+              message={`Could not load block #${height}: ${error.message}`}
+              onRetry={() => void refetch()}
+            />
           ) : isPending || !block ? (
             <p className="state-line" aria-busy="true">
               Loading block…

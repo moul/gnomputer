@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
+import { useOnlineStatus } from "./use-online-status";
 import { IslandPopover } from "./island-popover";
 import { openRef, focusOrReopen } from "./open-ref";
 import { iconForRefUri } from "./entity-icon";
@@ -22,6 +23,12 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const sdk = useSdk();
   const trailVersion = useShellStore((s) => s.trailVersion);
   const { data, state } = useNetworkStatus();
+  const online = useOnlineStatus();
+  // The browser's own offline signal is more immediate and more certain than
+  // waiting for an RPC call to time out — and unambiguous in a way "error"
+  // isn't (that could just as easily mean a network hiccup or a bad
+  // endpoint while genuinely still online).
+  const effectiveState = online ? state : "offline";
   const [now, setNow] = useState(() => new Date());
   const [steps, setSteps] = useState<{ refUri: string; label: string }[]>([]);
 
@@ -51,7 +58,7 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
       disabled={disabled}
       trigger={
         <div className="island__clock">
-          <span className="status-dot" data-state={state} aria-hidden="true" />
+          <span className="status-dot" data-state={effectiveState} aria-hidden="true" />
           {formatClock(now)}
         </div>
       }
@@ -61,6 +68,12 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
         <div className="island__clock-popover-date">
           {now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
         </div>
+        {!online && (
+          <p className="island-menu__hint island-menu__hint--offline">
+            ⚠ Offline — no internet connection. Already-loaded content keeps working; anything new
+            will pick back up once you're reconnected.
+          </p>
+        )}
         <dl className="island__clock-popover-stats">
           <dt>Chain</dt>
           <dd>{data?.chainId ?? "—"}</dd>

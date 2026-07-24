@@ -111,19 +111,26 @@ export function IslandBar() {
 
   const settingsOpen = windows["settings"] !== undefined && !windows["settings"]!.closed;
 
+  // While overview mode is active, the island isn't really usable as a menu
+  // (see IslandPopover's disabled prop) — replacing its whole content with
+  // the mode's own hint is clearer than a dimmed icon row plus a separate
+  // hint pill fighting for the same space (the earlier approach was hard to
+  // read against the dimmed-but-still-visible icons behind it). Any click
+  // here just exits overview, same as clicking the desktop background.
+  if (overviewOpen) {
+    return (
+      <button
+        type="button"
+        className="island island--overview"
+        onClick={() => closeOverview()}
+      >
+        Overview · click a window to open it
+      </button>
+    );
+  }
+
   return (
-    <div
-      className="island"
-      role="toolbar"
-      aria-label="Apps"
-      data-dimmed={overviewOpen}
-      onClickCapture={() => {
-        // Runs before the clicked icon's own onClick (capture phase) — an
-        // icon click while overview mode is showing should both exit it AND
-        // still perform the icon's normal action, not require a second click.
-        if (overviewOpen) closeOverview();
-      }}
-    >
+    <div className="island" role="toolbar" aria-label="Apps">
       <span className="island__brand" aria-hidden="true">
         ⌘
       </span>
@@ -155,14 +162,14 @@ export function IslandBar() {
         );
         if (icon.key === "settings") {
           return (
-            <IslandPopover key={icon.key} trigger={trigger} disabled={overviewOpen}>
+            <IslandPopover key={icon.key} trigger={trigger}>
               <IslandSettingsMenu />
             </IslandPopover>
           );
         }
         if (icon.key === "chain") {
           return (
-            <IslandPopover key={icon.key} trigger={trigger} disabled={overviewOpen}>
+            <IslandPopover key={icon.key} trigger={trigger}>
               <IslandChainMenu />
             </IslandPopover>
           );
@@ -170,7 +177,6 @@ export function IslandBar() {
         return <span key={icon.key}>{trigger}</span>;
       })}
       <IslandPopover
-        disabled={overviewOpen}
         trigger={
           <button
             type="button"

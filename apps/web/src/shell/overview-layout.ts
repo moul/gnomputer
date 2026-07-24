@@ -11,6 +11,11 @@ export interface OverviewRect {
   y: number;
   width: number;
   height: number;
+  /** How much smaller than real size this cell ended up (1 = unchanged) —
+   * window.tsx also applies this as a CSS zoom on the window's actual
+   * content, so it shrinks along with its box into a real live thumbnail
+   * instead of just getting cropped by a smaller container. */
+  scale: number;
 }
 
 const GAP = 24;
@@ -53,6 +58,7 @@ export function computeOverviewLayout(
       y: cellY + (cellHeight - height) / 2,
       width,
       height,
+      scale,
     };
   });
   return result;
