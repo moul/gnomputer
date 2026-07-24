@@ -1,11 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
+import { useShellStore } from "../store";
 import { openRef } from "../shell/open-ref";
 import { useResolveUser } from "../use-resolve-user";
 import { ErrorState } from "../shell/error-state";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
+// How many recently-looked-up addresses show — mirrors island-clock.tsx's
+// own RECENT_STEPS_LIMIT for the same kind of "recent" list.
+const RECENT_LOOKUPS_LIMIT = 8;
+
+/** Extracts the address from a Trail step's gno://<network>/address/<addr>
+ * ref URI, or null for any other kind of step. */
+export function addressFromRefUri(refUri: string): string | null {
+  const match = /^gno:\/\/[^/]+\/address\/(.+)$/.exec(refUri);
+  return match?.[1] ?? null;
+}
+
+/** Recently-looked-up addresses, most recent first — sourced from the
+ * user's own Trail (there's no chain-side way to list "recently active
+ * users" the way Browser's Recently Active does for realms: chain events
+ * carry no signer/caller address, only pkgPath — see rank-by-activity.ts).
+ * A personal "recently looked up" list is the honest equivalent available
+ * here. */
+function useRecentlyLookedUpAddresses(): string[] {
+  const sdk = useSdk();
+  const trailVersion = useShellStore((s) => s.trailVersion);
+  const [addresses, setAddresses] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const trailId = await sdk.trails.getActiveTrailId();
+      if (cancelled || !trailId) return;
+      const steps = await sdk.trails.getSteps(trailId);
+      if (cancelled) return;
+      const seen = new Set<string>();
+      const recent: string[] = [];
+      for (let i = steps.length - 1; i >= 0 && recent.length < RECENT_LOOKUPS_LIMIT; i--) {
+        const address = addressFromRefUri(steps[i]!.refUri);
+        if (address && !seen.has(address)) {
+          seen.add(address);
+          recent.push(address);
+        }
+      }
+      setAddresses(recent);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sdk, trailVersion]);
+
+  return addresses;
+}
 
 // gno.land/r/sys/users has no function that enumerates registered users —
 // only per-user lookups (ResolveAny/ResolveAddress/ResolveName) and the two
@@ -16,6 +64,7 @@ export function Users() {
   const sdk = useSdk();
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState<string | null>(null);
+  const recentAddresses = useRecentlyLookedUpAddresses();
 
   const {
     data: stats,
@@ -82,10 +131,29 @@ export function Users() {
       </form>
 
       {query === null ? (
-        <p className="state-line">
-          Search by username or address — there&rsquo;s no way to browse every registered user
-          without the indexer.
-        </p>
+        recentAddresses.length > 0 ? (
+          <div className="users-app__recent">
+            <p className="users-app__recent-title">Recently looked up</p>
+            <ul className="users-app__recent-list">
+              {recentAddresses.map((address) => (
+                <li key={address}>
+                  <button
+                    type="button"
+                    className="users-app__address-link"
+                    onClick={(e) => openRef(`gno://_/address/${address}`, { x: e.clientX, y: e.clientY })}
+                  >
+                    {address}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="state-line">
+            Search by username or address — there&rsquo;s no way to browse every registered user
+            without the indexer.
+          </p>
+        )
       ) : lookupPending ? (
         <p className="state-line" aria-busy="true">
           Looking up &ldquo;{query}&rdquo;…
