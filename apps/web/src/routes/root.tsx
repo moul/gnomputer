@@ -18,6 +18,7 @@ import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence
 import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
+import { useCustomNetworksPersistence } from "../shell/use-custom-networks-persistence";
 
 function RootLayout() {
   useThemePersistence();
@@ -26,6 +27,7 @@ function RootLayout() {
   useRealmTabsPersistence();
   useZoomPersistence();
   useBrowserHomePersistence();
+  useCustomNetworksPersistence();
   return (
     <>
       <ErrorBoundary>

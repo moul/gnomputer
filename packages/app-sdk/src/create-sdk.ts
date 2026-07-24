@@ -61,6 +61,12 @@ export interface GnomputerSDK {
     getDefault(): NetworkConfig;
     getActive(): NetworkConfig;
     setActive(id: string): void;
+    /** Switches to a full network config directly rather than an id looked
+     * up in list() — the one entry point that works for both a known
+     * default network and a user-added custom one (custom networks aren't
+     * tracked inside the SDK itself; see apps/web's custom-networks-store,
+     * which persists them and passes the resolved config here). */
+    setActiveConfig(config: NetworkConfig): void;
   };
   readonly rpc: RpcClient;
   indexer: {
@@ -128,6 +134,10 @@ export function createGnomputerSDK(
         const next = DEFAULT_NETWORKS.find((n) => n.id === id);
         if (!next) throw new Error(`Unknown network id "${id}"`);
         activeNetwork = next;
+        rpc = createRpcClient(activeNetwork);
+      },
+      setActiveConfig: (config: NetworkConfig) => {
+        activeNetwork = config;
         rpc = createRpcClient(activeNetwork);
       },
     },

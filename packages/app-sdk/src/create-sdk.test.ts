@@ -18,6 +18,22 @@ describe("createGnomputerSDK", () => {
     expect(sdk.networks.getActive().id).toBe("betanet");
   });
 
+  it("switches to a full network config directly, for a custom network not in list()", () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    const custom = {
+      id: "my-custom",
+      name: "My Custom Node",
+      chainId: "unknown",
+      rpcUrl: "http://localhost:12345",
+      environment: "custom" as const,
+      persistence: "unknown" as const,
+      trust: "custom" as const,
+      capabilities: [],
+    };
+    sdk.networks.setActiveConfig(custom);
+    expect(sdk.networks.getActive()).toEqual(custom);
+  });
+
   it("starts a Trail and records a step through the SDK", async () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
     const trailId = await sdk.trails.start("Untitled Trail");

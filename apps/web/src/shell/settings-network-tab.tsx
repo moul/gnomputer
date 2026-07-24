@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
+import { useCustomNetworksStore, buildCustomNetworkConfig } from "./custom-networks-store";
 import { NetworkMonitor } from "../routes/network-monitor";
 
 const STATE_LABEL: Record<string, string> = {
@@ -13,6 +15,14 @@ export function SettingsNetworkTab() {
   const sdk = useSdk();
   const { activeNetworkId, setActiveNetwork } = useShellStore();
   const { state, network } = useNetworkStatus();
+  const customNetworks = useCustomNetworksStore((s) => s.networks);
+  const addCustomNetwork = useCustomNetworksStore((s) => s.addNetwork);
+  const removeCustomNetwork = useCustomNetworksStore((s) => s.removeNetwork);
+  const [nameDraft, setNameDraft] = useState("");
+  const [rpcUrlDraft, setRpcUrlDraft] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const allNetworks = [...sdk.networks.list(), ...customNetworks];
 
   const links: { label: string; url: string }[] = [
     { label: "RPC", url: network.rpcUrl },
@@ -22,18 +32,57 @@ export function SettingsNetworkTab() {
     { label: "Explorer", url: network.explorerUrl ?? "" },
   ].filter((link) => link.url !== "");
 
+  function activate(id: string) {
+    const config = allNetworks.find((n) => n.id === id);
+    if (!config) return;
+    sdk.networks.setActiveConfig(config);
+    setActiveNetwork(id);
+  }
+
+  function addNetwork(e: React.FormEvent) {
+    e.preventDefault();
+    setAddError(null);
+    let url: URL;
+    try {
+      url = new URL(rpcUrlDraft.trim());
+    } catch {
+      setAddError("That doesn't look like a valid URL.");
+      return;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      setAddError("The RPC URL must be http:// or https://.");
+      return;
+    }
+    if (nameDraft.trim() === "") {
+      setAddError("Give it a name.");
+      return;
+    }
+    const config = buildCustomNetworkConfig(nameDraft, rpcUrlDraft.trim());
+    if (allNetworks.some((n) => n.id === config.id)) {
+      setAddError("A network with that name already exists.");
+      return;
+    }
+    addCustomNetwork(config);
+    // Not activate(config.id) — allNetworks is a snapshot from this render,
+    // taken before addCustomNetwork's state update is visible, so a lookup
+    // by id would find nothing yet. config is already the full object.
+    sdk.networks.setActiveConfig(config);
+    setActiveNetwork(config.id);
+    setNameDraft("");
+    setRpcUrlDraft("");
+  }
+
+  function removeNetwork(id: string) {
+    removeCustomNetwork(id);
+    if (activeNetworkId === id) activate(sdk.networks.getDefault().id);
+  }
+
   return (
     <div className="settings-tab">
       <label className="settings-field">
         Active network
-        <select
-          value={activeNetworkId}
-          onChange={(e) => {
-            sdk.networks.setActive(e.target.value);
-            setActiveNetwork(e.target.value);
-          }}
-        >
-          {sdk.networks.list().map((n) => (
+        <select value={activeNetworkId} onChange={(e) => activate(e.target.value)}>
+          {allNetworks.map((n) => (
             <option key={n.id} value={n.id}>
               {n.name}
             </option>
@@ -58,6 +107,49 @@ export function SettingsNetworkTab() {
           ))}
         </ul>
       </div>
+      {customNetworks.length > 0 && (
+        <div>
+          <p className="settings-section-label">Custom networks</p>
+          <ul className="settings-network-links">
+            {customNetworks.map((n) => (
+              <li key={n.id}>
+                <span className="settings-network-links__label">{n.name}</span>
+                <span className="custom-network__rpc-url">{n.rpcUrl}</span>
+                <button type="button" onClick={() => removeNetwork(n.id)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <form className="custom-network-form" onSubmit={addNetwork}>
+        <p className="settings-section-label">Add a custom network</p>
+        <label>
+          Name
+          <input
+            type="text"
+            autoComplete="off"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            placeholder="My local gnodev"
+          />
+        </label>
+        <label>
+          RPC URL
+          <input
+            type="text"
+            autoComplete="off"
+            value={rpcUrlDraft}
+            onChange={(e) => setRpcUrlDraft(e.target.value)}
+            placeholder="http://127.0.0.1:26657"
+          />
+        </label>
+        <button type="submit" disabled={!nameDraft.trim() || !rpcUrlDraft.trim()}>
+          Add and switch to it
+        </button>
+        {addError && <p className="state-line">{addError}</p>}
+      </form>
     </div>
   );
 }
