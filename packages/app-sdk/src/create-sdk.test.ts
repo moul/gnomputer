@@ -80,4 +80,19 @@ describe("createGnomputerSDK", () => {
     expect(all[0].queryKeyJson).toBe('["key-1"]');
     expect(all.at(-1)!.queryKeyJson).toBe('["key-50"]');
   });
+
+  it("creates, lists (most recently updated first), updates, and removes a script", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    const a = await sdk.scripts.create("First", "package main");
+    const b = await sdk.scripts.create("Second", "package main");
+    expect((await sdk.scripts.list()).map((s) => s.id)).toEqual([b.id, a.id]);
+
+    await sdk.scripts.update(a.id, { code: "package main // edited" });
+    const list = await sdk.scripts.list();
+    expect(list.map((s) => s.id)).toEqual([a.id, b.id]);
+    expect(list[0].code).toBe("package main // edited");
+
+    await sdk.scripts.remove(b.id);
+    expect((await sdk.scripts.list()).map((s) => s.id)).toEqual([a.id]);
+  });
 });

@@ -1347,10 +1347,67 @@ main {
   text-underline-offset: 2px;
 }
 
-.source-explorer {
+.source-explorer,
+.editor-window {
   display: flex;
   gap: var(--space-4);
   height: 100%;
+}
+
+.editor-window__sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-window__new {
+  margin-top: var(--space-2);
+  font-size: 12px;
+}
+
+.editor-window__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-window__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.editor-window__name {
+  font-weight: 700;
+  margin-right: var(--space-2);
+}
+
+.editor-window__spacer {
+  flex: 1;
+}
+
+.editor-window__code {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.editor-window__empty,
+.editor-window__templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.editor-window__templates {
+  width: 100%;
+}
+
+.editor-window__templates-cancel {
+  align-self: flex-start;
 }
 
 .file-tree {

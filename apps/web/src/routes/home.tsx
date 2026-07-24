@@ -7,6 +7,7 @@ import { BlockExplorer } from "./block-explorer";
 import { EventExplorer } from "./event-explorer";
 import { Gnockpit } from "./gnockpit";
 import { Resources } from "./resources";
+import { Editor } from "./editor";
 import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
@@ -71,6 +72,15 @@ export function Home() {
             defaultGeometry={{ x: 220, y: 160, width: 640, height: 500 }}
           >
             <Resources />
+          </Window>
+          <Window
+            id="editor"
+            title="Editor"
+            accent="magenta"
+            startClosed
+            defaultGeometry={{ x: 260, y: 190, width: 720, height: 540 }}
+          >
+            <Editor />
           </Window>
           <Window
             id="network-monitor"
