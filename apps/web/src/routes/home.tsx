@@ -12,6 +12,7 @@ import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
 import { AddressWindow } from "../shell/address-window";
+import { EmbedWindow } from "../shell/embed-window";
 import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowStore } from "../shell/window-store";
@@ -139,6 +140,7 @@ export function Home() {
           <SettingsWindow />
           <HistoryWindow />
           <AddressWindow />
+          <EmbedWindow />
           <ExtraRealmWindows />
         </div>
       </div>

@@ -9,6 +9,7 @@ import { ErrorState } from "./error-state";
 import { useAddressWindowStore } from "./address-window-store";
 import { useStorePersistence } from "./use-store-persistence";
 import { gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
+import { openEmbed } from "./open-embed";
 
 function formatBalance(coins: string): string {
   const match = /^(\d+)ugnot$/.exec(coins);
@@ -226,14 +227,22 @@ function AddressContent({ address }: { address: string }) {
             </a>
           )}
           {network.explorerUrl && (
-            <a
-              className="address-window__gnoweb-link"
-              href={mygnoscanAddressUrl(network.explorerUrl, address)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              See on mygnoscan ↗
-            </a>
+            <>
+              <a
+                className="address-window__gnoweb-link"
+                href={mygnoscanAddressUrl(network.explorerUrl, address)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                See on mygnoscan ↗
+              </a>
+              <button
+                type="button"
+                onClick={() => openEmbed(mygnoscanAddressUrl(network.explorerUrl as string, address), "mygnoscan")}
+              >
+                Embed here
+              </button>
+            </>
           )}
         </p>
       )}

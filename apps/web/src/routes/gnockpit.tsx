@@ -3,6 +3,7 @@ import { useNetworkStatus } from "../shell/use-network-status";
 import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
+import { openEmbed } from "../shell/open-embed";
 
 // A lightweight, embedded slice of what the real Gnockpit dashboard shows
 // (chain identity + validator set summary), backed by the same RPC calls the
@@ -63,12 +64,23 @@ export function Gnockpit() {
         </dd>
       </dl>
       {network.gnockpitUrl ? (
-        <a className="gnockpit__link" href={network.gnockpitUrl} target="_blank" rel="noreferrer">
-          Open Gnockpit ↗
-        </a>
+        <GnockpitLinks gnockpitUrl={network.gnockpitUrl} />
       ) : (
         <p className="state-line">No Gnockpit instance configured for {network.name}.</p>
       )}
     </div>
+  );
+}
+
+function GnockpitLinks({ gnockpitUrl }: { gnockpitUrl: string }) {
+  return (
+    <p className="gnockpit__links">
+      <a className="gnockpit__link" href={gnockpitUrl} target="_blank" rel="noreferrer">
+        Open Gnockpit ↗
+      </a>
+      <button type="button" onClick={() => openEmbed(gnockpitUrl, "Gnockpit")}>
+        Embed here
+      </button>
+    </p>
   );
 }

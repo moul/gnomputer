@@ -51,6 +51,10 @@ export const APP_REGISTRY: AppDescriptor[] = [
   // The generic "look up any address" viewer, opened contextually from
   // entity links (openRef) rather than from an island icon of its own.
   { id: "address", label: "Accounts", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
+  // Shows a curated third-party tool (mygnoscan, Gnockpit) inline via
+  // iframe — opened contextually from an "Embed" button next to that
+  // tool's existing external link, not from an island icon of its own.
+  { id: "embed", label: "Embed", icon: "🖼️", supportsMultiWindow: false, hiddenFromIsland: true },
 ];
 
 const ICON_BY_ID = new Map(APP_REGISTRY.map((app) => [app.id, app.icon]));
