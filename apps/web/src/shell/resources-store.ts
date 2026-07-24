@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type ResourcesTab = "docs" | "awesome-gno" | "about";
+export type ResourcesTab = "docs" | "awesome-gno" | "shortcuts" | "about";
 
 interface ResourcesState {
   tab: ResourcesTab;

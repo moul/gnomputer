@@ -19,6 +19,7 @@ import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 import { useCustomNetworksPersistence } from "../shell/use-custom-networks-persistence";
+import { useGlobalShortcuts } from "../shell/use-global-shortcuts";
 
 function RootLayout() {
   useThemePersistence();
@@ -28,6 +29,7 @@ function RootLayout() {
   useZoomPersistence();
   useBrowserHomePersistence();
   useCustomNetworksPersistence();
+  useGlobalShortcuts();
   return (
     <>
       <ErrorBoundary>

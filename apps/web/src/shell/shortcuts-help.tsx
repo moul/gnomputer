@@ -1,11 +1,17 @@
 import { useEffect } from "react";
 import { useShellStore } from "../store";
 
-const SHORTCUTS: { keys: string; description: string }[] = [
+export interface Shortcut {
+  keys: string;
+  description: string;
+}
+
+export const SHORTCUTS: Shortcut[] = [
   { keys: "⌘K / Ctrl+K", description: "Open the command palette" },
+  { keys: "⌘, / Ctrl+,", description: "Open Settings" },
   { keys: "⌘/ or ?", description: "Show this shortcuts help" },
   { keys: "Esc", description: "Close the command palette or this help" },
-  { keys: "Click desktop background", description: "Toggle overview mode (see every open window)" },
+  { keys: "Click desktop background", description: "Toggle overview mode (needs 2+ open windows)" },
 ];
 
 export function ShortcutsHelp() {

@@ -5,6 +5,7 @@ import { ErrorState } from "../shell/error-state";
 import { buildDocTree, type DocTreeNode } from "../shell/doc-tree";
 import { useResourcesStore, type ResourcesTab } from "../shell/resources-store";
 import { useStorePersistence } from "../shell/use-store-persistence";
+import { SHORTCUTS } from "../shell/shortcuts-help";
 
 const REPO_TREE_API = "https://api.github.com/repos/gnolang/gno/git/trees/master?recursive=1";
 const REPO_RAW_BASE = "https://raw.githubusercontent.com/gnolang/gno/master";
@@ -14,6 +15,7 @@ const AWESOME_GNO_URL = "https://github.com/gnolang/awesome-gno";
 const TABS: { id: ResourcesTab; label: string }[] = [
   { id: "docs", label: "Docs" },
   { id: "awesome-gno", label: "awesome-gno" },
+  { id: "shortcuts", label: "Shortcuts" },
   { id: "about", label: "About" },
 ];
 
@@ -53,6 +55,7 @@ export function Resources() {
       <div className="window-tabbody">
         {tab === "docs" && <DocsTab />}
         {tab === "awesome-gno" && <AwesomeGnoTab />}
+        {tab === "shortcuts" && <ShortcutsTab />}
         {tab === "about" && <AboutTab />}
       </div>
     </div>
@@ -201,6 +204,22 @@ function AwesomeGnoTab() {
       ) : (
         <Markdown text={text} />
       )}
+    </div>
+  );
+}
+
+function ShortcutsTab() {
+  return (
+    <div className="resources-shortcuts">
+      <p className="state-line">The same shortcuts as the in-app help (⌘/ or ?), for reference.</p>
+      <dl className="resources-shortcuts__list">
+        {SHORTCUTS.map((s) => (
+          <div key={s.keys} className="resources-shortcuts__row">
+            <dt>{s.keys}</dt>
+            <dd>{s.description}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
