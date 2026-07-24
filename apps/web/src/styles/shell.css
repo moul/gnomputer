@@ -1864,6 +1864,23 @@ main {
   text-decoration: underline;
 }
 
+.users-app__recent-title {
+  margin: 0 0 var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.users-app__recent-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .validator-monitor {
   display: flex;
   flex-direction: column;
