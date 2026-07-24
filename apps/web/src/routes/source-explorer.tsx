@@ -4,6 +4,7 @@ import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { ErrorState } from "../shell/error-state";
 import { CodeEditor } from "../shell/code-editor-lazy";
+import { forkFile } from "../shell/fork-script";
 
 export function SourceExplorer({ packagePath }: { packagePath: string }) {
   const sdk = useSdk();
@@ -98,6 +99,16 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
         </ul>
       </nav>
       <div className="source-viewer">
+        <div className="source-viewer__toolbar">
+          <span className="source-viewer__filename">{activeFile}</span>
+          <button
+            type="button"
+            disabled={sourcePending || !source || !activeFile}
+            onClick={() => void forkFile(sdk, activeFile ?? "Untitled", source ?? "")}
+          >
+            Fork this file → Editor
+          </button>
+        </div>
         {sourcePending ? (
           <p className="state-line" aria-busy="true">
             Loading file…
