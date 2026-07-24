@@ -312,6 +312,13 @@
   text-align: right;
 }
 
+.island__clock-popover-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
 .status-dot {
   display: inline-block;
   width: 8px;

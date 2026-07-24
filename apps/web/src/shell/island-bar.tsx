@@ -2,10 +2,8 @@ import { useWindowStore } from "./window-store";
 import { useRealmTabsStore } from "./realm-tabs-store";
 import { APP_REGISTRY, ISLAND_GROUPS } from "./app-registry";
 import { focusFamilyOrOpenDefault, realmFamilyIds } from "./focus-family";
-import { openSettings } from "./open-settings";
 import { IslandPopover } from "./island-popover";
 import { IslandSettingsMenu } from "./island-settings-menu";
-import { IslandProfileMenu } from "./island-profile-menu";
 import { IslandChainMenu } from "./island-chain-menu";
 import { IslandBrowserMenu } from "./island-browser-menu";
 import { IslandClock } from "./island-clock";
@@ -66,7 +64,6 @@ export function IslandBar() {
   const closeAllWindows = useWindowStore((s) => s.closeAll);
   const createNewRealmWindow = useRealmTabsStore((s) => s.createNewWindow);
   const setCommandPaletteOpen = useShellStore((s) => s.setCommandPaletteOpen);
-  const setShortcutsHelpOpen = useShellStore((s) => s.setShortcutsHelpOpen);
   const setHoveredWindowIds = useShellStore((s) => s.setHoveredWindowIds);
 
   function scrollToWindow(id: string) {
@@ -109,8 +106,6 @@ export function IslandBar() {
     return icon.supportsMultiWindow ? realmFamilyIds(windows) : icon.memberIds;
   }
 
-  const settingsOpen = windows["settings"] !== undefined && !windows["settings"]!.closed;
-
   // While overview mode is active, the island isn't really usable as a menu
   // (see IslandPopover's disabled prop) — replacing its whole content with
   // the mode's own hint is clearer than a dimmed icon row plus a separate
@@ -147,15 +142,6 @@ export function IslandBar() {
         onClick={() => setCommandPaletteOpen(true)}
       >
         🔍
-      </button>
-      <button
-        type="button"
-        className="island__icon"
-        aria-label="Show keyboard shortcuts (Cmd+/ or ?)"
-        title="Keyboard shortcuts (⌘/ or ?)"
-        onClick={() => setShortcutsHelpOpen(true)}
-      >
-        ?
       </button>
       <span className="island__divider" aria-hidden="true" />
       {ISLAND_ICONS.map((icon) => {
@@ -202,26 +188,6 @@ export function IslandBar() {
         }
         return <span key={icon.key}>{trigger}</span>;
       })}
-      <IslandPopover
-        trigger={
-          <button
-            type="button"
-            className="island__icon"
-            data-open={settingsOpen}
-            title="Profile"
-            aria-label="Profile"
-            onClick={() => openSettings("user")}
-            onMouseEnter={() => setHoveredWindowIds(["settings"])}
-            onMouseLeave={() => setHoveredWindowIds([])}
-          >
-            👤
-            {settingsOpen && <span className="island__icon-dot" aria-hidden="true" />}
-          </button>
-        }
-      >
-        <IslandProfileMenu />
-      </IslandPopover>
-      <span className="island__divider" aria-hidden="true" />
       <IslandClock disabled={overviewOpen} />
     </div>
   );

@@ -40,10 +40,6 @@ export const APP_REGISTRY: AppDescriptor[] = [
   { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false, group: "chain" },
   { id: "event-explorer", label: "Event Explorer", icon: "🔔", supportsMultiWindow: false, group: "chain" },
   { id: "gnockpit", label: "Gnockpit", icon: "📊", supportsMultiWindow: false, group: "chain" },
-  // Settings and Profile are two distinct entry points into the same
-  // window (Profile jumps straight to its User tab, see island-profile-menu)
-  // rather than a merged group icon, so each gets its own island slot and
-  // hover popover (island-settings-menu / island-profile-menu).
   { id: "settings", label: "Settings", icon: "⚙️", supportsMultiWindow: false },
   // Reachable via the clock's History menu (island-clock.tsx) instead of its
   // own icon — see AppDescriptor.hiddenFromIsland.
