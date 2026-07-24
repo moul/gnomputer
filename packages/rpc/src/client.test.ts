@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import nock from "nock";
 import { createRpcClient } from "./client";
 import { DEFAULT_NETWORKS } from "@gnomputer/networks";
 import statusFixture from "./__fixtures__/status.json";
@@ -16,44 +17,80 @@ const test13 = DEFAULT_NETWORKS.find((n) => n.id === "test13")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
 const UNFUNDED_ADDRESS = "g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzp0nh0";
 
-function abciQueryFixture(init?: RequestInit) {
-  const body = JSON.parse(String(init?.body ?? "{}")) as {
-    params?: { path?: string; data?: string };
-  };
-  const path = body.params?.path ?? "";
+// Every RpcClient method funnels through ONE shared transport, regardless
+// of which higher-level class calls it: Tm2Client.abciQuery/status/block/
+// validators AND JSONRPCProvider.getAccount (which just wraps its own
+// internal Tm2Client) both bottom out in @gnolang/tm2-rpc's
+// dist/rpcclients/http.mjs, which does `import fetch from "cross-fetch"`.
+// Mocking global.fetch (the previous approach) silently mocked nothing —
+// cross-fetch never reads globalThis.fetch — and vi.mock("cross-fetch")
+// also silently fails to intercept here: pnpm's strict node_modules means
+// packages/rpc/src/client.test.ts and @gnolang/tm2-rpc's own import of
+// "cross-fetch" resolve through different dependency scopes, so vitest's
+// mock registry (keyed per resolution) misses the one tm2-rpc actually
+// uses. Confirmed empirically: even an unconditionally-throwing
+// vi.mock("cross-fetch") left every test passing — proof every one of
+// these was secretly hitting the real network the whole time, and only
+// ever passed because the fixture data happened to still match live
+// chain state (getAccountInfo's exact balance/sequence was one real
+// transaction on that account away from breaking outright).
+//
+// nock patches Node's http/https module directly — the layer every one
+// of these libraries' request eventually goes through regardless of
+// which higher-level "fetch" wrapper or import path it took to get
+// there — so it isn't exposed to this resolution-scope problem.
+function mockRpcWithFixtures() {
+  nock.disableNetConnect();
+  nock(test13.rpcUrl)
+    .persist()
+    .post(/.*/)
+    .reply(200, (_uri, requestBody) => {
+      const body = (typeof requestBody === "string" ? JSON.parse(requestBody) : requestBody) as {
+        method?: string;
+        params?: { path?: string; data?: string };
+      };
+      return fixtureFor(body);
+    });
+}
+
+function abciQueryFixture(params: { path?: string; data?: string } | undefined) {
+  const path = params?.path ?? "";
   if (path === "vm/qfile") return qfileFixture;
   if (path.startsWith("auth/accounts/")) {
     return path.endsWith(UNFUNDED_ADDRESS) ? accountUninitializedFixture : accountFixture;
   }
   if (path === "vm/qeval") {
-    const decoded = body.params?.data ? atob(body.params.data) : "";
+    const decoded = params?.data ? atob(params.data) : "";
     return decoded.includes(UNFUNDED_ADDRESS) ? qevalUsernameNilFixture : qevalUsernameFixture;
   }
   return qrenderFixture;
 }
 
-function mockFetchWithFixtures() {
-  global.fetch = vi.fn(async (_url: unknown, init?: RequestInit) => {
-    const body = JSON.parse(String(init?.body ?? "{}")) as { method: string };
-    const fixture =
-      body.method === "status"
-        ? statusFixture
-        : body.method === "abci_query"
-          ? abciQueryFixture(init)
-          : body.method === "block"
-            ? blockFixture
-            : body.method === "validators"
-              ? validatorsFixture
-              : body.method === "block_results"
-                ? blockResultsFixture
-                : {};
-    return new Response(JSON.stringify(fixture), { headers: { "content-type": "application/json" } });
-  }) as unknown as typeof fetch;
+function fixtureFor(body: { method?: string; params?: { path?: string; data?: string } }): unknown {
+  switch (body.method) {
+    case "status":
+      return statusFixture;
+    case "abci_query":
+      return abciQueryFixture(body.params);
+    case "block":
+      return blockFixture;
+    case "validators":
+      return validatorsFixture;
+    case "block_results":
+      return blockResultsFixture;
+    default:
+      return {};
+  }
 }
 
 describe("createRpcClient", () => {
   beforeEach(() => {
-    mockFetchWithFixtures();
+    mockRpcWithFixtures();
+  });
+
+  afterEach(() => {
+    nock.cleanAll();
+    nock.enableNetConnect();
   });
 
   it("wraps getStatus in a DataEnvelope with source=rpc", async () => {
