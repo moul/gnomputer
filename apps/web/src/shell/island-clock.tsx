@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
 import { useOnlineStatus } from "./use-online-status";
 import { IslandPopover } from "./island-popover";
 import { openRef, focusOrReopen } from "./open-ref";
+import { openSettings } from "./open-settings";
 import { iconForRefUri } from "./entity-icon";
+import { formatTimeAgo } from "../format-time-ago";
 
 // How many recent Trail steps show in the quick menu — anything older is
 // still there, just behind "Open full History" (history-window.tsx).
@@ -31,11 +33,23 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const effectiveState = online ? state : "offline";
   const [now, setNow] = useState(() => new Date());
   const [steps, setSteps] = useState<{ refUri: string; label: string }[]>([]);
+  const [disconnectedSince, setDisconnectedSince] = useState<string | null>(null);
+  const wasConnected = useRef(effectiveState === "connected");
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const connected = effectiveState === "connected";
+    if (connected) {
+      setDisconnectedSince(null);
+    } else if (wasConnected.current) {
+      setDisconnectedSince(new Date().toISOString());
+    }
+    wasConnected.current = connected;
+  }, [effectiveState]);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,8 +89,26 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
           </p>
         )}
         <dl className="island__clock-popover-stats">
+          <dt>Connection</dt>
+          <dd>
+            {effectiveState === "connected" ? (
+              <span className="island__clock-popover-status">
+                <span className="status-dot" data-state="connected" aria-hidden="true" />
+                Connected
+              </span>
+            ) : (
+              <span className="island__clock-popover-status">
+                <span className="status-dot" data-state={effectiveState} aria-hidden="true" />
+                {disconnectedSince ? `Disconnected since ${formatTimeAgo(disconnectedSince, now.getTime())}` : "Not connected"}
+              </span>
+            )}
+          </dd>
           <dt>Chain</dt>
-          <dd>{data?.chainId ?? "—"}</dd>
+          <dd>
+            <button type="button" className="island-menu__inline-link" onClick={() => openSettings("network")}>
+              {data?.chainId ?? "—"}
+            </button>
+          </dd>
           <dt>Height</dt>
           <dd>
             {data ? (
@@ -93,6 +125,14 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
           </dd>
           <dt>Latency</dt>
           <dd>{data ? `${data.latencyMs}ms` : "—"}</dd>
+          <dt>Account</dt>
+          <dd>
+            {/* Always "Guest" today — no wallet connection yet — but the
+                entry point already opens where that would live. */}
+            <button type="button" className="island-menu__inline-link" onClick={() => openSettings("user")}>
+              Guest
+            </button>
+          </dd>
         </dl>
         <p className="island-menu__title island-menu__title--sub">History</p>
         {recentSteps.length === 0 ? (

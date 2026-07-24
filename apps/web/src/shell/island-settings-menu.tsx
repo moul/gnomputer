@@ -1,6 +1,7 @@
 import { useThemeStore, THEME_LABELS } from "./theme-store";
 import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 import { focusOrReopen } from "./open-ref";
+import { openSettings } from "./open-settings";
 import { generalBugReportUrl } from "./bug-report";
 import { useSdk } from "../sdk-context";
 
@@ -35,6 +36,17 @@ export function IslandSettingsMenu() {
       <button type="button" className="island-menu__action" onClick={() => focusOrReopen("settings")}>
         Open Settings →
       </button>
+      <button type="button" className="island-menu__action" onClick={() => openSettings("about")}>
+        About Gnomputer →
+      </button>
+      <a
+        className="island-menu__action"
+        href={`${__GIT_REPO__}/blob/main/CHANGELOG.md`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Changelog ↗
+      </a>
       <a
         className="island-menu__action"
         href={generalBugReportUrl(sdk)}
