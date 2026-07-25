@@ -83,6 +83,52 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
   return nodes.length > 0 ? nodes : [{ type: "text", content: unescapeMarkdown(text) }];
 }
 
+const HEADING_RE = /^(#{1,6})\s+(.*)$/;
+
+// A block (still relative to the outer \n\n+ split below) may pack several
+// ATX headings and paragraph lines together with only single newlines
+// between them — confirmed live: gno.land/r/gov/dao's Render() output does
+// exactly this ("# GovDAO\n## Members\n[link](url)\n## Proposals\n..." all
+// as one \n\n-delimited chunk). Standard Markdown treats a line starting
+// with "#" as its own heading block regardless of blank-line separation, so
+// headings need detecting per LINE here, not only when a heading happens to
+// be a block's entire (single-line) content — the previous whole-block-only
+// check left every one of these heading markers as literal "#" text.
+function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNode[]): void {
+  let paragraphLines: string[] = [];
+
+  function flushParagraph() {
+    if (paragraphLines.length === 0) return;
+    const text = paragraphLines.join(" ");
+    paragraphLines = [];
+    LINK_RE.lastIndex = 0;
+    if (LINK_RE.test(text)) {
+      LINK_RE.lastIndex = 0;
+      nodes.push({ type: "paragraph", children: parseInlineLinks(text, currentPackagePath) });
+    } else {
+      nodes.push({ type: "paragraph", content: unescapeMarkdown(text) });
+    }
+  }
+
+  for (const line of lines) {
+    const headingMatch = HEADING_RE.exec(line);
+    if (!headingMatch) {
+      paragraphLines.push(line);
+      continue;
+    }
+    flushParagraph();
+    const headingText = headingMatch[2]!;
+    LINK_RE.lastIndex = 0;
+    if (LINK_RE.test(headingText)) {
+      LINK_RE.lastIndex = 0;
+      nodes.push({ type: "heading", children: parseInlineLinks(headingText, currentPackagePath) });
+    } else {
+      nodes.push({ type: "heading", content: unescapeMarkdown(headingText) });
+    }
+  }
+  flushParagraph();
+}
+
 export function parseRenderMarkup(markup: string, currentPackagePath: string): RenderNode[] {
   const blocks = markup.split(/\n\n+/);
   const nodes: RenderNode[] = [];
@@ -90,12 +136,6 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
   for (const block of blocks) {
     const trimmed = block.trim();
     if (!trimmed) continue;
-
-    const headingMatch = /^(#{1,6})\s+(.*)$/.exec(trimmed);
-    if (headingMatch) {
-      nodes.push({ type: "heading", content: unescapeMarkdown(headingMatch[2]!) });
-      continue;
-    }
 
     // A raw HTML block (common in GitHub READMEs — a centered banner image,
     // a badge wrapped in a <div>/<a>, ...) has no rendering here at all; Gno
@@ -115,14 +155,7 @@ export function parseRenderMarkup(markup: string, currentPackagePath: string): R
       continue;
     }
 
-    LINK_RE.lastIndex = 0;
-    if (LINK_RE.test(trimmed)) {
-      LINK_RE.lastIndex = 0;
-      nodes.push({ type: "paragraph", children: parseInlineLinks(trimmed, currentPackagePath) });
-      continue;
-    }
-
-    nodes.push({ type: "paragraph", content: unescapeMarkdown(trimmed) });
+    parseLines(trimmed.split("\n"), currentPackagePath, nodes);
   }
 
   return nodes;

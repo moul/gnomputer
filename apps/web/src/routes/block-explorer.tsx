@@ -10,6 +10,7 @@ import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { openExplorer } from "../shell/open-explorer";
+import { formatNumber } from "../format-number";
 import { BlockStrip } from "./block-strip";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
@@ -54,7 +55,7 @@ export function BlockExplorer() {
 
   useTrailRecorder({
     uri: `gno://${networkId}/block/${height ?? ""}`,
-    label: height !== null ? `Block #${height.toLocaleString()}` : "Block Explorer",
+    label: height !== null ? `Block #${formatNumber(height)}` : "Block Explorer",
   });
 
   const {
@@ -125,7 +126,7 @@ export function BlockExplorer() {
                     className="activity-list__height"
                     onClick={() => selectBlock(b.height)}
                   >
-                    #{b.height.toLocaleString()}
+                    #{formatNumber(b.height)}
                   </button>
                   <span className="activity-list__txs">
                     {b.numTxs} {b.numTxs === 1 ? "transaction" : "transactions"}
@@ -198,12 +199,12 @@ export function BlockExplorer() {
               <Freshness dataUpdatedAt={dataUpdatedAt} />
               <dl className="account-fields">
                 <dt>Height</dt>
-                <dd>#{block.height.toLocaleString()}</dd>
+                <dd>#{formatNumber(block.height)}</dd>
                 <dt>Time</dt>
                 <dd>{block.time}</dd>
                 <dt>Transactions</dt>
                 <dd>
-                  {block.numTxs} (chain total: {block.totalTxs.toLocaleString()})
+                  {block.numTxs} (chain total: {formatNumber(block.totalTxs)})
                 </dd>
                 <dt>Proposer</dt>
                 <dd>
@@ -229,7 +230,7 @@ export function BlockExplorer() {
                               Tx #{tx.txIndex} · {tx.success ? "success" : "failed"}
                             </span>
                             <span className="event-list__pkg">
-                              gas {tx.gasUsed.toLocaleString()} / {tx.gasWanted.toLocaleString()}
+                              gas {formatNumber(tx.gasUsed)} / {formatNumber(tx.gasWanted)}
                             </span>
                           </div>
                           {tx.events.length > 0 && (

@@ -13,7 +13,11 @@ export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId:
     case "heading":
       return (
         <h2>
-          <Linkified text={node.content ?? ""} />
+          {node.content !== undefined ? (
+            <Linkified text={node.content} />
+          ) : (
+            node.children?.map((c, i) => <RenderNodeView key={i} node={c} windowId={windowId} />)
+          )}
         </h2>
       );
     case "code":

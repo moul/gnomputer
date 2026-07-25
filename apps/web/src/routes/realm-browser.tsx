@@ -25,6 +25,7 @@ import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
 import { RenderNodeView } from "../shell/render-node-view";
+import { formatNumber } from "../format-number";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
@@ -527,7 +528,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
                 <li key={realm.packagePath}>
                   <button type="button" onClick={() => onOpen(realm.packagePath)}>
                     {realm.packagePath}
-                    <span className="realm-browser-home__path">block #{realm.blockHeight.toLocaleString()}</span>
+                    <span className="realm-browser-home__path">block #{formatNumber(realm.blockHeight)}</span>
                   </button>
                 </li>
               ))}

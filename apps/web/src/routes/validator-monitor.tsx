@@ -5,6 +5,7 @@ import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { openGnockpitEmbed } from "../shell/open-gnockpit-embed";
+import { formatNumber } from "../format-number";
 import type { ValidatorInfo } from "@gnomputer/app-sdk";
 
 type SortKey = "address" | "votingPower" | "proposerPriority";
@@ -74,8 +75,8 @@ export function ValidatorMonitor() {
     <div className="validator-monitor">
       <Freshness dataUpdatedAt={dataUpdatedAt} />
       <p className="state-line">
-        {data.validators.length} validators · {totalPower.toLocaleString()} total voting power · at height #
-        {data.height.toLocaleString()}
+        {data.validators.length} validators · {formatNumber(totalPower)} total voting power · at height #
+        {formatNumber(data.height)}
       </p>
       <div className="validator-monitor__toolbar">
         <input
@@ -122,8 +123,8 @@ export function ValidatorMonitor() {
                 <td>
                   <Linkified text={v.address} />
                 </td>
-                <td>{Number(v.votingPower).toLocaleString()}</td>
-                <td>{Number(v.proposerPriority).toLocaleString()}</td>
+                <td>{formatNumber(Number(v.votingPower))}</td>
+                <td>{formatNumber(Number(v.proposerPriority))}</td>
               </tr>
             ))}
           </tbody>

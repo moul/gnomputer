@@ -3,6 +3,7 @@ import { useSdk } from "../sdk-context";
 import { useLiveEvents } from "../use-live-events";
 import { openRef } from "../shell/open-ref";
 import { ErrorState } from "../shell/error-state";
+import { formatNumber } from "../format-number";
 
 interface RenderableEvent {
   height: number;
@@ -22,7 +23,7 @@ function EventList({ events }: { events: RenderableEvent[] }) {
               className="event-list__height"
               onClick={(e) => openRef(`gno://_/block/${event.height}`, { x: e.clientX, y: e.clientY })}
             >
-              #{event.height.toLocaleString()}
+              #{formatNumber(event.height)}
             </button>
             <span className="event-list__type">{event.type}</span>
           </div>

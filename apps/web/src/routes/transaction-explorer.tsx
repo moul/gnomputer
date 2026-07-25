@@ -5,6 +5,7 @@ import { useLiveTransactions } from "../use-live-transactions";
 import { openRef } from "../shell/open-ref";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
+import { formatNumber } from "../format-number";
 
 type SortKey = "height" | "gasUsed";
 type SortDir = "asc" | "desc";
@@ -86,7 +87,7 @@ function TransactionTable({ rows, filter }: { rows: Row[]; filter: string }) {
                 className="data-table__link"
                 onClick={(e) => openRef(`gno://_/block/${tx.height}`, { x: e.clientX, y: e.clientY })}
               >
-                #{tx.height.toLocaleString()}
+                #{formatNumber(tx.height)}
                 <span className="transaction-explorer__tx-index">.{tx.txIndex}</span>
               </button>
             </td>
@@ -97,7 +98,7 @@ function TransactionTable({ rows, filter }: { rows: Row[]; filter: string }) {
             </td>
             <td className="transaction-explorer__pkgs">{tx.pkgPaths.length === 0 ? "—" : tx.pkgPaths.join(", ")}</td>
             <td>
-              {tx.gasUsed.toLocaleString()} / {tx.gasWanted.toLocaleString()}
+              {formatNumber(tx.gasUsed)} / {formatNumber(tx.gasWanted)}
             </td>
             <td>{tx.eventCount}</td>
           </tr>
@@ -152,7 +153,7 @@ function IndexerTransactionExplorer() {
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter by package…"
         />
-        <span className="state-line">{rows.length.toLocaleString()} total</span>
+        <span className="state-line">{formatNumber(rows.length)} total</span>
       </div>
       {error ? (
         <ErrorState message={`Could not load transactions: ${error.message}`} onRetry={() => void refetch()} />

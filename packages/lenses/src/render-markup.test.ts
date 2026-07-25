@@ -62,4 +62,41 @@ describe("parseRenderMarkup", () => {
     );
     expect(nodes[0]).toMatchObject({ type: "paragraph", content: "Add 11 validator(s) to the valset" });
   });
+
+  // Confirmed live: gno.land/r/gov/dao's real Render() output packs several
+  // ATX headings and a link, each on its own line, with only single
+  // newlines between them (no blank-line separation) — the previous
+  // whole-block-only heading check left every one of these as literal "#"
+  // text instead of real heading nodes.
+  it("recognizes each heading on its own line even without blank-line separation between them", () => {
+    const nodes = parseRenderMarkup(
+      "# GovDAO\n## Members\n[> Go to Memberstore <](/r/gov/dao/v3/memberstore)\n## Proposals",
+      "gno.land/r/gov/dao"
+    );
+    expect(nodes[0]).toMatchObject({ type: "heading", content: "GovDAO" });
+    expect(nodes[1]).toMatchObject({ type: "heading", content: "Members" });
+    expect(nodes[2]).toMatchObject({ type: "paragraph" });
+    const link = nodes[2]!.children?.[0];
+    expect(link).toMatchObject({ type: "link", href: "/r/gov/dao/v3/memberstore" });
+    expect(nodes[3]).toMatchObject({ type: "heading", content: "Proposals" });
+  });
+
+  it("parses a heading whose entire text is a markdown link", () => {
+    const nodes = parseRenderMarkup(
+      "### [Prop #19 - Add 6 validator\\(s\\) to the valset](/r/gov/dao:19)\nAuthor: g1abc",
+      "gno.land/r/gov/dao"
+    );
+    expect(nodes[0]!.type).toBe("heading");
+    const link = nodes[0]!.children?.[0];
+    expect(link).toMatchObject({ type: "link", content: "Prop #19 - Add 6 validator(s) to the valset" });
+    expect(link!.ref?.packagePath).toBe("gno.land/r/gov/dao");
+    expect(link!.renderPath).toBe("19");
+    expect(nodes[1]).toMatchObject({ type: "paragraph", content: "Author: g1abc" });
+  });
+
+  it("joins consecutive non-heading lines within a block into one paragraph", () => {
+    const nodes = parseRenderMarkup("Line one\nLine two", "gno.land/r/demo/foo");
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]).toMatchObject({ type: "paragraph", content: "Line one Line two" });
+  });
 });
