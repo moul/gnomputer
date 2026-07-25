@@ -17,6 +17,7 @@ import qrenderInvalidPathFixture from "./__fixtures__/qrender-invalid-path.json"
 import qpkgJsonFixture from "./__fixtures__/qpkg-json.json";
 import qobjectJsonFixture from "./__fixtures__/qobject-json.json";
 import qtypeJsonFixture from "./__fixtures__/qtype-json.json";
+import qfuncsFixture from "./__fixtures__/qfuncs.json";
 
 const topaz = DEFAULT_NETWORKS.find((n) => n.id === "topaz")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -77,6 +78,7 @@ function abciQueryFixture(params: { path?: string; data?: string } | undefined) 
   if (path === "vm/qpkg_json") return qpkgJsonFixture;
   if (path === "vm/qobject_json") return qobjectJsonFixture;
   if (path === "vm/qtype_json") return qtypeJsonFixture;
+  if (path === "vm/qfuncs") return qfuncsFixture;
   return qrenderFixture;
 }
 
@@ -268,5 +270,18 @@ describe("createRpcClient", () => {
     const parsed = JSON.parse(env.data);
     expect(parsed.typeid).toBe("errors.errorString");
     expect(parsed.type.Base.Fields[0].Name).toBe("s");
+  });
+
+  it("wraps queryFuncs in a DataEnvelope with real function signatures, including a crossing function's realm-typed first param", async () => {
+    const client = createRpcClient(topaz);
+    const env = await client.queryFuncs("gno.land/r/gnoland/blog", "2026-07-22T00:00:00.000Z");
+    const parsed = JSON.parse(env.data);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0].FuncName).toBe("ModAddPost");
+    expect(parsed[0].Params[0].Name).toBe(".arg_0");
+    expect(parsed[0].Params[0].Type).toContain(".uverse.realm");
+    expect(parsed[0].Params[1].Name).toBe("slug");
+    expect(parsed[1].FuncName).toBe("Render");
+    expect(parsed[1].Results[0].Type).toBe("string");
   });
 });

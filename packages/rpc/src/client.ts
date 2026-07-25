@@ -90,6 +90,16 @@ export interface RpcClient {
    * to label a StructValue's Fields array, which carries values only, not
    * field names. */
   queryTypeJson(typeId: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** A package's exported top-level function signatures (name, params,
+   * results) as a raw JSON array via vm/qfuncs — confirmed live against a
+   * real deployed realm (gno.land/r/gnoland/blog), same "no indexer needed"
+   * VM query family as queryPkgJson/queryFile. A crossing function's first
+   * param comes back named ".arg_0" with a Type string containing
+   * ".uverse.realm" (the expanded realm-interface shape) — the same
+   * fingerprint gnolang/gno's own gnopie CLI tool (PR #5444) uses to detect
+   * `cur realm` params, confirmed by reading its real, live response
+   * shape rather than gnopie's (draft, unmerged) source directly. */
+  queryFuncs(packagePath: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   /** Real, live package-path enumeration via vm/qpaths — a genuine prefix
    * scan over deployed packages (store.FindPathsByPrefix on the node side),
    * unlike the indexer (CORS-blocked from the browser on every network
@@ -243,6 +253,21 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.type-json.v1",
+      });
+    },
+
+    async queryFuncs(packagePath, fetchedAt) {
+      const client = await getClient();
+      const value = await abciQueryString(client, "vm/qfuncs", packagePath);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "realm", packagePath },
+        data: value,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.funcs.v1",
       });
     },
 
