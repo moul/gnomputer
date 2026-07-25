@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-07-25
 
+- Omnisearch (⌘K), the Browser's realm-path field, and the Shell's `cd`
+  autocomplete now match a real, complete listing of every deployed
+  package — including /p/ libraries, not just /r/ realms — so a substring
+  like "panictoerr" finds gno.land/p/aeddi/panictoerr from the first
+  keystroke, on any network (no indexer required).
 - Fixed: Resources → Docs was slow to open — it fetched gnolang/gno's
   entire recursive git tree (~9,600 entries, 2.9MB) just to keep the 73
   under docs/. Now fetches only docs/'s own subtree (~21KB).
