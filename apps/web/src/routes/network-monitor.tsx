@@ -1,7 +1,7 @@
 import { useNetworkStatus } from "../shell/use-network-status";
 import { Freshness } from "../shell/freshness";
 import { openRef } from "../shell/open-ref";
-import { openEmbed } from "../shell/open-embed";
+import { openExplorer } from "../shell/open-explorer";
 import { ErrorState } from "../shell/error-state";
 
 export function NetworkMonitor() {
@@ -48,7 +48,7 @@ export function NetworkMonitor() {
       {(network.explorerUrl || network.statusUrl) && (
         <p className="network-monitor__external-links">
           {network.explorerUrl && (
-            <button type="button" onClick={() => openEmbed(network.explorerUrl as string, "Explorer")}>
+            <button type="button" onClick={() => openExplorer(network.explorerUrl as string)}>
               Open the explorer
             </button>
           )}

@@ -1302,16 +1302,6 @@ main {
   gap: var(--space-3);
 }
 
-.gnockpit__link {
-  align-self: flex-start;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-.gnockpit__link:hover {
-  color: var(--accent);
-}
-
 .gnockpit__links {
   display: flex;
   align-items: center;

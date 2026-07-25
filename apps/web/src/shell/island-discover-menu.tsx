@@ -1,14 +1,15 @@
 import { DISCOVER_TABS } from "../routes/discover";
 import { openDiscoverTab } from "./open-discover";
-import { openEmbed } from "./open-embed";
+import { openExplorer } from "./open-explorer";
 import { useSdk } from "../sdk-context";
 
 // Faucet Hub covers every gno.land faucet (Topaz, Boards2 Mobile, ...) from
-// one shared page — confirmed live (lists "Topaz Faucet" among others) and
-// embeddable (no X-Frame-Options/CSP framing block, same check as
-// mygnoscan/Gnockpit). No per-network URL needed, unlike explorerUrl/
-// gnockpitUrl, since it's one community-run hub rather than a
-// per-deployment tool.
+// one shared page — confirmed live (lists "Topaz Faucet" among others). No
+// per-network URL needed, unlike explorerUrl/gnockpitUrl, since it's one
+// community-run hub rather than a per-deployment tool. Opens externally
+// rather than in a dedicated window — it's a one-off "go do this on the
+// real site" action, not a tool worth keeping embedded/pinned open like
+// the Explorer or Gnockpit windows.
 const FAUCET_HUB_URL = "https://faucet.gno.land";
 
 export function IslandDiscoverMenu() {
@@ -31,17 +32,17 @@ export function IslandDiscoverMenu() {
       <button
         type="button"
         className="island-menu__action"
-        onClick={() => openEmbed(FAUCET_HUB_URL, "Faucet")}
+        onClick={() => window.open(FAUCET_HUB_URL, "_blank", "noopener,noreferrer")}
       >
-        🚰 Faucet →
+        🚰 Faucet ↗
       </button>
       {explorerUrl && (
         <button
           type="button"
           className="island-menu__action"
-          onClick={() => openEmbed(explorerUrl, "Explorer")}
+          onClick={() => openExplorer(explorerUrl)}
         >
-          🔭 Explorer →
+          🧭 Explorer →
         </button>
       )}
     </div>

@@ -3,7 +3,7 @@ import { useNetworkStatus } from "../shell/use-network-status";
 import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
-import { openEmbed } from "../shell/open-embed";
+import { openGnockpitEmbed } from "../shell/open-gnockpit-embed";
 
 // A lightweight, embedded slice of what the real Gnockpit dashboard shows
 // (chain identity + validator set summary), backed by the same RPC calls the
@@ -75,11 +75,8 @@ export function Gnockpit() {
 function GnockpitLinks({ gnockpitUrl }: { gnockpitUrl: string }) {
   return (
     <p className="gnockpit__links">
-      <a className="gnockpit__link" href={gnockpitUrl} target="_blank" rel="noreferrer">
-        Open Gnockpit ↗
-      </a>
-      <button type="button" onClick={() => openEmbed(gnockpitUrl, "Gnockpit")}>
-        Embed here
+      <button type="button" onClick={() => openGnockpitEmbed(gnockpitUrl)}>
+        Open Gnockpit
       </button>
     </p>
   );

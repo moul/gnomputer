@@ -9,7 +9,7 @@ import { formatTimeAgo } from "../format-time-ago";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
-import { openEmbed } from "../shell/open-embed";
+import { openExplorer } from "../shell/open-explorer";
 import { BlockStrip } from "./block-strip";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
@@ -178,7 +178,7 @@ export function BlockExplorer() {
               {latest ? "● Latest" : "○ Latest"}
             </button>
             {explorerUrl && (
-              <button type="button" onClick={() => openEmbed(explorerUrl, "Explorer")}>
+              <button type="button" onClick={() => openExplorer(explorerUrl)}>
                 Open the explorer
               </button>
             )}
