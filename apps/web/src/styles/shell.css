@@ -836,6 +836,28 @@ main {
   gap: var(--space-4);
 }
 
+.realm-graph--embed {
+  height: 100%;
+  gap: 0;
+  /* Same cancel-the-body-padding trick as .embed-window — the iframe
+     should fill the lens body edge to edge, not float in an inset box. */
+  margin: calc(-1 * var(--space-4));
+}
+
+.realm-graph__embed-toolbar {
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border);
+}
+
+.realm-graph__embed-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+}
+
 .realm-docs h3,
 .realm-actions h3,
 .realm-graph h3 {
