@@ -13,8 +13,12 @@ banner links here.
   "Packages deployed" count now actually resolves instead of showing "Not
   available".
 - New Chain Stats app (⛽): gas/fee totals, top realms and transactions by
-  gas, top callers and deployers — aggregated from the whole chain's
-  transaction history.
+  gas, top callers and deployers, and a daily activity chart (blocks/txs
+  per day) — aggregated from the whole chain's transaction history.
+- The Browser's realm-path field and the Users lookup field now suggest
+  real matches from the indexer as you type — realm paths match anywhere
+  in the path (not just from "gno.land/" onward), and address lookup
+  suggests real recently-active addresses.
 - Wallet connect: Settings → User now shows two explicit paths instead of
   one button whose label just changed — Adena (Connect / Install Adena)
   and gnokey (CLI or mobile): paste your address for a real, read-only

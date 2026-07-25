@@ -14,6 +14,7 @@ import {
 } from "../shell/register-username";
 import { gnowebTxLink } from "../shell/gnoweb-links";
 import { QrCode } from "../shell/qr-code";
+import { useAddressSuggestions } from "../shell/use-address-suggestions";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 // How many recently-looked-up addresses show — mirrors island-clock.tsx's
@@ -174,8 +175,10 @@ export function Users() {
   const sdk = useSdk();
   const account = useWalletStore((s) => s.account);
   const [draft, setDraft] = useState("");
+  const [focused, setFocused] = useState(false);
   const [query, setQuery] = useState<string | null>(null);
   const recentAddresses = useRecentlyLookedUpAddresses();
+  const addressSuggestions = useAddressSuggestions(focused, draft);
 
   const {
     data: stats,
@@ -234,8 +237,16 @@ export function Users() {
             data-bwignore="true"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            list="users-address-suggestions"
             placeholder="@moul, moul, or g1…"
           />
+          <datalist id="users-address-suggestions">
+            {addressSuggestions.map((address) => (
+              <option key={address} value={address} />
+            ))}
+          </datalist>
         </label>
         <button type="submit" disabled={!draft.trim()}>
           Search
