@@ -417,3 +417,72 @@ export async function chainActivityStats(
     schema: "gnomputer.indexer.chain-activity-stats.v1",
   });
 }
+
+export interface DailyActivity {
+  /** UTC calendar date, "YYYY-MM-DD". */
+  date: string;
+  blockCount: number;
+  txCount: number;
+}
+
+interface DailyActivityBlock {
+  time: string;
+  num_txs: number;
+}
+
+// Neither Gnomputer nor mygnoscan has a time-series chart at all (confirmed
+// live: mygnoscan's own client has zero chart/canvas/sparkline code, and
+// its "Analytics"/"Gas" pages are cumulative leaderboards, not
+// time-series) — this is genuinely ahead, not just parity.
+//
+// `num_txs: { gt: 0 }` cuts the row count from "every block ever" (which
+// blows the 10,000-row cap almost immediately — most blocks are empty) down
+// to just the ones worth bucketing, confirmed live to bring back a full
+// week of Topaz history (845 blocks) in one request. Still a real, several-
+// second round trip (confirmed live: ~10s) since the indexer has to scan
+// the full block range server-side to find them — worth caching
+// aggressively client-side (a long staleTime) rather than refetching often.
+const DAILY_ACTIVITY_QUERY = `{
+  getBlocks(where: { height: { gt: 0 }, num_txs: { gt: 0 } }, order: { height: ASC }) {
+    time
+    num_txs
+  }
+}`;
+
+export async function dailyActivity(
+  network: { id: string; indexerGraphqlUrl?: string },
+  fetchedAt: string
+): Promise<DataEnvelope<DailyActivity[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — daily activity needs one.`);
+  }
+
+  const data = await queryIndexer<{ getBlocks: DailyActivityBlock[] | null }>(
+    network.indexerGraphqlUrl,
+    DAILY_ACTIVITY_QUERY
+  );
+
+  const byDate = new Map<string, { blockCount: number; txCount: number }>();
+  for (const block of data.getBlocks ?? []) {
+    const date = block.time.slice(0, 10);
+    const existing = byDate.get(date) ?? { blockCount: 0, txCount: 0 };
+    existing.blockCount += 1;
+    existing.txCount += block.num_txs;
+    byDate.set(date, existing);
+  }
+
+  const days = [...byDate.entries()]
+    .map(([date, stat]) => ({ date, ...stat }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return wrapEnvelope({
+    ref: { uri: `gno://${network.id}/network/${network.id}`, kind: "network", networkId: network.id },
+    data: days,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.daily-activity.v1",
+  });
+}

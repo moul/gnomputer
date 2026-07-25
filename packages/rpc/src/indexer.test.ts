@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { countPackagesByCreator, listRealms, realmHistory, chainActivityStats } from "./indexer";
+import { countPackagesByCreator, listRealms, realmHistory, chainActivityStats, dailyActivity } from "./indexer";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
@@ -305,5 +305,39 @@ describe("chainActivityStats", () => {
 
   it("throws when the network has no indexer configured", async () => {
     await expect(chainActivityStats({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+});
+
+describe("dailyActivity", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("buckets blocks by UTC calendar date, sorted oldest first", async () => {
+    mockIndexerResponse({
+      getBlocks: [
+        { time: "2026-07-20T10:00:00.000Z", num_txs: 3 },
+        { time: "2026-07-21T05:00:00.000Z", num_txs: 1 },
+        { time: "2026-07-20T23:59:00.000Z", num_txs: 2 },
+      ],
+    });
+
+    const result = await dailyActivity(NETWORK, NOW);
+
+    expect(result.data).toEqual([
+      { date: "2026-07-20", blockCount: 2, txCount: 5 },
+      { date: "2026-07-21", blockCount: 1, txCount: 1 },
+    ]);
+  });
+
+  it("returns an empty list when getBlocks is null", async () => {
+    mockIndexerResponse({ getBlocks: null });
+    const result = await dailyActivity(NETWORK, NOW);
+    expect(result.data).toEqual([]);
+  });
+
+  it("throws when the network has no indexer configured", async () => {
+    await expect(dailyActivity({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
   });
 });
