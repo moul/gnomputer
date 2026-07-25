@@ -1,5 +1,14 @@
 import { DISCOVER_TABS } from "../routes/discover";
 import { openDiscoverTab } from "./open-discover";
+import { openEmbed } from "./open-embed";
+
+// Faucet Hub covers every gno.land faucet (Topaz, Boards2 Mobile, ...) from
+// one shared page — confirmed live (lists "Topaz Faucet" among others) and
+// embeddable (no X-Frame-Options/CSP framing block, same check as
+// mygnoscan/Gnockpit). No per-network URL needed, unlike explorerUrl/
+// gnockpitUrl, since it's one community-run hub rather than a
+// per-deployment tool.
+const FAUCET_HUB_URL = "https://faucet.gno.land";
 
 export function IslandDiscoverMenu() {
   return (
@@ -15,6 +24,13 @@ export function IslandDiscoverMenu() {
           {tab.emoji} {tab.label} →
         </button>
       ))}
+      <button
+        type="button"
+        className="island-menu__action"
+        onClick={() => openEmbed(FAUCET_HUB_URL, "Faucet")}
+      >
+        🚰 Faucet →
+      </button>
     </div>
   );
 }
