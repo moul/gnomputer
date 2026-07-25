@@ -11,12 +11,16 @@ import { DiscoverGovernance } from "./discover-governance";
 // the raw protocol). Users was previously its own island icon; it lives
 // here now since looking someone up is itself a "discover" action, same
 // as browsing packages, transactions, tokens, or proposals.
-const TABS: { id: DiscoverTab; label: string }[] = [
-  { id: "users", label: "Users" },
-  { id: "packages", label: "Packages" },
-  { id: "transactions", label: "Transactions" },
-  { id: "tokens", label: "Tokens" },
-  { id: "governance", label: "Governance" },
+//
+// Exported so the island Discover menu (island-discover-menu.tsx) can list
+// the same tabs, with the same emoji, as its own hover popover — one
+// source of truth, same pattern as SETTINGS_TABS.
+export const DISCOVER_TABS: { id: DiscoverTab; emoji: string; label: string }[] = [
+  { id: "users", emoji: "👤", label: "Users" },
+  { id: "packages", emoji: "📦", label: "Packages" },
+  { id: "transactions", emoji: "🧾", label: "Transactions" },
+  { id: "tokens", emoji: "🪙", label: "Tokens" },
+  { id: "governance", emoji: "🏛️", label: "Governance" },
 ];
 
 export function Discover() {
@@ -27,7 +31,7 @@ export function Discover() {
   return (
     <div className="discover-window">
       <div className="window-tabbar" role="tablist" aria-label="Discover">
-        {TABS.map((t) => (
+        {DISCOVER_TABS.map((t) => (
           <button
             key={t.id}
             type="button"
@@ -37,7 +41,7 @@ export function Discover() {
             data-active={tab === t.id}
             onClick={() => setTab(t.id)}
           >
-            {t.label}
+            {t.emoji} {t.label}
           </button>
         ))}
       </div>

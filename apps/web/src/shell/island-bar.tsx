@@ -6,6 +6,8 @@ import { IslandPopover } from "./island-popover";
 import { IslandSettingsMenu } from "./island-settings-menu";
 import { IslandChainMenu } from "./island-chain-menu";
 import { IslandBrowserMenu } from "./island-browser-menu";
+import { IslandEditorMenu } from "./island-editor-menu";
+import { IslandDiscoverMenu } from "./island-discover-menu";
 import { IslandClock } from "./island-clock";
 import { useShellStore } from "../store";
 
@@ -171,6 +173,20 @@ export function IslandBar() {
           return (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandChainMenu />
+            </IslandPopover>
+          );
+        }
+        if (icon.key === "editor") {
+          return (
+            <IslandPopover key={icon.key} trigger={trigger}>
+              <IslandEditorMenu />
+            </IslandPopover>
+          );
+        }
+        if (icon.key === "discover") {
+          return (
+            <IslandPopover key={icon.key} trigger={trigger}>
+              <IslandDiscoverMenu />
             </IslandPopover>
           );
         }
