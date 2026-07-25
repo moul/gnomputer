@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-25
 
+- Cypherpunk theme pushed further: a bright scan-band now sweeps top-to-
+  bottom across the desktop on its own slow loop, the focused window's
+  title gets a brief RGB-split "signal glitch" every ~9s, and buttons get
+  a phosphor glow on hover (previously only on focus).
 - Omnisearch (⌘K), the Browser's realm-path field, and the Shell's `cd`
   autocomplete now match a real, complete listing of every deployed
   package — including /p/ libraries, not just /r/ realms — so a substring
