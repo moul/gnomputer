@@ -236,6 +236,66 @@ const REALM_HISTORY_QUERY = `
   }
 `;
 
+export interface IndexerRecentEvent extends IndexerEvent {
+  pkgPath: string;
+}
+
+// Same query shape as REALM_HISTORY_QUERY above but with no pkg_path
+// filter — every successful transaction's own GnoEvents, most recent first.
+// Used to backfill the Event Explorer (chain-wide, no single realm) so it
+// shows real recent activity immediately instead of waiting for the next
+// live block to happen to carry an event.
+const RECENT_EVENTS_QUERY = `
+  query RecentEvents {
+    getTransactions(where: { success: { eq: true } }, order: { heightAndIndex: DESC }) {
+      block_height
+      index
+      response { events { ... on GnoEvent { type pkg_path attrs { key value } } } }
+    }
+  }
+`;
+
+export async function recentEvents(
+  network: { id: string; indexerGraphqlUrl?: string },
+  fetchedAt: string,
+  limit = 40
+): Promise<DataEnvelope<IndexerRecentEvent[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — event history needs one.`);
+  }
+
+  const data = await queryIndexer<{ getTransactions: RealmHistoryTx[] | null }>(
+    network.indexerGraphqlUrl,
+    RECENT_EVENTS_QUERY
+  );
+
+  const events: IndexerRecentEvent[] = [];
+  outer: for (const tx of data.getTransactions ?? []) {
+    for (const ev of tx.response?.events ?? []) {
+      if (!ev?.type || !ev.pkg_path) continue;
+      events.push({
+        height: tx.block_height,
+        txIndex: tx.index,
+        type: ev.type,
+        pkgPath: ev.pkg_path,
+        attrs: ev.attrs ?? [],
+      });
+      if (events.length >= limit) break outer;
+    }
+  }
+
+  return wrapEnvelope({
+    ref: { uri: `gno://${network.id}/network/${network.id}`, kind: "network", networkId: network.id },
+    data: events,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.recent-events.v1",
+  });
+}
+
 export async function realmHistory(
   network: { id: string; indexerGraphqlUrl?: string },
   packagePath: string,

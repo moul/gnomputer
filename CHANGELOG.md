@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-07-25
 
+- Event Explorer now backfills real recent chain-wide events from the
+  indexer immediately on open (networks with one configured), instead of
+  starting blank until the next live block happens to carry one — the same
+  historical-then-live split the History lens already used for a single
+  realm.
 - Every embedded third-party page (Explorer, Gnockpit, the Graph lens's
   mygnoscan embed) now has zoom in/out and a refresh button, right before
   its "Open externally" link.
