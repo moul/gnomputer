@@ -7,12 +7,14 @@ import {
   createRpcClient,
   listRealms,
   countPackagesByCreator,
+  realmHistory,
   type RpcClient,
   type BlockSummary,
   type AccountInfo,
   type ValidatorInfo,
   type ValidatorSet,
   type RealmSummary,
+  type IndexerEvent,
   type ChainEvent,
   type BlockTxResult,
   type BlockEvents,
@@ -26,6 +28,7 @@ export type {
   ValidatorInfo,
   ValidatorSet,
   RealmSummary,
+  IndexerEvent,
   ChainEvent,
   BlockTxResult,
   BlockEvents,
@@ -72,6 +75,7 @@ export interface GnomputerSDK {
   indexer: {
     listRealms(): Promise<DataEnvelope<RealmSummary[]>>;
     countPackagesByCreator(address: string): Promise<DataEnvelope<{ count: number }>>;
+    realmHistory(packagePath: string): Promise<DataEnvelope<IndexerEvent[]>>;
   };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
@@ -148,6 +152,7 @@ export function createGnomputerSDK(
       listRealms: () => listRealms(activeNetwork, new Date().toISOString()),
       countPackagesByCreator: (address) =>
         countPackagesByCreator(activeNetwork, address, new Date().toISOString()),
+      realmHistory: (packagePath) => realmHistory(activeNetwork, packagePath, new Date().toISOString()),
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },

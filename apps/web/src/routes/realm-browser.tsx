@@ -452,17 +452,34 @@ function CollapsibleSection({
   );
 }
 
-// Realm discovery mostly needs the indexer to enumerate anything beyond a
-// single known package, and that indexer doesn't allow browser access
-// (ADR-012/015, confirmed still true live — see rpc/src/indexer.ts). What's
-// genuinely available without it: a curated list, "recently active" (ranked
-// from live chain events since this window opened) and "recently added"
-// (vm/qpaths polled for packages that weren't there last time, i.e. a real
-// prefix scan over deployed packages — see use-recently-added-packages.ts).
+// Now that the indexer's GraphQL endpoint sends real CORS headers
+// (confirmed live 2026-07-25 — see rpc/src/indexer.ts), "Recently deployed"
+// is backed by a real, complete listing (sdk.indexer.listRealms) rather
+// than only what's been seen since this window opened. Networks with no
+// indexer configured (e.g. gnodev) still fall back to the old vm/qpaths
+// polling approach (use-recently-added-packages.ts).
+function useIndexerRealms(indexerConfigured: boolean) {
+  const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
+  return useQuery({
+    queryKey: ["indexer-realms", networkId],
+    queryFn: async () => (await sdk.indexer.listRealms()).data,
+    enabled: indexerConfigured,
+  });
+}
+
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
+  const sdk = useSdk();
+  const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
   const { events } = useLiveEvents(false);
   const activity = rankByActivity(events);
-  const recentlyAdded = useRecentlyAddedPackages(true);
+  const recentlyAddedPolled = useRecentlyAddedPackages(!indexerConfigured);
+  const {
+    data: indexerRealms,
+    error: indexerError,
+    isPending: indexerPending,
+    refetch: refetchIndexerRealms,
+  } = useIndexerRealms(indexerConfigured);
   const staffPicks = KNOWN_REALMS.filter((r) => !r.system);
   const systemRealms = KNOWN_REALMS.filter((r) => r.system);
 
@@ -493,14 +510,36 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
         </p>
       </CollapsibleSection>
 
-      <CollapsibleSection id="recently-added" title="Recently added">
-        {recentlyAdded.length === 0 ? (
+      <CollapsibleSection id="recently-added" title="Recently deployed">
+        {indexerConfigured ? (
+          indexerError ? (
+            <ErrorState
+              message={`Could not load recently deployed realms: ${indexerError.message}`}
+              onRetry={() => void refetchIndexerRealms()}
+            />
+          ) : indexerPending ? (
+            <p className="state-line" aria-busy="true">
+              Loading recently deployed realms…
+            </p>
+          ) : (
+            <ul className="realm-browser-home__list">
+              {indexerRealms!.map((realm) => (
+                <li key={realm.packagePath}>
+                  <button type="button" onClick={() => onOpen(realm.packagePath)}>
+                    {realm.packagePath}
+                    <span className="realm-browser-home__path">block #{realm.blockHeight.toLocaleString()}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : recentlyAddedPolled.length === 0 ? (
           <p className="state-line" aria-busy="true">
             Watching for newly deployed packages…
           </p>
         ) : (
           <ul className="realm-browser-home__list">
-            {recentlyAdded.map((path) => (
+            {recentlyAddedPolled.map((path) => (
               <li key={path}>
                 <button type="button" onClick={() => onOpen(path)}>
                   {path}

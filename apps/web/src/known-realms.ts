@@ -1,8 +1,10 @@
 // A small curated set of well-known realms — shared by the Browser's Home
-// tab. Not sourced from any live query: the indexer that could enumerate
-// real deployed realms doesn't allow browser access yet (ADR-012/015), so
-// this is deliberately just a hand-picked starting point, not a claim of
-// completeness.
+// tab. Deliberately editorial rather than sourced from a live query — a
+// hand-picked starting point, not a claim of completeness. (A real,
+// complete listing is available via sdk.indexer.listRealms now that the
+// indexer's GraphQL endpoint allows browser access — see "Recently
+// deployed" in realm-browser.tsx — but this curated list is still useful
+// as a "start here" set independent of deployment recency.)
 export interface KnownRealm {
   label: string;
   packagePath: string;

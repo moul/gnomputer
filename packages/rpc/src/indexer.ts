@@ -1,20 +1,46 @@
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 
-// NOTE: as of this writing, Topaz's indexer (indexer.topaz.testnets.gno.land)
-// sends no Access-Control-Allow-Origin header, so its CORS preflight fails
-// and every one of these queries is rejected by the browser before it ever
-// reaches the network — confirmed live, not just via server-side curl. Callers
-// must treat rejection as an expected, user-facing "not available" state
-// rather than a bug to chase, until the indexer adds CORS support.
+// As of 2026-07-25, Topaz's indexer (indexer.topaz.testnets.gno.land) sends
+// `access-control-allow-origin: *` and these queries work directly from the
+// browser — confirmed live via a real cross-origin browser fetch (not just
+// curl) and via a live vitest run against the real endpoint. Previously
+// (ADR-012/015) this was blocked entirely by a missing CORS header; that's
+// no longer true, though callers should still treat network failure as a
+// possible, if now much rarer, "not available" state. The schema itself is
+// narrower than a typical GraphQL API: only getBlocks/getTransactions/
+// latestBlockHeight (getAccount-style queries don't exist — "what has this
+// address done" only works by filtering getTransactions on a message's
+// caller/creator field), no gte/lte or `in` filter operators, no pagination
+// (cursor/take/skip) — only `where`+`order`, and a hard 10,000-row cap per
+// query enforced server-side.
 
 export interface RealmSummary {
   packagePath: string;
   blockHeight: number;
 }
 
+export interface IndexerEvent {
+  height: number;
+  txIndex: number;
+  type: string;
+  attrs: { key: string; value: string }[];
+}
+
 interface AddPackageTx {
   block_height: number;
   messages: { value: { package?: { path: string } } | null }[];
+}
+
+interface GnoEventNode {
+  type?: string;
+  pkg_path?: string;
+  attrs?: { key: string; value: string }[];
+}
+
+interface RealmHistoryTx {
+  block_height: number;
+  index: number;
+  response: { events: (GnoEventNode | null)[] } | null;
 }
 
 const LIST_REALMS_QUERY = `{
@@ -65,13 +91,16 @@ export async function countPackagesByCreator(
     throw new Error(`${network.id} has no indexer configured — package discovery needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: AddPackageTx[] }>(
+  const data = await queryIndexer<{ getTransactions: AddPackageTx[] | null }>(
     network.indexerGraphqlUrl,
     COUNT_BY_CREATOR_QUERY,
     { address }
   );
   const paths = new Set<string>();
-  for (const tx of data.getTransactions) {
+  // The indexer returns `getTransactions: null` (not `[]`) when nothing
+  // matches — confirmed live for an address with zero deployments, which is
+  // the common case (most addresses never deploy a package).
+  for (const tx of data.getTransactions ?? []) {
     for (const message of tx.messages) {
       const path = message.value?.package?.path;
       if (path) paths.add(path);
@@ -104,13 +133,13 @@ export async function listRealms(
     throw new Error(`${network.id} has no indexer configured — realm discovery needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: AddPackageTx[] }>(
+  const data = await queryIndexer<{ getTransactions: AddPackageTx[] | null }>(
     network.indexerGraphqlUrl,
     LIST_REALMS_QUERY
   );
 
   const latestHeightByPath = new Map<string, number>();
-  for (const tx of data.getTransactions) {
+  for (const tx of data.getTransactions ?? []) {
     for (const message of tx.messages) {
       const path = message.value?.package?.path;
       if (!path || !path.includes("/r/")) continue;
@@ -135,5 +164,65 @@ export async function listRealms(
     fetchedAt,
     freshness: "live",
     schema: "gnomputer.indexer.realm-list.v1",
+  });
+}
+
+// `pkg_path` is a real filter field on MsgCall (same confirmed-live pattern
+// as MsgAddPackage.creator above). Events come back per-transaction via
+// `response.events` regardless of which package they belong to (a single
+// call can touch several realms' events in one tx, e.g. a token transfer
+// nested inside a swap call) — filtered client-side to just this
+// packagePath's own GnoEvents. Non-GnoEvent union members (storage
+// deposit/unlock, unknown) come back as `{}` since only `... on GnoEvent`
+// is requested, so `!ev?.type` also filters those out.
+const REALM_HISTORY_QUERY = `
+  query RealmHistory($pkgPath: String!) {
+    getTransactions(where: { success: { eq: true }, messages: { value: { MsgCall: { pkg_path: { eq: $pkgPath } } } } }, order: { heightAndIndex: DESC }) {
+      block_height
+      index
+      response { events { ... on GnoEvent { type pkg_path attrs { key value } } } }
+    }
+  }
+`;
+
+export async function realmHistory(
+  network: { id: string; indexerGraphqlUrl?: string },
+  packagePath: string,
+  fetchedAt: string,
+  limit = 100
+): Promise<DataEnvelope<IndexerEvent[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — realm history needs one.`);
+  }
+
+  const data = await queryIndexer<{ getTransactions: RealmHistoryTx[] | null }>(
+    network.indexerGraphqlUrl,
+    REALM_HISTORY_QUERY,
+    { pkgPath: packagePath }
+  );
+
+  const events: IndexerEvent[] = [];
+  outer: for (const tx of data.getTransactions ?? []) {
+    for (const ev of tx.response?.events ?? []) {
+      if (!ev?.type || ev.pkg_path !== packagePath) continue;
+      events.push({ height: tx.block_height, txIndex: tx.index, type: ev.type, attrs: ev.attrs ?? [] });
+      if (events.length >= limit) break outer;
+    }
+  }
+
+  return wrapEnvelope({
+    ref: {
+      uri: `gno://${network.id}/realm/${packagePath}`,
+      kind: "realm",
+      objectId: packagePath,
+      networkId: network.id,
+    },
+    data: events,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.realm-history.v1",
   });
 }
