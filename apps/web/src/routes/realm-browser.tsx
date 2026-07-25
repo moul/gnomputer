@@ -14,6 +14,7 @@ import { router } from "../routes/root";
 import { SourceExplorer } from "./source-explorer";
 import { RealmDocs } from "./realm-docs";
 import { RealmState } from "./realm-state";
+import { RealmStateExplorer } from "./realm-state-explorer";
 import { RealmHistory } from "./realm-history";
 import { RealmActions } from "./realm-actions";
 import { RealmGraph } from "./realm-graph";
@@ -29,7 +30,8 @@ const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
   { id: "source", label: "Source" },
   { id: "docs", label: "Docs" },
-  { id: "state", label: "State" },
+  { id: "state-explorer", label: "State" },
+  { id: "state", label: "Eval" },
   { id: "history", label: "History" },
   { id: "actions", label: "Actions" },
   { id: "graph", label: "Graph" },
@@ -253,6 +255,8 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
           <SourceExplorer packagePath={tab.packagePath} />
         ) : tab.lens === "docs" ? (
           <RealmDocs packagePath={tab.packagePath} />
+        ) : tab.lens === "state-explorer" ? (
+          <RealmStateExplorer packagePath={tab.packagePath} />
         ) : tab.lens === "state" ? (
           <RealmState packagePath={tab.packagePath} />
         ) : tab.lens === "history" ? (

@@ -14,6 +14,9 @@ import qevalUsernameNilFixture from "./__fixtures__/qeval-username-nil.json";
 import blockResultsFixture from "./__fixtures__/block-results.json";
 import qpathsFixture from "./__fixtures__/qpaths.json";
 import qrenderInvalidPathFixture from "./__fixtures__/qrender-invalid-path.json";
+import qpkgJsonFixture from "./__fixtures__/qpkg-json.json";
+import qobjectJsonFixture from "./__fixtures__/qobject-json.json";
+import qtypeJsonFixture from "./__fixtures__/qtype-json.json";
 
 const topaz = DEFAULT_NETWORKS.find((n) => n.id === "topaz")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
@@ -71,6 +74,9 @@ function abciQueryFixture(params: { path?: string; data?: string } | undefined) 
     if (decoded.startsWith("gno.land/r/does/not/exist")) return qrenderInvalidPathFixture;
     return qrenderFixture;
   }
+  if (path === "vm/qpkg_json") return qpkgJsonFixture;
+  if (path === "vm/qobject_json") return qobjectJsonFixture;
+  if (path === "vm/qtype_json") return qtypeJsonFixture;
   return qrenderFixture;
 }
 
@@ -236,5 +242,31 @@ describe("createRpcClient", () => {
     expect(env.data.validators.length).toBeGreaterThan(0);
     expect(env.data.validators[0]!.address).toMatch(/^g1[a-z0-9]+$/);
     expect(typeof env.data.validators[0]!.votingPower).toBe("string");
+  });
+
+  it("wraps queryPkgJson in a DataEnvelope with the package's declarations as Amino JSON", async () => {
+    const client = createRpcClient(topaz);
+    const env = await client.queryPkgJson("gno.land/r/gnoland/blog", "2026-07-22T00:00:00.000Z");
+    expect(env.source).toBe("rpc");
+    const parsed = JSON.parse(env.data);
+    expect(parsed.names).toContain("errNotAdmin");
+    expect(parsed.values[0].T["@type"]).toBe("/gno.PointerType");
+  });
+
+  it("wraps queryObjectJson in a DataEnvelope with a persisted object's full value", async () => {
+    const client = createRpcClient(topaz);
+    const env = await client.queryObjectJson("abc123:5", "2026-07-22T00:00:00.000Z");
+    const parsed = JSON.parse(env.data);
+    expect(parsed.objectid).toBe("abc123:5");
+    expect(parsed.value["@type"]).toBe("/gno.StructValue");
+    expect(parsed.value.Fields[0].V.value).toBe("access restricted: not admin");
+  });
+
+  it("wraps queryTypeJson in a DataEnvelope with the declared type's struct field names", async () => {
+    const client = createRpcClient(topaz);
+    const env = await client.queryTypeJson("errors.errorString", "2026-07-22T00:00:00.000Z");
+    const parsed = JSON.parse(env.data);
+    expect(parsed.typeid).toBe("errors.errorString");
+    expect(parsed.type.Base.Fields[0].Name).toBe("s");
   });
 });

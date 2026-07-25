@@ -75,6 +75,21 @@ export interface RpcClient {
    * "gno.land/r/gnoland/blog"). Throws on a VM-level error (bad syntax,
    * unknown identifier, panic) — the caller shows that message as-is. */
   evalExpression(packagePath: string, expression: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** A package's top-level declarations (names, types, values) as Amino
+   * JSON — confirmed live and reachable via plain abci_query, the same
+   * backend gnoweb's own State Explorer tab uses (gnolang/gno PR #5283).
+   * Raw JSON string; the caller (state-explorer.tsx) parses and decodes
+   * it, since the full Amino type/value schema is large and UI-specific. */
+  queryPkgJson(packagePath: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** A single persisted object's full value by its ObjectID (e.g.
+   * "<pkg-hash>:4") via vm/qobject_json — used to lazily expand a pointer/
+   * ref the package-level query only gave an ObjectID for. */
+  queryObjectJson(objectId: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  /** A declared type's structure (struct field names, in the same order
+   * object values list their fields) by type ID via vm/qtype_json — needed
+   * to label a StructValue's Fields array, which carries values only, not
+   * field names. */
+  queryTypeJson(typeId: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   /** Real, live package-path enumeration via vm/qpaths — a genuine prefix
    * scan over deployed packages (store.FindPathsByPrefix on the node side),
    * unlike the indexer (CORS-blocked from the browser on every network
@@ -183,6 +198,51 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
         fetchedAt,
         freshness: "live",
         schema: "gnomputer.rpc.eval.v1",
+      });
+    },
+
+    async queryPkgJson(packagePath, fetchedAt) {
+      const client = await getClient();
+      const value = await abciQueryString(client, "vm/qpkg_json", packagePath);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "realm", packagePath },
+        data: value,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.pkg-json.v1",
+      });
+    },
+
+    async queryObjectJson(objectId, fetchedAt) {
+      const client = await getClient();
+      const value = await abciQueryString(client, "vm/qobject_json", objectId);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "state-object", objectId },
+        data: value,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.object-json.v1",
+      });
+    },
+
+    async queryTypeJson(typeId, fetchedAt) {
+      const client = await getClient();
+      const value = await abciQueryString(client, "vm/qtype_json", typeId);
+      return wrapEnvelope({
+        ref: { ...baseRef, kind: "type" },
+        data: value,
+        source: "rpc",
+        consistency: "authoritative",
+        networkId: network.id,
+        fetchedAt,
+        freshness: "live",
+        schema: "gnomputer.rpc.type-json.v1",
       });
     },
 

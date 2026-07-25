@@ -1049,6 +1049,72 @@ main {
   color: var(--danger);
 }
 
+.state-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.state-explorer__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.state-explorer__decl-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.state-explorer__scalar {
+  color: var(--accent);
+}
+
+.state-explorer__unsupported {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.state-explorer__node {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.state-explorer__toggle {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.state-explorer__toggle:hover {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.state-explorer__fields {
+  margin: var(--space-1) 0 0 var(--space-4);
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 1px solid var(--border);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.state-explorer__field-name {
+  color: var(--text-dim);
+}
+
 .realm-raw__body {
   margin: 0;
   font-family: var(--font-mono);
