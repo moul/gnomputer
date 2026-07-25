@@ -6,6 +6,7 @@ import {
   chainActivityStats,
   dailyActivity,
   listTransactions,
+  recentEvents,
 } from "./indexer";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
@@ -230,6 +231,82 @@ describe("realmHistory", () => {
     await expect(realmHistory({ id: "gnodev" }, "gno.land/r/demo/a", NOW)).rejects.toThrow(
       "gnodev has no indexer configured"
     );
+  });
+});
+
+describe("recentEvents", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("extracts every successful transaction's GnoEvents, most recent first, with pkgPath attached", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          response: {
+            events: [
+              { type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [{ key: "to", value: "g1abc" }] },
+            ],
+          },
+        },
+        {
+          block_height: 150,
+          index: 1,
+          response: { events: [{ type: "Swap", pkg_path: "gno.land/r/demo/b", attrs: [] }] },
+        },
+      ],
+    });
+
+    const result = await recentEvents(NETWORK, NOW);
+
+    expect(result.data).toEqual([
+      { height: 200, txIndex: 0, type: "Transfer", pkgPath: "gno.land/r/demo/a", attrs: [{ key: "to", value: "g1abc" }] },
+      { height: 150, txIndex: 1, type: "Swap", pkgPath: "gno.land/r/demo/b", attrs: [] },
+    ]);
+    expect(result.source).toBe("indexer");
+  });
+
+  it("skips non-GnoEvent union members that come back with no type/pkg_path", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          response: { events: [{}, { type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+        },
+      ],
+    });
+
+    const result = await recentEvents(NETWORK, NOW);
+
+    expect(result.data).toEqual([{ height: 200, txIndex: 0, type: "Transfer", pkgPath: "gno.land/r/demo/a", attrs: [] }]);
+  });
+
+  it("returns an empty list when getTransactions is null", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    const result = await recentEvents(NETWORK, NOW);
+    expect(result.data).toEqual([]);
+  });
+
+  it("respects the limit parameter", async () => {
+    mockIndexerResponse({
+      getTransactions: Array.from({ length: 5 }, (_, i) => ({
+        block_height: i,
+        index: 0,
+        response: { events: [{ type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+      })),
+    });
+
+    const result = await recentEvents(NETWORK, NOW, 2);
+
+    expect(result.data).toHaveLength(2);
+  });
+
+  it("throws when the network has no indexer configured", async () => {
+    await expect(recentEvents({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
   });
 });
 

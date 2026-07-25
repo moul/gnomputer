@@ -11,6 +11,7 @@ import {
   chainActivityStats,
   dailyActivity,
   listTransactions,
+  recentEvents,
   type RpcClient,
   type BlockSummary,
   type AccountInfo,
@@ -18,6 +19,7 @@ import {
   type ValidatorSet,
   type RealmSummary,
   type IndexerEvent,
+  type IndexerRecentEvent,
   type ChainActivityStats,
   type DailyActivity,
   type IndexerTransaction,
@@ -35,6 +37,7 @@ export type {
   ValidatorSet,
   RealmSummary,
   IndexerEvent,
+  IndexerRecentEvent,
   ChainActivityStats,
   DailyActivity,
   IndexerTransaction,
@@ -88,6 +91,7 @@ export interface GnomputerSDK {
     chainActivityStats(): Promise<DataEnvelope<ChainActivityStats>>;
     dailyActivity(): Promise<DataEnvelope<DailyActivity[]>>;
     listTransactions(): Promise<DataEnvelope<IndexerTransaction[]>>;
+    recentEvents(): Promise<DataEnvelope<IndexerRecentEvent[]>>;
   };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
@@ -168,6 +172,7 @@ export function createGnomputerSDK(
       chainActivityStats: () => chainActivityStats(activeNetwork, new Date().toISOString()),
       dailyActivity: () => dailyActivity(activeNetwork, new Date().toISOString()),
       listTransactions: () => listTransactions(activeNetwork, new Date().toISOString()),
+      recentEvents: () => recentEvents(activeNetwork, new Date().toISOString()),
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },
