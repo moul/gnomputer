@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { BlockSummary } from "@gnomputer/app-sdk";
+import { formatNumber } from "../format-number";
 
 // A literal "squares for blocks" visualization — chronological left-to-right
 // (useLiveActivity returns newest-first, so this reverses for display),
@@ -34,7 +35,7 @@ export function BlockStrip({
             data-active={b.height === selectedHeight}
             data-empty={b.numTxs === 0}
             style={style}
-            title={`#${b.height.toLocaleString()} — ${b.numTxs} ${b.numTxs === 1 ? "transaction" : "transactions"}`}
+            title={`#${formatNumber(b.height)} — ${b.numTxs} ${b.numTxs === 1 ? "transaction" : "transactions"}`}
             onClick={() => onSelect(b.height)}
           />
         );

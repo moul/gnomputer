@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLiveEvents } from "../use-live-events";
 import { openRef } from "../shell/open-ref";
+import { formatNumber } from "../format-number";
 
 export function EventExplorer() {
   const [paused, setPaused] = useState(false);
@@ -27,7 +28,7 @@ export function EventExplorer() {
                   className="event-list__height"
                   onClick={(e) => openRef(`gno://_/block/${event.height}`, { x: e.clientX, y: e.clientY })}
                 >
-                  #{event.height.toLocaleString()}
+                  #{formatNumber(event.height)}
                 </button>
                 <span className="event-list__type">{event.type}</span>
                 {event.pkgPath && <span className="event-list__pkg">{event.pkgPath}</span>}

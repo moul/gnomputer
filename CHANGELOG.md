@@ -6,6 +6,17 @@ banner links here.
 
 ## 2026-07-25
 
+- Fixed: Governance (and any other Render() output that packs several
+  markdown headings/links onto separate lines without blank-line
+  separation, like gno.land/r/gov/dao's real output) rendered literal "#"/
+  "##" markers as visible text instead of real headings — a real gap in
+  the render-markup parser, not a gov/dao content bug.
+- All numbers across the app now format consistently (comma thousands,
+  period decimal) regardless of the runtime's locale — previously
+  `.toLocaleString()` with no explicit locale could render space-separated
+  thousands or a comma decimal depending on OS/browser settings. Chain
+  Stats also got a cleaner stat-tile layout and a chart fix so a low-
+  activity day is never a near-invisible sliver next to a busy one.
 - The Browser hover menu's window list now smart-truncates long realm
   paths (drops "gno.land/", shortens the namespace to its first letter
   before ever touching the realm's own name) instead of relying on plain

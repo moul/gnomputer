@@ -10,14 +10,7 @@ import { useAddressWindowStore } from "./address-window-store";
 import { useStorePersistence } from "./use-store-persistence";
 import { gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
 import { openExplorer } from "./open-explorer";
-
-function formatBalance(coins: string): string {
-  const match = /^(\d+)ugnot$/.exec(coins);
-  if (!match) return coins || "0 GNOT";
-  const [, amount] = match;
-  const gnot = Number(amount) / 1_000_000;
-  return `${gnot.toLocaleString(undefined, { maximumFractionDigits: 6 })} GNOT`;
-}
+import { formatUgnotString } from "../format-number";
 
 export function AddressWindow() {
   useStorePersistence("ui-state:address-window", useAddressWindowStore);
@@ -190,7 +183,7 @@ function AddressContent({ address }: { address: string }) {
             {info.initialized && (
               <>
                 <dt>Balance</dt>
-                <dd>{formatBalance(info.balance)}</dd>
+                <dd>{formatUgnotString(info.balance)}</dd>
                 <dt>Account number</dt>
                 <dd>{info.accountNumber}</dd>
                 <dt>Sequence</dt>

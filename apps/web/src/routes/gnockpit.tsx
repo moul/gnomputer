@@ -4,6 +4,7 @@ import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { openGnockpitEmbed } from "../shell/open-gnockpit-embed";
+import { formatNumber } from "../format-number";
 
 // A lightweight, embedded slice of what the real Gnockpit dashboard shows
 // (chain identity + validator set summary), backed by the same RPC calls the
@@ -51,7 +52,7 @@ export function Gnockpit() {
         <dt>Chain ID</dt>
         <dd>{status.data.chainId}</dd>
         <dt>Latest height</dt>
-        <dd>#{status.data.latestHeight.toLocaleString()}</dd>
+        <dd>#{formatNumber(status.data.latestHeight)}</dd>
         <dt>RPC latency</dt>
         <dd>{status.data.latencyMs}ms</dd>
         <dt>Validators</dt>
@@ -60,7 +61,7 @@ export function Gnockpit() {
             ? "Loading…"
             : validators.error
               ? "Not available"
-              : `${validators.data.validators.length} · ${totalPower!.toLocaleString()} total voting power`}
+              : `${validators.data.validators.length} · ${formatNumber(totalPower!)} total voting power`}
         </dd>
       </dl>
       {network.gnockpitUrl ? (

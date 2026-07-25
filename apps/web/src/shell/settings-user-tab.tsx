@@ -10,12 +10,7 @@ import {
   ADENA_INSTALL_URL,
 } from "./wallet-connect";
 import { QrCode } from "./qr-code";
-
-function formatUgnot(coins: string): string {
-  const match = /^(\d+)ugnot$/.exec(coins.trim());
-  if (!match) return coins;
-  return `${(Number(match[1]) / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 6 })} GNOT`;
-}
+import { formatUgnotString } from "../format-number";
 
 export function SettingsUserTab() {
   const account = useWalletStore((s) => s.account);
@@ -41,7 +36,7 @@ export function SettingsUserTab() {
           <dt>Address</dt>
           <dd>{account.address}</dd>
           <dt>Balance</dt>
-          <dd>{formatUgnot(account.coins)}</dd>
+          <dd>{formatUgnotString(account.coins)}</dd>
           <dt>Chain</dt>
           <dd>{account.chainId}</dd>
         </dl>

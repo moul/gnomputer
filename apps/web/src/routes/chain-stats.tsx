@@ -3,10 +3,7 @@ import { useSdk } from "../sdk-context";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { openRef } from "../shell/open-ref";
-
-function formatGnot(amountUgnot: number): string {
-  return `${(amountUgnot / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 6 })} GNOT`;
-}
+import { formatNumber, formatGnotAmount } from "../format-number";
 
 function RealmLink({ packagePath }: { packagePath: string }) {
   return (
@@ -39,13 +36,27 @@ function BlockLink({ height }: { height: number }) {
       className="chain-stats__link"
       onClick={(e) => openRef(`gno://_/block/${height}`, { x: e.clientX, y: e.clientY })}
     >
-      #{height.toLocaleString()}
+      #{formatNumber(height)}
     </button>
+  );
+}
+
+function StatTile({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="chain-stats__tile">
+      <span className="chain-stats__tile-value">{value}</span>
+      <span className="chain-stats__tile-label">{label}</span>
+    </div>
   );
 }
 
 const CHART_HEIGHT = 60;
 const CHART_BAR_GAP = 2;
+// A day with real but small activity (e.g. 1 tx) would otherwise render as
+// a near-invisible sliver next to a busy day with 100+ — flooring every
+// non-zero bar to at least this fraction of the chart height keeps every
+// day visibly a bar, not a hairline.
+const MIN_BAR_HEIGHT_RATIO = 0.08;
 
 // A plain hand-rolled SVG bar chart rather than pulling in a charting
 // library — two small bars per day (blocks, txs) is well within what a
@@ -61,14 +72,23 @@ function DailyBarChart({
 }) {
   const max = Math.max(1, ...data.map(pick));
   const barWidth = data.length > 0 ? 100 / data.length : 100;
+  const minBarHeight = CHART_HEIGHT * MIN_BAR_HEIGHT_RATIO;
 
   return (
     <div className="chain-stats__chart">
       <p className="chain-stats__chart-label">{label}</p>
       <svg viewBox={`0 0 100 ${CHART_HEIGHT}`} preserveAspectRatio="none" className="chain-stats__chart-svg">
+        <line
+          x1="0"
+          y1={CHART_HEIGHT - 0.5}
+          x2="100"
+          y2={CHART_HEIGHT - 0.5}
+          className="chain-stats__chart-baseline"
+        />
         {data.map((d, i) => {
           const value = pick(d);
-          const barHeight = (value / max) * (CHART_HEIGHT - 4);
+          const rawHeight = (value / max) * (CHART_HEIGHT - 4);
+          const barHeight = value > 0 ? Math.max(rawHeight, minBarHeight) : 0;
           return (
             <rect
               key={d.date}
@@ -76,10 +96,11 @@ function DailyBarChart({
               y={CHART_HEIGHT - barHeight}
               width={Math.max(0, barWidth - CHART_BAR_GAP)}
               height={barHeight}
+              rx="1"
               className="chain-stats__chart-bar"
             >
               <title>
-                {d.date}: {value.toLocaleString()}
+                {d.date}: {formatNumber(value)}
               </title>
             </rect>
           );
@@ -176,19 +197,22 @@ export function ChainStats() {
     );
   }
 
+  const avgGasPerTx = stats.totalTxs > 0 ? Math.round(stats.totalGasUsed / stats.totalTxs) : 0;
+
   return (
     <div className="chain-stats">
       <Freshness dataUpdatedAt={dataUpdatedAt} />
-      <p className="state-line">
-        {stats.totalTxs.toLocaleString()} successful transactions · {stats.totalCalls.toLocaleString()}{" "}
-        calls · {stats.totalDeploys.toLocaleString()} deploys · {stats.totalRuns.toLocaleString()} runs ·{" "}
-        {stats.totalSends.toLocaleString()} sends
-      </p>
-      <p className="state-line">
-        {stats.totalGasUsed.toLocaleString()} total gas used · {formatGnot(stats.totalFeeUgnot)} total fees
-        · {stats.totalTxs > 0 ? Math.round(stats.totalGasUsed / stats.totalTxs).toLocaleString() : 0} avg
-        gas/tx
-      </p>
+
+      <div className="chain-stats__tiles">
+        <StatTile value={formatNumber(stats.totalTxs)} label="transactions" />
+        <StatTile value={formatNumber(stats.totalCalls)} label="calls" />
+        <StatTile value={formatNumber(stats.totalDeploys)} label="deploys" />
+        <StatTile value={formatNumber(stats.totalRuns)} label="runs" />
+        <StatTile value={formatNumber(stats.totalSends)} label="sends" />
+        <StatTile value={formatNumber(stats.totalGasUsed)} label="total gas used" />
+        <StatTile value={formatGnotAmount(stats.totalFeeUgnot)} label="total fees" />
+        <StatTile value={formatNumber(avgGasPerTx)} label="avg gas / tx" />
+      </div>
 
       <DailyActivitySection />
 
@@ -202,7 +226,7 @@ export function ChainStats() {
               <li key={r.packagePath}>
                 <RealmLink packagePath={r.packagePath} />
                 <span className="chain-stats__value">
-                  {r.gasUsed.toLocaleString()} gas · {r.txCount} {r.txCount === 1 ? "tx" : "txs"}
+                  {formatNumber(r.gasUsed)} gas · {r.txCount} {r.txCount === 1 ? "tx" : "txs"}
                 </span>
               </li>
             ))}
@@ -220,7 +244,7 @@ export function ChainStats() {
               <li key={`${tx.height}-${tx.index}`}>
                 <BlockLink height={tx.height} />
                 <span className="chain-stats__value">
-                  {tx.gasUsed.toLocaleString()} gas · {formatGnot(tx.feeUgnot)}
+                  {formatNumber(tx.gasUsed)} gas · {formatGnotAmount(tx.feeUgnot)}
                   {tx.packagePaths.length > 0 ? ` · ${tx.packagePaths.join(", ")}` : ""}
                 </span>
               </li>

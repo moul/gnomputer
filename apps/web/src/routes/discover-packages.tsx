@@ -6,6 +6,7 @@ import { rankByActivity } from "../rank-by-activity";
 import { ErrorState } from "../shell/error-state";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { focusOrReopen } from "../shell/open-ref";
+import { formatNumber } from "../format-number";
 
 const PACKAGE_LIMIT = 2000;
 
@@ -88,7 +89,7 @@ export function DiscoverPackages() {
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter by path…"
         />
-        <span className="state-line">{paths.length.toLocaleString()} packages</span>
+        <span className="state-line">{formatNumber(paths.length)} packages</span>
       </div>
       {sorted.length === 0 ? (
         <p className="state-line">No packages match &ldquo;{filter}&rdquo;.</p>
@@ -123,7 +124,7 @@ export function DiscoverPackages() {
         </table>
       )}
       {sorted.length > 500 && (
-        <p className="state-line">Showing the first 500 of {sorted.length.toLocaleString()} matches.</p>
+        <p className="state-line">Showing the first 500 of {formatNumber(sorted.length)} matches.</p>
       )}
     </div>
   );
