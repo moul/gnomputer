@@ -6,6 +6,8 @@ banner links here.
 
 ## 2026-07-25
 
+- The Shell now autocompletes: real package paths while typing `cd `, and
+  real function names (from the current package) once one is set.
 - Fixed: a package with no Render() function (a pure library, or a realm
   that never defined one) showed a generic error on its Render tab —
   Gnomputer now recognizes this and auto-switches to Source, graying out
