@@ -15,9 +15,9 @@ export const SETTINGS_TABS: { id: SettingsTab; emoji: string; label: string }[] 
   { id: "network", emoji: "📡", label: "Network" },
   { id: "user", emoji: "👤", label: "User" },
   { id: "theme", emoji: "🎨", label: "Theme" },
-  { id: "about", emoji: "ℹ️", label: "About" },
   { id: "bug", emoji: "🐛", label: "Report a bug" },
   { id: "changelog", emoji: "📜", label: "Changelog" },
+  { id: "about", emoji: "ℹ️", label: "About" },
 ];
 
 const TAB_LABEL: Record<SettingsTab, string> = Object.fromEntries(
