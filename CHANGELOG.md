@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-25
 
+- The Shell app has a new `funcs` command — real function-signature
+  introspection (vm/qfuncs) for the current package, so you don't have to
+  already know a function's name/params before evaluating a call against
+  it. Crossing functions (`cur realm` first param) are flagged `[crossing]`.
 - Split "Discover" into five genuinely independent apps — Users, Packages,
   Transactions, Tokens, Governance — each its own window instead of tabs
   inside one shared one. The Discover island icon is now a pure hover

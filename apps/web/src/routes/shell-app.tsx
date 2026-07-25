@@ -8,11 +8,57 @@ import { useSdk } from "../sdk-context";
 // gnolang/gno PR #5421) the same one gno.land's own newest built-in
 // playground settled on instead of a client-side WASM interpreter — see
 // the "Shell/REPL" issue for why gnovm-as-WASM wasn't pursued here.
+//
+// `funcs` (vm/qfuncs, sdk.rpc.queryFuncs) is a lightweight, deliberately
+// read-only-safe borrow from gnolang/gno's own gnopie CLI (PR #5444, an
+// "httpie for gno.land"): real function-signature introspection so you
+// don't have to already know a package's function names/params before
+// typing an eval expression against it. NOT borrowed from that PR: its
+// auto-`cross(...)`-wrapping for crossing functions — that needs the exact
+// call syntax verified against a real signed transaction, which isn't
+// something this read-only qeval shell can safely check, so a crossing
+// function is only flagged with "[crossing]" here, not auto-rewritten.
 interface ShellEntry {
   prompt: string;
   input: string;
   output?: string;
   error?: string;
+}
+
+export interface FuncParam {
+  Name: string;
+  Type: string;
+}
+
+export interface FuncSignature {
+  FuncName: string;
+  Params: FuncParam[] | null;
+  Results: FuncParam[] | null;
+}
+
+// A crossing function's first param has a Type string that's the fully-
+// expanded realm-interface shape (confirmed live against
+// gno.land/r/gnoland/blog: ModAddPost's unnamed `realm` param comes back
+// named ".arg_0", but NewPostProposalRequest's explicitly-named `cur realm`
+// param keeps its real name "cur" — so detection has to key on the TYPE
+// fingerprint of the FIRST param specifically, not the name, which varies
+// depending on whether the source named the param at all). Not something
+// the caller ever types themselves either way, so it's hidden from the
+// formatted signature rather than shown as a real parameter.
+const CROSSING_TYPE_FINGERPRINT = ".uverse.realm";
+
+export function isCrossingSignature(fn: FuncSignature): boolean {
+  const first = fn.Params?.[0];
+  return !!first && first.Type.includes(CROSSING_TYPE_FINGERPRINT);
+}
+
+export function formatFuncSignature(fn: FuncSignature): string {
+  const crossing = isCrossingSignature(fn);
+  const params = crossing ? (fn.Params ?? []).slice(1) : (fn.Params ?? []);
+  const paramList = params.map((p) => `${p.Name} ${p.Type}`).join(", ");
+  const results = fn.Results ?? [];
+  const resultList = results.length > 0 ? `: ${results.map((r) => r.Type).join(", ")}` : "";
+  return `${fn.FuncName}(${paramList})${resultList}${crossing ? " [crossing]" : ""}`;
 }
 
 export function ShellApp() {
@@ -56,8 +102,11 @@ export function ShellApp() {
 
     setPending(true);
     try {
-      const env = await sdk.rpc.evalExpression(pkg, trimmed, new Date().toISOString());
-      setHistory((prev) => [...prev, { prompt, input: trimmed, output: env.data }]);
+      const output =
+        trimmed === "funcs"
+          ? await listFuncs(pkg)
+          : (await sdk.rpc.evalExpression(pkg, trimmed, new Date().toISOString())).data;
+      setHistory((prev) => [...prev, { prompt, input: trimmed, output }]);
     } catch (err) {
       setHistory((prev) => [
         ...prev,
@@ -67,6 +116,13 @@ export function ShellApp() {
       setPending(false);
       setDraft("");
     }
+  }
+
+  async function listFuncs(packagePath: string): Promise<string> {
+    const env = await sdk.rpc.queryFuncs(packagePath, new Date().toISOString());
+    const signatures: FuncSignature[] = JSON.parse(env.data);
+    if (signatures.length === 0) return "(no exported functions found)";
+    return signatures.map(formatFuncSignature).join("\n");
   }
 
   function recall(direction: -1 | 1) {
@@ -84,7 +140,8 @@ export function ShellApp() {
       <div className="shell-app__scrollback" ref={scrollRef}>
         <p className="shell-app__hint">
           A general vm/qeval REPL — <code>cd &lt;packagePath&gt;</code> to set the current package,
-          then evaluate any Gno expression against it (e.g. <code>Render("")</code>).
+          then evaluate any Gno expression against it (e.g. <code>Render("")</code>), or run{" "}
+          <code>funcs</code> to list its exported functions.
         </p>
         {history.map((entry, i) => (
           <div key={i} className="shell-app__entry">
