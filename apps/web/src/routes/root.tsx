@@ -9,6 +9,7 @@ import { Home } from "./home";
 import { IslandBar } from "../shell/island-bar";
 import { CommandPalette } from "../shell/command-palette";
 import { ShortcutsHelp } from "../shell/shortcuts-help";
+import { AppSwitcherOverlay } from "../shell/app-switcher-overlay";
 import { UpdateBanner } from "../shell/update-banner";
 import { AppErrorFallback } from "../shell/app-error-fallback";
 import { ErrorBoundary } from "../shell/error-boundary";
@@ -40,6 +41,9 @@ function RootLayout() {
       </ErrorBoundary>
       <ErrorBoundary>
         <ShortcutsHelp />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <AppSwitcherOverlay />
       </ErrorBoundary>
       <ErrorBoundary>
         <UpdateBanner />

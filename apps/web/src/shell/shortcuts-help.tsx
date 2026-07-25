@@ -12,6 +12,7 @@ export const SHORTCUTS: Shortcut[] = [
   { keys: "⌘/ or ?", description: "Show this shortcuts help" },
   { keys: "Esc", description: "Close the command palette or this help" },
   { keys: "Click desktop background", description: "Toggle overview mode (needs 2+ open windows)" },
+  { keys: "Shift+Tab", description: "Hold Shift, tap Tab to switch between open windows" },
 ];
 
 export function ShortcutsHelp() {
