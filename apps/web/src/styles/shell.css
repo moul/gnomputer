@@ -482,6 +482,8 @@
 
 .app-switcher {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-3);
   padding: var(--space-4);
   background: var(--bg-elevated);
@@ -489,7 +491,8 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-modal);
   max-width: 90vw;
-  overflow-x: auto;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .app-switcher__item {
