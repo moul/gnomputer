@@ -44,6 +44,95 @@ function BlockLink({ height }: { height: number }) {
   );
 }
 
+const CHART_HEIGHT = 60;
+const CHART_BAR_GAP = 2;
+
+// A plain hand-rolled SVG bar chart rather than pulling in a charting
+// library — two small bars per day (blocks, txs) is well within what a
+// few dozen <rect>s can do without any new dependency.
+function DailyBarChart({
+  data,
+  pick,
+  label,
+}: {
+  data: { date: string; blockCount: number; txCount: number }[];
+  pick: (d: { date: string; blockCount: number; txCount: number }) => number;
+  label: string;
+}) {
+  const max = Math.max(1, ...data.map(pick));
+  const barWidth = data.length > 0 ? 100 / data.length : 100;
+
+  return (
+    <div className="chain-stats__chart">
+      <p className="chain-stats__chart-label">{label}</p>
+      <svg viewBox={`0 0 100 ${CHART_HEIGHT}`} preserveAspectRatio="none" className="chain-stats__chart-svg">
+        {data.map((d, i) => {
+          const value = pick(d);
+          const barHeight = (value / max) * (CHART_HEIGHT - 4);
+          return (
+            <rect
+              key={d.date}
+              x={i * barWidth + CHART_BAR_GAP / 2}
+              y={CHART_HEIGHT - barHeight}
+              width={Math.max(0, barWidth - CHART_BAR_GAP)}
+              height={barHeight}
+              className="chain-stats__chart-bar"
+            >
+              <title>
+                {d.date}: {value.toLocaleString()}
+              </title>
+            </rect>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+function DailyActivitySection() {
+  const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
+  const {
+    data: days,
+    error,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: ["daily-activity", networkId],
+    queryFn: async () => (await sdk.indexer.dailyActivity()).data,
+    // The indexer scans the whole block range server-side for this one
+    // (confirmed live: ~10s round trip) — this doesn't change fast enough
+    // to be worth refetching on every window focus.
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (error) {
+    return (
+      <ErrorState message={`Could not load daily activity: ${error.message}`} onRetry={() => void refetch()} />
+    );
+  }
+  if (isPending) {
+    return (
+      <p className="state-line" aria-busy="true">
+        Loading daily activity (this scans the full chain history, can take several seconds)…
+      </p>
+    );
+  }
+  if (days.length === 0) {
+    return <p className="state-line">No historical block data found.</p>;
+  }
+
+  return (
+    <section className="chain-stats__section">
+      <h3>
+        Daily activity ({days[0]!.date} to {days[days.length - 1]!.date})
+      </h3>
+      <DailyBarChart data={days} pick={(d) => d.blockCount} label="Blocks with activity / day" />
+      <DailyBarChart data={days} pick={(d) => d.txCount} label="Transactions / day" />
+    </section>
+  );
+}
+
 // Aggregated from every successful transaction on the chain (indexer-backed
 // — see sdk.indexer.chainActivityStats / rpc/src/indexer.ts's
 // chainActivityStats for the exact attribution rules, e.g. a multi-message
@@ -100,6 +189,8 @@ export function ChainStats() {
         · {stats.totalTxs > 0 ? Math.round(stats.totalGasUsed / stats.totalTxs).toLocaleString() : 0} avg
         gas/tx
       </p>
+
+      <DailyActivitySection />
 
       <section className="chain-stats__section">
         <h3>Top realms by gas</h3>
