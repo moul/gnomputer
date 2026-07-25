@@ -1115,6 +1115,86 @@ main {
   color: var(--text-dim);
 }
 
+.shell-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+  margin: calc(-1 * var(--space-4));
+  background: var(--bg-inset);
+  cursor: text;
+}
+
+.shell-app__scrollback {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shell-app__hint {
+  margin: 0 0 var(--space-2);
+  color: var(--text-dim);
+}
+
+.shell-app__hint code {
+  color: var(--text);
+}
+
+.shell-app__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shell-app__line {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.shell-app__prompt {
+  color: var(--accent);
+  flex: 0 0 auto;
+  white-space: pre;
+}
+
+.shell-app__output,
+.shell-app__error {
+  margin: 0 0 0 calc(var(--space-2) * -1);
+  padding-left: var(--space-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+
+.shell-app__error {
+  color: var(--danger);
+}
+
+.shell-app__input-line {
+  flex: 1;
+  align-items: center;
+}
+
+.shell-app__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.shell-app__input:focus-visible {
+  box-shadow: none;
+}
+
 .realm-raw__body {
   margin: 0;
   font-family: var(--font-mono);
