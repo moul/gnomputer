@@ -1,9 +1,18 @@
+import type { GnomputerSDK } from "@gnomputer/app-sdk";
 import { useWalletStore } from "./wallet-store";
 
-const ADENA_INSTALL_URL = "https://www.adena.app/";
+export const ADENA_INSTALL_URL = "https://www.adena.app/";
+
+// Same convention as entity-patterns.ts's inline address-detection regex
+// (bech32 gno addresses: "g1" prefix, 25-50 further lowercase/digit chars).
+const GNO_ADDRESS_PATTERN = /^g1[a-z0-9]{25,50}$/;
 
 export function isAdenaInstalled(): boolean {
   return typeof window !== "undefined" && !!window.adena;
+}
+
+export function isValidGnoAddress(address: string): boolean {
+  return GNO_ADDRESS_PATTERN.test(address.trim());
 }
 
 async function refreshAccount(): Promise<boolean> {
@@ -14,6 +23,7 @@ async function refreshAccount(): Promise<boolean> {
     address: res.data.address,
     chainId: res.data.chainId,
     coins: res.data.coins,
+    source: "adena",
   });
   return true;
 }
@@ -35,6 +45,35 @@ export async function connectWallet(): Promise<void> {
     if (!ok) store.setError("Adena did not return an account.");
   } catch (err) {
     store.setError(err instanceof Error ? err.message : "Could not connect to Adena.");
+  } finally {
+    useWalletStore.getState().setConnecting(false);
+  }
+}
+
+/** The gnokey CLI/mobile alternative: no browser extension can speak for
+ * these, so instead of a signing handshake the user pastes their own
+ * address and Gnomputer looks up its real on-chain balance — a read-only
+ * identity. Anything that needs a signature (e.g. registering a username)
+ * falls back to a real gnoweb TxLink + QR the user completes with gnokey
+ * directly, the same pattern Realm Actions already uses. */
+export async function connectManualAddress(sdk: GnomputerSDK, address: string): Promise<void> {
+  const trimmed = address.trim();
+  const store = useWalletStore.getState();
+  if (!isValidGnoAddress(trimmed)) {
+    store.setError("That doesn't look like a Gno address (expected g1…).");
+    return;
+  }
+  store.setConnecting(true);
+  try {
+    const env = await sdk.rpc.getAccountInfo(trimmed, new Date().toISOString());
+    store.setAccount({
+      address: trimmed,
+      chainId: sdk.networks.getActive().chainId,
+      coins: env.data.balance,
+      source: "manual",
+    });
+  } catch (err) {
+    store.setError(err instanceof Error ? err.message : "Could not look up that address.");
   } finally {
     useWalletStore.getState().setConnecting(false);
   }
