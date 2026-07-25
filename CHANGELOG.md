@@ -50,16 +50,41 @@ banner links here.
   file's real content inline. The island Settings dropdown now has one
   entry per tab, each with a matching emoji.
 - Fork a realm's open source file straight into a new Editor script, or
-  duplicate an existing one; Browser home has a new "My apps & scripts"
-  section listing your local scripts.
+  duplicate an existing one.
 - A visual block strip in Block Explorer — literal squares for blocks,
   glow scaled by how busy each one was, click to open its detail.
 - Cypherpunk and Minimal themes pushed further from recolored variants:
   Cypherpunk gets a blinking terminal caret, a "> " prompt prefix on
-  window titles, and a slow CRT flicker; Minimal drops to square corners
-  and a single neutral chrome color instead of per-app accents.
+  window titles, a slow CRT flicker, and a dynamic synthwave-style
+  background grid; Minimal drops to square corners and a single neutral
+  chrome color instead of per-app accents.
 - Light themes' window background nudged from pure white to a faint
   off-white.
+- Real wallet connect via the Adena browser extension: Settings → User
+  shows your real address/balance/chain once connected, and Discover's
+  Users tab offers a real "Register username" action (calls the actual
+  `gno.land/r/gnoland/users/v1` registration realm) if the connected
+  account doesn't have one yet.
+- Realm Actions now link to gnoweb's own call form via a real, clickable
+  TxLink per function, plus a QR code to continue on another device.
+- The Graph lens embeds mygnoscan's real dependency graph (including
+  reverse references) instead of showing only direct imports.
+- A new "State" lens — a real, expandable tree of a package's persisted
+  on-chain state (the same backend gnoweb's own State Explorer uses),
+  lazily loading nested objects and resolving struct field names. The
+  previous "State" lens (an ad-hoc expression console) is now "Eval".
+- A new Shell app (⌨️) — a general-purpose live expression REPL, not
+  scoped to one realm/tab: `cd <packagePath>`, then evaluate anything
+  against it, with command history.
+- Editor and Discover icons get hover menus (10 most recent scripts;
+  Users/Packages/Transactions/Tokens/Governance); a Faucet entry was
+  added to Discover's menu.
+- Shift+Tab now opens an app-switcher overlay — hold Shift, tap Tab to
+  cycle through open windows, release to focus one.
+- Windows can no longer be dragged (or left, after resizing the browser)
+  fully off-screen — at least 20% of a window's width and its whole
+  titlebar always stay reachable. The desktop no longer scrolls.
+- Test13 removed from the network list.
 
 ## Earlier
 
