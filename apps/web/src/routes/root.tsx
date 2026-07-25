@@ -21,6 +21,7 @@ import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 import { useCustomNetworksPersistence } from "../shell/use-custom-networks-persistence";
 import { useGlobalShortcuts } from "../shell/use-global-shortcuts";
+import { useWalletInit } from "../shell/use-wallet-init";
 
 function RootLayout() {
   useThemePersistence();
@@ -31,6 +32,7 @@ function RootLayout() {
   useBrowserHomePersistence();
   useCustomNetworksPersistence();
   useGlobalShortcuts();
+  useWalletInit();
   return (
     <>
       <ErrorBoundary>

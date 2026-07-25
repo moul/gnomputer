@@ -2095,6 +2095,16 @@ main {
   gap: var(--space-2);
 }
 
+.users-app__register {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
 .validator-monitor {
   display: flex;
   flex-direction: column;
@@ -2631,6 +2641,12 @@ main {
 
 .settings-user-identity button {
   margin-left: auto;
+}
+
+.settings-user-identity__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger);
 }
 
 .address-window {
