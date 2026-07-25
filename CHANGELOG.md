@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-25
 
+- The Source lens's import paths (`gno.land/r/...`/`gno.land/p/...`) are now
+  clickable, opening that package's own Source view directly.
+- Shell fixes: the prompt no longer floats vertically centered in a mostly-
+  empty window; new `help`/`?`, `pwd`, and `ls`/`dir` commands.
 - The Chain menu's Gnockpit entry now opens the real embedded dashboard
   directly instead of the native mini-summary page first.
 - Added a gnoscan.io link to the Discover menu (opens externally, with the

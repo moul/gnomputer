@@ -5,8 +5,9 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { ErrorState } from "../shell/error-state";
 import { CodeEditor } from "../shell/code-editor-lazy";
 import { forkFile } from "../shell/fork-script";
+import { openInRealmTab } from "../shell/open-in-realm-tab";
 
-export function SourceExplorer({ packagePath }: { packagePath: string }) {
+export function SourceExplorer({ packagePath, windowId }: { packagePath: string; windowId: string }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -119,6 +120,9 @@ export function SourceExplorer({ packagePath }: { packagePath: string }) {
             value={source ?? ""}
             readOnly
             language={activeFile?.endsWith(".gno") || activeFile?.endsWith(".go") ? "go" : "text"}
+            onImportClick={(importPath) =>
+              openInRealmTab(windowId, { packagePath: importPath, lens: "source" })
+            }
           />
         )}
       </div>
