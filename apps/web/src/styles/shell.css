@@ -2633,6 +2633,12 @@ main {
   margin-left: auto;
 }
 
+.settings-user-identity__error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--danger);
+}
+
 .address-window {
   display: flex;
   flex-direction: column;

@@ -8,6 +8,11 @@ import { openRef, focusOrReopen } from "./open-ref";
 import { openSettings } from "./open-settings";
 import { iconForRefUri } from "./entity-icon";
 import { formatTimeAgo } from "../format-time-ago";
+import { useWalletStore } from "./wallet-store";
+
+function shortenAddress(address: string): string {
+  return address.length > 13 ? `${address.slice(0, 7)}…${address.slice(-4)}` : address;
+}
 
 // How many recent Trail steps show in the quick menu — anything older is
 // still there, just behind "Open full History" (history-window.tsx).
@@ -23,6 +28,7 @@ function formatClock(date: Date): string {
 
 export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const sdk = useSdk();
+  const account = useWalletStore((s) => s.account);
   const trailVersion = useShellStore((s) => s.trailVersion);
   const { data, state } = useNetworkStatus();
   const online = useOnlineStatus();
@@ -127,10 +133,8 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
           <dd>{data ? `${data.latencyMs}ms` : "—"}</dd>
           <dt>Account</dt>
           <dd>
-            {/* Always "Guest" today — no wallet connection yet — but the
-                entry point already opens where that would live. */}
             <button type="button" className="island-menu__inline-link" onClick={() => openSettings("user")}>
-              Guest
+              {account ? shortenAddress(account.address) : "Guest"}
             </button>
           </dd>
         </dl>
