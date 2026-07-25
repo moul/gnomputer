@@ -703,6 +703,29 @@ main {
   }
 }
 
+.realm-browser__refreshed-badge {
+  color: var(--accent);
+  font-weight: 600;
+  animation: realm-browser-refreshed-fade 1.5s ease-out forwards;
+}
+
+@keyframes realm-browser-refreshed-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* Every lens (Render/Source/.../Raw) plus "Open on gnoweb" now lives ONLY
    here — the footer — collapsing overflow into a "•••" menu (lens-tab-bar.tsx)
    instead of a separate always-visible tab row above the lens body. */

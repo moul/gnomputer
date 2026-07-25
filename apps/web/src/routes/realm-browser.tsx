@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
@@ -287,6 +287,27 @@ function RealmStatusBar({
   const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
   const gnowebUrl = sdk.networks.getActive().gnowebUrl;
 
+  // A manual refresh often re-fetches identical content (e.g. a realm whose
+  // Render() output hasn't changed since the last load) — with only the
+  // spinner and a "Updated just now" label that read the same before and
+  // after, clicking refresh looked like it did nothing at all. This flag
+  // gives an unmistakable, un-missable confirmation that the click was
+  // received and the round trip actually completed.
+  const [justRefreshed, setJustRefreshed] = useState(false);
+  const wasFetchingRef = useRef(false);
+  const manualRefreshRef = useRef(false);
+  useEffect(() => {
+    const isFetching = renderStats?.isFetching ?? false;
+    const wasFetching = wasFetchingRef.current;
+    wasFetchingRef.current = isFetching;
+    if (wasFetching && !isFetching && manualRefreshRef.current) {
+      manualRefreshRef.current = false;
+      setJustRefreshed(true);
+      const timer = setTimeout(() => setJustRefreshed(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [renderStats?.isFetching]);
+
   const items: LensTabBarItem[] = [
     ...LENS_TABS.map((lensTab) => ({
       key: lensTab.id,
@@ -312,7 +333,11 @@ function RealmStatusBar({
         {tab.lens === "render" && renderStats && (
           <>
             <span>Loaded in {renderStats.loadMs}ms</span>
-            <Freshness dataUpdatedAt={renderStats.updatedAt} />
+            {justRefreshed ? (
+              <span className="realm-browser__refreshed-badge">✓ Refreshed</span>
+            ) : (
+              <Freshness dataUpdatedAt={renderStats.updatedAt} />
+            )}
             <button
               type="button"
               className="realm-browser__refresh"
@@ -320,7 +345,10 @@ function RealmStatusBar({
               disabled={renderStats.isFetching}
               aria-label="Refresh"
               title="Refresh"
-              onClick={renderStats.refetch}
+              onClick={() => {
+                manualRefreshRef.current = true;
+                renderStats.refetch();
+              }}
             >
               ↻
             </button>
