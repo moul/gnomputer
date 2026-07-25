@@ -15,9 +15,9 @@ describe("DEFAULT_NETWORKS", () => {
     });
   });
 
-  it("still includes test13, betanet, and gnodev as selectable networks", () => {
+  it("still includes betanet and gnodev as selectable networks", () => {
     expect(DEFAULT_NETWORKS.map((n) => n.id)).toEqual(
-      expect.arrayContaining(["topaz", "test13", "betanet", "gnodev"])
+      expect.arrayContaining(["topaz", "betanet", "gnodev"])
     );
   });
 

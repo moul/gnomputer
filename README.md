@@ -21,8 +21,8 @@ read-only PWA with a windowed desktop interface. See:
 
 ### What's in the desktop
 
-Everything below is real, live data from Gno testnets (default: Topaz; also Test13,
-betanet, and a local `gnodev` option) — no mocked or fabricated content in the running
+Everything below is real, live data from Gno testnets (default: Topaz; also betanet,
+and a local `gnodev` option) — no mocked or fabricated content in the running
 app:
 
 - **Browser** — gno.land's own official pages plus any realm's rendered output, with
