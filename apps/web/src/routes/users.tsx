@@ -5,6 +5,8 @@ import { useShellStore } from "../store";
 import { openRef } from "../shell/open-ref";
 import { useResolveUser } from "../use-resolve-user";
 import { ErrorState } from "../shell/error-state";
+import { useWalletStore } from "../shell/wallet-store";
+import { registerUsername, isValidUsername, USERNAME_FORMAT_HINT } from "../shell/register-username";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 // How many recently-looked-up addresses show — mirrors island-clock.tsx's
@@ -55,6 +57,71 @@ function useRecentlyLookedUpAddresses(): string[] {
   return addresses;
 }
 
+/** Shown only once connected (useWalletStore) — checks whether the
+ * connected address already has a username via the same ResolveAny lookup
+ * the search form uses, and offers to register one if not, via the real
+ * Register() call on gno.land/r/gnoland/users/v1 (see register-username.ts). */
+function RegisterUsernameSection({ address }: { address: string }) {
+  const account = useWalletStore((s) => s.account);
+  const { data: result, isPending, refetch } = useResolveUser(address);
+  const [draft, setDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (isPending || !account) return null;
+  if (result?.found && result.username) {
+    return (
+      <p className="state-line">
+        Registered as <strong>{result.username}</strong>.
+      </p>
+    );
+  }
+
+  const trimmed = draft.trim();
+  const valid = trimmed !== "" && isValidUsername(trimmed);
+
+  return (
+    <div className="users-app__register">
+      <p className="state-line">Your connected account has no registered username yet.</p>
+      <form
+        className="open-package-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!valid || submitting) return;
+          setSubmitting(true);
+          setError(null);
+          registerUsername(account, trimmed)
+            .then(() => {
+              setDraft("");
+              void refetch();
+            })
+            .catch((err: unknown) => setError(err instanceof Error ? err.message : "Registration failed."))
+            .finally(() => setSubmitting(false));
+        }}
+      >
+        <label>
+          Register a username (1 GNOT)
+          <input
+            type="text"
+            autoComplete="off"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="abc123"
+          />
+        </label>
+        <button type="submit" disabled={!valid || submitting}>
+          {submitting ? "Registering…" : "Register"}
+        </button>
+      </form>
+      {draft && !valid && <p className="state-line">{USERNAME_FORMAT_HINT}</p>}
+      {error && <p className="settings-user-identity__error">{error}</p>}
+    </div>
+  );
+}
+
 // gno.land/r/sys/users has no function that enumerates registered users —
 // only per-user lookups (ResolveAny/ResolveAddress/ResolveName) and the two
 // aggregate counts its own Render() shows. A real directory listing would
@@ -62,6 +129,7 @@ function useRecentlyLookedUpAddresses(): string[] {
 // is a lookup tool plus those same two counts, not a browsable list.
 export function Users() {
   const sdk = useSdk();
+  const account = useWalletStore((s) => s.account);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState<string | null>(null);
   const recentAddresses = useRecentlyLookedUpAddresses();
@@ -105,6 +173,7 @@ export function Users() {
             : `${stats?.addresses ?? "?"} addresses · ${stats?.names ?? "?"} names registered on ${USERS_PACKAGE}.`}
         </p>
       )}
+      {account && <RegisterUsernameSection address={account.address} />}
       <form
         className="open-package-form"
         onSubmit={(e) => {
