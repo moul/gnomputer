@@ -889,20 +889,6 @@ main {
   margin: calc(-1 * var(--space-4));
 }
 
-.realm-graph__embed-toolbar {
-  flex: 0 0 auto;
-  padding: var(--space-2) var(--space-3);
-  background: var(--bg-inset);
-  border-bottom: 1px solid var(--border);
-}
-
-.realm-graph__embed-frame {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  border: none;
-}
-
 .realm-docs h3,
 .realm-actions h3,
 .realm-graph h3 {
@@ -1474,11 +1460,37 @@ main {
   color: var(--text-dim);
 }
 
-.embed-window__frame {
+.embed-window__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.embed-window__controls button {
+  padding: 2px var(--space-2);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.embed-window__zoom-level {
+  min-width: 34px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+.embed-window__viewport {
   flex: 1;
   min-height: 0;
-  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.embed-window__frame {
   border: none;
+  transform-origin: top left;
 }
 
 .desktop-shell {

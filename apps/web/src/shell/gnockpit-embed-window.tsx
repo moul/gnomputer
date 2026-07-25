@@ -1,5 +1,6 @@
 import { Window } from "./window";
 import { useGnockpitEmbedWindowStore } from "./gnockpit-embed-window-store";
+import { EmbedFrame } from "./embed-frame";
 
 // The real, external Gnockpit dashboard (network.gnockpitUrl) in its own
 // dedicated window — distinct from the native "Gnockpit" app (gnockpit.tsx,
@@ -19,21 +20,7 @@ export function GnockpitEmbedWindow() {
       defaultGeometry={{ x: 120, y: 120, width: 720, height: 560 }}
     >
       <div className="embed-window">
-        {url ? (
-          <>
-            <p className="embed-window__bar">
-              <span className="embed-window__url">{url}</span>
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                Open externally ↗
-              </a>
-            </p>
-            {/* No sandbox restriction — gnockpitUrl is a curated, trusted
-                URL from network-config.ts, not arbitrary input. */}
-            <iframe className="embed-window__frame" src={url} title="Gnockpit" />
-          </>
-        ) : (
-          <p className="state-line">Nothing to show yet.</p>
-        )}
+        <EmbedFrame url={url} title="Gnockpit" />
       </div>
     </Window>
   );
