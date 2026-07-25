@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gnowebRealmUrl, gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
+import { gnowebRealmUrl, gnowebAddressUrl, mygnoscanAddressUrl, gnowebTxLink } from "./gnoweb-links";
 
 describe("gnowebRealmUrl", () => {
   it("strips the domain segment and joins with the gnoweb base URL", () => {
@@ -27,6 +27,23 @@ describe("mygnoscanAddressUrl", () => {
   it("builds an /address/<address> explorer URL", () => {
     expect(mygnoscanAddressUrl("https://explorer.topaz.testnets.gno.land", "g1abc")).toBe(
       "https://explorer.topaz.testnets.gno.land/address/g1abc"
+    );
+  });
+});
+
+describe("gnowebTxLink", () => {
+  it("builds a $help&func=<name> TxLink with no args", () => {
+    expect(gnowebTxLink("https://topaz.testnets.gno.land", "gno.land/r/gnoland/blog", "AddComment")).toBe(
+      "https://topaz.testnets.gno.land/r/gnoland/blog$help&func=AddComment"
+    );
+  });
+
+  it("appends named args by their real Gno parameter name, not positionally", () => {
+    const url = gnowebTxLink("https://topaz.testnets.gno.land", "gno.land/r/gnoland/blog", "AdminAddModerator", {
+      addr: "g1abcdefg",
+    });
+    expect(url).toBe(
+      "https://topaz.testnets.gno.land/r/gnoland/blog$help&func=AdminAddModerator&addr=g1abcdefg"
     );
   });
 });

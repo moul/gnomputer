@@ -17,6 +17,25 @@ export function gnowebAddressUrl(gnowebUrl: string, address: string): string {
   return `${gnowebUrl}/u/${address}`;
 }
 
+// GnoConnect's "TxLink" convention (docs.gno.land/resources/gnoconnect) —
+// $help selects the Actions tab's function-call form, &func=<Name> jumps
+// straight to that function (confirmed live: the page's own function list
+// narrows to just the one named), and any further &<param>=<value> pairs
+// pre-fill that function's inputs by their real Gno parameter name (NOT
+// positional arg1/arg2 — confirmed live: arg1= is silently ignored, but a
+// param named after the function's actual argument, e.g. &addr=g1..., does
+// populate it, verified by reading the resulting gnokey command's -args).
+export function gnowebTxLink(
+  gnowebUrl: string,
+  packagePath: string,
+  func: string,
+  args: Record<string, string> = {},
+): string {
+  const pathAfterDomain = packagePath.replace(/^[^/]+\//, "");
+  const params = new URLSearchParams({ func, ...args });
+  return `${gnowebUrl}/${pathAfterDomain}$help&${params.toString()}`;
+}
+
 // mygnoscan's address-page convention — confirmed live against the deployed
 // topaz instance (network-config.ts's explorerUrl).
 export function mygnoscanAddressUrl(explorerUrl: string, address: string): string {
