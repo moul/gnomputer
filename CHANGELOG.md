@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-07-25
 
+- Fixed: Resources → Docs was slow to open — it fetched gnolang/gno's
+  entire recursive git tree (~9,600 entries, 2.9MB) just to keep the 73
+  under docs/. Now fetches only docs/'s own subtree (~21KB).
 - Event Explorer now backfills real recent chain-wide events from the
   indexer immediately on open (networks with one configured), instead of
   starting blank until the next live block happens to carry one — the same

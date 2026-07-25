@@ -7,7 +7,7 @@ import { useResourcesStore, type ResourcesTab } from "../shell/resources-store";
 import { useStorePersistence } from "../shell/use-store-persistence";
 import { SHORTCUTS } from "../shell/shortcuts-help";
 
-const REPO_TREE_API = "https://api.github.com/repos/gnolang/gno/git/trees/master?recursive=1";
+const REPO_ROOT_TREE_API = "https://api.github.com/repos/gnolang/gno/git/trees/master";
 const REPO_RAW_BASE = "https://raw.githubusercontent.com/gnolang/gno/master";
 const AWESOME_GNO_RAW_URL = "https://raw.githubusercontent.com/gnolang/awesome-gno/main/README.md";
 const AWESOME_GNO_URL = "https://github.com/gnolang/awesome-gno";
@@ -62,9 +62,13 @@ export function Resources() {
   );
 }
 
-// The whole docs/ folder, enumerated live via GitHub's recursive git tree
-// API (confirmed CORS-enabled) rather than a hand-picked subset — a real
-// directory listing, not a guess at which files matter.
+// The whole docs/ folder, enumerated live via GitHub's git tree API
+// (confirmed CORS-enabled) rather than a hand-picked subset — a real
+// directory listing, not a guess at which files matter. Two requests, not
+// one: the root tree (non-recursive, ~9,600 entries across the WHOLE
+// monorepo, 2.9MB) only to find docs/'s own tree sha, then that subtree
+// recursively (73 entries, ~21KB) — fetching the whole repo recursively
+// just to keep 73 of its 9,600 entries was the real reason this was slow.
 function DocsTab() {
   const selected = useResourcesStore((s) => s.selectedDoc);
   const setSelected = useResourcesStore((s) => s.setSelectedDoc);
@@ -74,12 +78,20 @@ function DocsTab() {
     isPending: treePending,
     refetch: refetchTree,
   } = useQuery({
-    queryKey: ["repo-tree", REPO_TREE_API],
+    queryKey: ["repo-tree", REPO_ROOT_TREE_API],
     queryFn: async () => {
-      const res = await fetch(REPO_TREE_API);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const body = (await res.json()) as { tree: { path: string; type: string }[] };
-      const paths = body.tree.filter((t) => t.type === "blob" && t.path.startsWith("docs/")).map((t) => t.path);
+      const rootRes = await fetch(REPO_ROOT_TREE_API);
+      if (!rootRes.ok) throw new Error(`${rootRes.status} ${rootRes.statusText}`);
+      const rootBody = (await rootRes.json()) as { tree: { path: string; type: string; sha: string }[] };
+      const docsEntry = rootBody.tree.find((t) => t.path === "docs" && t.type === "tree");
+      if (!docsEntry) throw new Error("docs/ not found in gnolang/gno's root tree");
+
+      const docsRes = await fetch(
+        `https://api.github.com/repos/gnolang/gno/git/trees/${docsEntry.sha}?recursive=1`
+      );
+      if (!docsRes.ok) throw new Error(`${docsRes.status} ${docsRes.statusText}`);
+      const docsBody = (await docsRes.json()) as { tree: { path: string; type: string }[] };
+      const paths = docsBody.tree.filter((t) => t.type === "blob").map((t) => `docs/${t.path}`);
       return buildDocTree(paths, "docs/");
     },
   });
