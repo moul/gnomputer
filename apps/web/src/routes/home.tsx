@@ -5,6 +5,7 @@ import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
 import { EventExplorer } from "./event-explorer";
+import { ChainStats } from "./chain-stats";
 import { Gnockpit } from "./gnockpit";
 import { Resources } from "./resources";
 import { Editor } from "./editor";
@@ -138,6 +139,15 @@ export function Home() {
             defaultGeometry={{ x: 120, y: 100, width: 600, height: 460 }}
           >
             <EventExplorer />
+          </Window>
+          <Window
+            id="chain-stats"
+            title="Chain Stats"
+            accent="green"
+            startClosed
+            defaultGeometry={{ x: 140, y: 110, width: 480, height: 520 }}
+          >
+            <ChainStats />
           </Window>
           <Window
             id="gnockpit"

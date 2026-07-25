@@ -44,6 +44,7 @@ export const APP_REGISTRY: AppDescriptor[] = [
   { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false, group: "chain" },
   { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false, group: "chain" },
   { id: "event-explorer", label: "Event Explorer", icon: "🔔", supportsMultiWindow: false, group: "chain" },
+  { id: "chain-stats", label: "Chain Stats", icon: "⛽", supportsMultiWindow: false, group: "chain" },
   { id: "gnockpit", label: "Gnockpit", icon: "📊", supportsMultiWindow: false, group: "chain" },
   { id: "settings", label: "Settings", icon: "⚙️", supportsMultiWindow: false },
   // Reachable via the clock's History menu (island-clock.tsx) instead of its
