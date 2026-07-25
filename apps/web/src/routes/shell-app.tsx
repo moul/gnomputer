@@ -61,6 +61,17 @@ export function formatFuncSignature(fn: FuncSignature): string {
   return `${fn.FuncName}(${paramList})${resultList}${crossing ? " [crossing]" : ""}`;
 }
 
+const HELP_TEXT = [
+  "cd <packagePath>   Set the current package",
+  "ls, dir            List files in the current package (vm/qfile)",
+  "funcs              List exported function signatures (vm/qfuncs)",
+  "pwd                Show the current package path",
+  "help, ?            Show this help",
+  '<expression>       Evaluate a Gno expression against the current package (e.g. Render(""))',
+  "",
+  "↑ / ↓ recall previous commands",
+].join("\n");
+
 export function ShellApp() {
   const sdk = useSdk();
   const [pkg, setPkg] = useState("");
@@ -82,6 +93,18 @@ export function ShellApp() {
     const prompt = pkg ? `${pkg}> ` : "$ ";
     setCommandHistory((prev) => [...prev, trimmed]);
     setHistoryIndex(null);
+
+    if (trimmed === "help" || trimmed === "?") {
+      setHistory((prev) => [...prev, { prompt, input: trimmed, output: HELP_TEXT }]);
+      setDraft("");
+      return;
+    }
+
+    if (trimmed === "pwd") {
+      setHistory((prev) => [...prev, { prompt, input: trimmed, output: pkg || "(no package set)" }]);
+      setDraft("");
+      return;
+    }
 
     const cdMatch = /^cd\s+(\S+)$/.exec(trimmed);
     if (cdMatch) {
@@ -105,7 +128,9 @@ export function ShellApp() {
       const output =
         trimmed === "funcs"
           ? await listFuncs(pkg)
-          : (await sdk.rpc.evalExpression(pkg, trimmed, new Date().toISOString())).data;
+          : trimmed === "ls" || trimmed === "dir"
+            ? await listFiles(pkg)
+            : (await sdk.rpc.evalExpression(pkg, trimmed, new Date().toISOString())).data;
       setHistory((prev) => [...prev, { prompt, input: trimmed, output }]);
     } catch (err) {
       setHistory((prev) => [
@@ -125,6 +150,15 @@ export function ShellApp() {
     return signatures.map(formatFuncSignature).join("\n");
   }
 
+  async function listFiles(packagePath: string): Promise<string> {
+    const env = await sdk.rpc.queryFile(packagePath, new Date().toISOString());
+    const files = env.data
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return files.length === 0 ? "(no files found)" : files.join("\n");
+  }
+
   function recall(direction: -1 | 1) {
     if (commandHistory.length === 0) return;
     setHistoryIndex((prev) => {
@@ -140,8 +174,8 @@ export function ShellApp() {
       <div className="shell-app__scrollback" ref={scrollRef}>
         <p className="shell-app__hint">
           A general vm/qeval REPL — <code>cd &lt;packagePath&gt;</code> to set the current package,
-          then evaluate any Gno expression against it (e.g. <code>Render("")</code>), or run{" "}
-          <code>funcs</code> to list its exported functions.
+          then evaluate any Gno expression against it (e.g. <code>Render("")</code>). Run{" "}
+          <code>help</code> for the full command list.
         </p>
         {history.map((entry, i) => (
           <div key={i} className="shell-app__entry">

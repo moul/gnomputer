@@ -1,10 +1,11 @@
 import { useEffect, useRef } from "react";
-import { EditorView } from "@codemirror/view";
-import { EditorState, type Extension } from "@codemirror/state";
+import { Decoration, EditorView } from "@codemirror/view";
+import { EditorState, RangeSetBuilder, type Extension } from "@codemirror/state";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { basicSetup, minimalSetup } from "codemirror";
 import { go } from "@codemirror/lang-go";
 import { tags } from "@lezer/highlight";
+import { findImportPaths } from "./find-import-paths";
 
 // Colors reference the app's own theme variables (theme.css) rather than a
 // baked-in palette, so the editor automatically matches whichever of the
@@ -55,12 +56,47 @@ function makeTheme(fill: boolean) {
   });
 }
 
+function findImportPathDecorations(doc: string) {
+  const builder = new RangeSetBuilder<Decoration>();
+  for (const { path, from, to } of findImportPaths(doc)) {
+    builder.add(
+      from,
+      to,
+      Decoration.mark({ class: "cm-gno-import-link", attributes: { "data-import-path": path } })
+    );
+  }
+  return builder.finish();
+}
+
+/** Makes every "gno.land/r/..." or "gno.land/p/..." import path inside an
+ * import statement a clickable link — computed once against the initial
+ * doc (fine for a read-only view, which never changes after mount). */
+function gnoImportLinkExtension(doc: string, onImportClick: (packagePath: string) => void): Extension {
+  return [
+    EditorView.decorations.of(findImportPathDecorations(doc)),
+    EditorView.domEventHandlers({
+      click(event) {
+        const path = (event.target as HTMLElement | null)
+          ?.closest(".cm-gno-import-link")
+          ?.getAttribute("data-import-path");
+        if (!path) return false;
+        onImportClick(path);
+        return true;
+      },
+    }),
+    EditorView.theme({
+      ".cm-gno-import-link": { textDecoration: "underline", cursor: "pointer", color: "var(--accent)" },
+    }),
+  ];
+}
+
 export function CodeEditor({
   value,
   onChange,
   readOnly = false,
   language = "go",
   fill = true,
+  onImportClick,
 }: {
   value: string;
   onChange?: (value: string) => void;
@@ -77,6 +113,9 @@ export function CodeEditor({
    * (a realm's Render() output, a docs page) rather than filling a
    * dedicated pane (the Source lens, the Editor app). */
   fill?: boolean;
+  /** When provided (Source lens only, so far), makes import paths clickable
+   * — called with the raw package path (e.g. "gno.land/p/demo/avl"). */
+  onImportClick?: (packagePath: string) => void;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -95,6 +134,7 @@ export function CodeEditor({
       makeTheme(fill),
       EditorView.editable.of(!readOnly),
       EditorView.lineWrapping,
+      ...(language === "go" && onImportClick ? [gnoImportLinkExtension(value, onImportClick)] : []),
     ];
     if (!readOnly) {
       extensions.push(

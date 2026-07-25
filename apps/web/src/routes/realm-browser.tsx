@@ -253,7 +253,7 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
             onStats={setRenderStats}
           />
         ) : tab.lens === "source" ? (
-          <SourceExplorer packagePath={tab.packagePath} />
+          <SourceExplorer packagePath={tab.packagePath} windowId={windowId} />
         ) : tab.lens === "docs" ? (
           <RealmDocs packagePath={tab.packagePath} />
         ) : tab.lens === "state-explorer" ? (

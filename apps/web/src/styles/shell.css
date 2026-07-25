@@ -1212,7 +1212,7 @@ main {
 }
 
 .shell-app__input-line {
-  flex: 1;
+  flex: 0 0 auto;
   align-items: center;
 }
 
