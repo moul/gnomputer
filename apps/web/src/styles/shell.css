@@ -2834,24 +2834,57 @@ main {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(51, 255, 51, 0) 0px,
-    rgba(51, 255, 51, 0) 2px,
-    rgba(51, 255, 51, 0.04) 3px
-  );
-  animation: cypherpunk-flicker 6s linear infinite;
+  /* Two layers: the original green scanline texture (static), plus a
+     magenta horizon grid drifting slowly downward — a synthwave floor
+     scrolling toward the viewer, without an actual 3D transform (which
+     would also skew .desktop's absolutely-positioned window children). */
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(51, 255, 51, 0) 0px,
+      rgba(51, 255, 51, 0) 2px,
+      rgba(51, 255, 51, 0.04) 3px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 51, 204, 0.14) 0px,
+      rgba(255, 51, 204, 0.14) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+  background-position:
+    0 0,
+    0 0;
+  animation:
+    cypherpunk-flicker 6s linear infinite,
+    cypherpunk-grid-drift 3s linear infinite;
 }
 
-/* A CRT vignette darkening the desktop's corners, separate from the
-   scanline layer so the two textures can animate independently. */
+/* A CRT vignette darkening the desktop's corners, plus a synthwave "sun"
+   glow low on the horizon — separate from the scanline/grid layer so the
+   three textures can animate independently. */
 :root[data-theme="ascii-cypherpunk"] .desktop::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.35) 100%);
+  background:
+    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(255, 51, 204, 0.3) 0%, rgba(255, 51, 204, 0) 70%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+@keyframes cypherpunk-grid-drift {
+  from {
+    background-position:
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 0,
+      0 40px;
+  }
 }
 
 @keyframes cypherpunk-flicker {
