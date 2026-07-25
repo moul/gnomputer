@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { countPackagesByCreator, listRealms, realmHistory } from "./indexer";
+import { countPackagesByCreator, listRealms, realmHistory, chainActivityStats } from "./indexer";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
@@ -223,5 +223,87 @@ describe("realmHistory", () => {
     await expect(realmHistory({ id: "gnodev" }, "gno.land/r/demo/a", NOW)).rejects.toThrow(
       "gnodev has no indexer configured"
     );
+  });
+});
+
+describe("chainActivityStats", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("aggregates totals, per-realm gas, top gas transactions, and top callers/deployers", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 100,
+          index: 0,
+          gas_used: 500,
+          gas_wanted: 600,
+          gas_fee: { amount: 10 },
+          messages: [
+            { typeUrl: "exec", value: { pkg_path: "gno.land/r/demo/a", caller: "g1abc" } },
+            { typeUrl: "exec", value: { pkg_path: "gno.land/r/demo/b", caller: "g1abc" } },
+          ],
+        },
+        {
+          block_height: 101,
+          index: 0,
+          gas_used: 1000,
+          gas_wanted: 1200,
+          gas_fee: { amount: 20 },
+          messages: [{ typeUrl: "add_package", value: { creator: "g1xyz", package: { path: "gno.land/r/demo/c" } } }],
+        },
+        {
+          block_height: 102,
+          index: 0,
+          gas_used: 50,
+          gas_wanted: 60,
+          gas_fee: { amount: 1 },
+          messages: [{ typeUrl: "run", value: { caller: "g1xyz" } }],
+        },
+        {
+          block_height: 103,
+          index: 0,
+          gas_used: 30,
+          gas_wanted: 40,
+          gas_fee: { amount: 1 },
+          messages: [{ typeUrl: "send", value: null }],
+        },
+      ],
+    });
+
+    const result = await chainActivityStats(NETWORK, NOW);
+
+    expect(result.data.totalTxs).toBe(4);
+    expect(result.data.totalCalls).toBe(2);
+    expect(result.data.totalDeploys).toBe(1);
+    expect(result.data.totalRuns).toBe(1);
+    expect(result.data.totalSends).toBe(1);
+    expect(result.data.totalGasUsed).toBe(500 + 1000 + 50 + 30);
+    expect(result.data.totalFeeUgnot).toBe(10 + 20 + 1 + 1);
+    // The two-message tx's full gas (500) counts toward BOTH realms it touched.
+    expect(result.data.topRealmsByGas).toEqual(
+      expect.arrayContaining([
+        { packagePath: "gno.land/r/demo/a", gasUsed: 500, txCount: 1 },
+        { packagePath: "gno.land/r/demo/b", gasUsed: 500, txCount: 1 },
+        { packagePath: "gno.land/r/demo/c", gasUsed: 1000, txCount: 1 },
+      ])
+    );
+    expect(result.data.topTxsByGas[0]).toMatchObject({ height: 101, gasUsed: 1000 });
+    expect(result.data.topCallers).toEqual([{ address: "g1abc", count: 2 }]);
+    expect(result.data.topDeployers).toEqual([{ address: "g1xyz", count: 1 }]);
+  });
+
+  it("returns zeroed stats when getTransactions is null", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    const result = await chainActivityStats(NETWORK, NOW);
+    expect(result.data.totalTxs).toBe(0);
+    expect(result.data.topRealmsByGas).toEqual([]);
+    expect(result.data.topCallers).toEqual([]);
+  });
+
+  it("throws when the network has no indexer configured", async () => {
+    await expect(chainActivityStats({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
   });
 });

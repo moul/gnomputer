@@ -4,6 +4,31 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-07-25
+
+- Topaz's indexer now allows real browser access — Browser home's "Recently
+  deployed" is a real, complete listing instead of only what's been seen
+  since the window opened; the History lens shows real historical events
+  for a realm, not just live ones from now on; the Accounts window's
+  "Packages deployed" count now actually resolves instead of showing "Not
+  available".
+- New Chain Stats app (⛽): gas/fee totals, top realms and transactions by
+  gas, top callers and deployers — aggregated from the whole chain's
+  transaction history.
+- Wallet connect: Settings → User now shows two explicit paths instead of
+  one button whose label just changed — Adena (Connect / Install Adena)
+  and gnokey (CLI or mobile): paste your address for a real, read-only
+  connected identity with a QR code. Registering a username with a
+  gnokey-connected address gets a real TxLink + QR instead of a signing
+  form Gnomputer can't submit on your behalf.
+- Network Monitor, the Address window, and Block Explorer's "Open in
+  Explorer" + separate "Embed here" toggle collapsed into one "Open the
+  explorer" button; the Discover icon's hover menu now links there too.
+- Fixed: the Realm Browser's refresh button was already working (a real
+  network round trip fires on click) but gave no visible feedback when the
+  refetched content was unchanged — a "✓ Refreshed" confirmation now
+  appears every time.
+
 ## 2026-07-24
 
 - Added a "new version available" banner that properly waits for the new

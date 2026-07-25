@@ -1323,6 +1323,57 @@ main {
   padding: 2px var(--space-2);
 }
 
+.chain-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow-y: auto;
+}
+
+.chain-stats__section h3 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: 13px;
+}
+
+.chain-stats__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.chain-stats__list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.chain-stats__link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chain-stats__link:hover {
+  text-decoration: underline;
+}
+
+.chain-stats__value {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 .embed-window {
   display: flex;
   flex-direction: column;

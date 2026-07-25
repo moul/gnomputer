@@ -43,6 +43,57 @@ interface RealmHistoryTx {
   response: { events: (GnoEventNode | null)[] } | null;
 }
 
+export interface RealmGasStat {
+  packagePath: string;
+  gasUsed: number;
+  txCount: number;
+}
+
+export interface TopGasTx {
+  height: number;
+  index: number;
+  gasUsed: number;
+  gasWanted: number;
+  feeUgnot: number;
+  packagePaths: string[];
+}
+
+export interface AddressActivityStat {
+  address: string;
+  count: number;
+}
+
+export interface ChainActivityStats {
+  totalTxs: number;
+  totalCalls: number;
+  totalDeploys: number;
+  totalRuns: number;
+  totalSends: number;
+  totalGasUsed: number;
+  totalGasWanted: number;
+  totalFeeUgnot: number;
+  topRealmsByGas: RealmGasStat[];
+  topTxsByGas: TopGasTx[];
+  topCallers: AddressActivityStat[];
+  topDeployers: AddressActivityStat[];
+}
+
+interface ActivityMessageValue {
+  pkg_path?: string;
+  caller?: string;
+  creator?: string;
+  package?: { path: string };
+}
+
+interface ActivityTx {
+  block_height: number;
+  index: number;
+  gas_used: number;
+  gas_wanted: number;
+  gas_fee: { amount: number } | null;
+  messages: { typeUrl: string; value: ActivityMessageValue | null }[];
+}
+
 const LIST_REALMS_QUERY = `{
   getTransactions(where: { success: { eq: true }, messages: { typeUrl: { eq: "add_package" } } }) {
     block_height
@@ -224,5 +275,145 @@ export async function realmHistory(
     fetchedAt,
     freshness: "live",
     schema: "gnomputer.indexer.realm-history.v1",
+  });
+}
+
+// No `where` filter here (beyond success) and no pagination exists on this
+// schema at all — the whole chain's successful-transaction history comes
+// back in one request, capped at 10,000 rows server-side. Confirmed live
+// this comfortably covers Topaz's real current volume (842 txs, ~213KB,
+// well under a second) — mygnoscan's own /api/gas and /api/analytics pages
+// are backed by the same total-volume assumption (they aggregate ALL
+// transactions server-side, not a windowed sample), so this matches that
+// convention rather than inventing a new one.
+//
+// A transaction's gas is attributed to EVERY distinct realm its messages
+// reference (not just the first) — a multi-message tx (e.g. one swap
+// touching three gnoswap realms) counts its full gas toward each one. This
+// double-counts gas across realms in a single tx, which is the same
+// tradeoff mygnoscan's own per-realm gas tally makes (confirmed via its
+// per-realm storage/gas tab attributing a shared tx to multiple realms).
+const CHAIN_ACTIVITY_QUERY = `{
+  getTransactions(where: { success: { eq: true } }, order: { heightAndIndex: DESC }) {
+    block_height
+    index
+    gas_used
+    gas_wanted
+    gas_fee { amount }
+    messages {
+      typeUrl
+      value {
+        ... on MsgCall { pkg_path caller }
+        ... on MsgAddPackage { creator package { path } }
+        ... on MsgRun { caller }
+      }
+    }
+  }
+}`;
+
+const TOP_N = 20;
+
+export async function chainActivityStats(
+  network: { id: string; indexerGraphqlUrl?: string },
+  fetchedAt: string
+): Promise<DataEnvelope<ChainActivityStats>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — chain activity stats need one.`);
+  }
+
+  const data = await queryIndexer<{ getTransactions: ActivityTx[] | null }>(
+    network.indexerGraphqlUrl,
+    CHAIN_ACTIVITY_QUERY
+  );
+  const txs = data.getTransactions ?? [];
+
+  let totalCalls = 0;
+  let totalDeploys = 0;
+  let totalRuns = 0;
+  let totalSends = 0;
+  let totalGasUsed = 0;
+  let totalGasWanted = 0;
+  let totalFeeUgnot = 0;
+  const gasByRealm = new Map<string, { gasUsed: number; txCount: number }>();
+  const callsByAddress = new Map<string, number>();
+  const deploysByAddress = new Map<string, number>();
+  const topTxsByGas: TopGasTx[] = [];
+
+  for (const tx of txs) {
+    totalGasUsed += tx.gas_used;
+    totalGasWanted += tx.gas_wanted;
+    totalFeeUgnot += tx.gas_fee?.amount ?? 0;
+
+    const packagePaths = new Set<string>();
+    for (const message of tx.messages) {
+      if (message.typeUrl === "exec") {
+        totalCalls++;
+        if (message.value?.pkg_path) packagePaths.add(message.value.pkg_path);
+        if (message.value?.caller) {
+          callsByAddress.set(message.value.caller, (callsByAddress.get(message.value.caller) ?? 0) + 1);
+        }
+      } else if (message.typeUrl === "add_package") {
+        totalDeploys++;
+        if (message.value?.package?.path) packagePaths.add(message.value.package.path);
+        if (message.value?.creator) {
+          deploysByAddress.set(message.value.creator, (deploysByAddress.get(message.value.creator) ?? 0) + 1);
+        }
+      } else if (message.typeUrl === "run") {
+        totalRuns++;
+      } else if (message.typeUrl === "send") {
+        totalSends++;
+      }
+    }
+
+    for (const path of packagePaths) {
+      const existing = gasByRealm.get(path) ?? { gasUsed: 0, txCount: 0 };
+      existing.gasUsed += tx.gas_used;
+      existing.txCount += 1;
+      gasByRealm.set(path, existing);
+    }
+
+    topTxsByGas.push({
+      height: tx.block_height,
+      index: tx.index,
+      gasUsed: tx.gas_used,
+      gasWanted: tx.gas_wanted,
+      feeUgnot: tx.gas_fee?.amount ?? 0,
+      packagePaths: [...packagePaths],
+    });
+  }
+
+  const stats: ChainActivityStats = {
+    totalTxs: txs.length,
+    totalCalls,
+    totalDeploys,
+    totalRuns,
+    totalSends,
+    totalGasUsed,
+    totalGasWanted,
+    totalFeeUgnot,
+    topRealmsByGas: [...gasByRealm.entries()]
+      .map(([packagePath, stat]) => ({ packagePath, ...stat }))
+      .sort((a, b) => b.gasUsed - a.gasUsed)
+      .slice(0, TOP_N),
+    topTxsByGas: topTxsByGas.sort((a, b) => b.gasUsed - a.gasUsed).slice(0, TOP_N),
+    topCallers: [...callsByAddress.entries()]
+      .map(([address, count]) => ({ address, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, TOP_N),
+    topDeployers: [...deploysByAddress.entries()]
+      .map(([address, count]) => ({ address, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, TOP_N),
+  };
+
+  return wrapEnvelope({
+    ref: { uri: `gno://${network.id}/network/${network.id}`, kind: "network", networkId: network.id },
+    data: stats,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.chain-activity-stats.v1",
   });
 }
