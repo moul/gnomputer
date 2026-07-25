@@ -22,3 +22,9 @@ export function isPhoneViewport(): boolean {
 // to clear it by at least this much. Also mirrored as --island-clearance in
 // theme.css so CSS (which can't import this) stays in sync.
 export const ISLAND_CLEARANCE_PX = 56;
+
+// .window__titlebar's own rendered height (padding + line-height, see
+// shell.css) — window-store.ts's drag/reclamp bounds use this so a
+// window's titlebar can never be dragged (or left behind after a browser
+// resize) past the bottom edge of the viewport, where it'd be ungrabbable.
+export const TITLEBAR_HEIGHT_PX = 36;

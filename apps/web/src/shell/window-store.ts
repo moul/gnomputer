@@ -1,7 +1,15 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 import { desktopBounds, clientToDesktopLocal } from "./desktop-bounds";
-import { ISLAND_CLEARANCE_PX } from "./viewport";
+import { ISLAND_CLEARANCE_PX, TITLEBAR_HEIGHT_PX } from "./viewport";
+
+// However far a window is dragged (or left after the browser itself is
+// resized), at least this fraction of its width must stay on-screen — an
+// "invisible wall" so a window can never be shoved fully off the left/right
+// edge and become unreachable. Paired with the titlebar-height clamp below
+// (vertical) for a real desktop feel: windows can be dragged mostly off
+// any edge, but never so far they can't be dragged back.
+const MIN_VISIBLE_WIDTH_RATIO = 0.2;
 
 export interface WindowGeometry {
   x: number;
@@ -35,6 +43,11 @@ interface WindowManagerState {
   focus: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
   resize: (id: string, width: number, height: number) => void;
+  /** Re-applies clampWindowOrigin to every open, non-maximized window in
+   * place — called when the browser viewport itself is resized, so a
+   * window that was fully in-bounds before doesn't get left stranded off
+   * the new, smaller edge (use-window-viewport-reclamp.ts). */
+  reclampAll: () => void;
   close: (id: string) => void;
   /** Closes every currently-open window at once (overview mode's "close all
    * windows" button) — leaves already-closed windows untouched. */
@@ -60,18 +73,22 @@ const MIN_HEIGHT = 180;
 // window can show up off in a corner.
 const CENTER_JITTER_RATIO = 0.25;
 
-// The island's bottom edge is an invisible wall — nothing (initial
-// placement, drag, resize-driven reflow) may ever put a window's top edge
-// above it, full stop, even if the window is taller than the available
-// desktop height below that line (better to let it run off the bottom,
-// where it's still draggable/scrollable, than hide the titlebar behind the
-// island where it can't be interacted with at all).
+// Two invisible walls, enforced everywhere a window's x/y is set (initial
+// placement, drag, browser-resize reclamp): horizontally, at least
+// MIN_VISIBLE_WIDTH_RATIO of the window's own width must stay on-screen on
+// either axis of overhang; vertically, the top wall is the island's bottom
+// edge (a window's titlebar can never go above/behind it) and the bottom
+// wall is the viewport's own bottom edge minus the titlebar's height, so
+// the titlebar — regardless of how tall the rest of the window is, or
+// whether it runs off the bottom — always stays 100% visible and grabbable.
 function clampWindowOrigin(x: number, y: number, size: { width: number; height: number }): { x: number; y: number } {
   const bounds = desktopBounds();
-  const maxX = Math.max(0, bounds.width - size.width);
-  const maxY = Math.max(ISLAND_CLEARANCE_PX, bounds.height - size.height);
+  const minVisibleWidth = size.width * MIN_VISIBLE_WIDTH_RATIO;
+  const minX = minVisibleWidth - size.width;
+  const maxX = bounds.width - minVisibleWidth;
+  const maxY = Math.max(ISLAND_CLEARANCE_PX, bounds.height - TITLEBAR_HEIGHT_PX);
   return {
-    x: Math.round(Math.min(maxX, Math.max(0, x))),
+    x: Math.round(Math.min(maxX, Math.max(minX, x))),
     y: Math.round(Math.min(maxY, Math.max(ISLAND_CLEARANCE_PX, y))),
   };
 }
@@ -159,8 +176,9 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
   move: (id, x, y) => {
     const win = get().windows[id];
     if (!win || win.maximized) return;
+    const clamped = clampWindowOrigin(x, y, win);
     set((state) => ({
-      windows: { ...state.windows, [id]: { ...win, x: Math.max(0, x), y: Math.max(ISLAND_CLEARANCE_PX, y) } },
+      windows: { ...state.windows, [id]: { ...win, ...clamped } },
     }));
   },
 
@@ -183,6 +201,17 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     const win = get().windows[id];
     if (!win) return;
     set((state) => ({ windows: { ...state.windows, [id]: { ...win, closed: true } } }));
+  },
+
+  reclampAll: () => {
+    set((state) => ({
+      windows: Object.fromEntries(
+        Object.entries(state.windows).map(([id, w]) => {
+          if (w.closed || w.maximized) return [id, w];
+          return [id, { ...w, ...clampWindowOrigin(w.x, w.y, w) }];
+        })
+      ),
+    }));
   },
 
   placeNear: (id, client) => {
