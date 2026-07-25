@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-07-25
 
+- The Browser hover menu's window list now smart-truncates long realm
+  paths (drops "gno.land/", shortens the namespace to its first letter
+  before ever touching the realm's own name) instead of relying on plain
+  CSS ellipsis, and no longer repeats "Browser" in every row — that stays
+  in the menu's own title and each window's real titlebar.
 - The Shell app has a new `funcs` command — real function-signature
   introspection (vm/qfuncs) for the current package, so you don't have to
   already know a function's name/params before evaluating a call against
