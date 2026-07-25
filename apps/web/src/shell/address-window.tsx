@@ -227,22 +227,12 @@ function AddressContent({ address }: { address: string }) {
             </a>
           )}
           {network.explorerUrl && (
-            <>
-              <a
-                className="address-window__gnoweb-link"
-                href={mygnoscanAddressUrl(network.explorerUrl, address)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                See on mygnoscan ↗
-              </a>
-              <button
-                type="button"
-                onClick={() => openEmbed(mygnoscanAddressUrl(network.explorerUrl as string, address), "mygnoscan")}
-              >
-                Embed here
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={() => openEmbed(mygnoscanAddressUrl(network.explorerUrl as string, address), "Explorer")}
+            >
+              Open the explorer
+            </button>
           )}
         </p>
       )}
