@@ -6,7 +6,14 @@ import { openRef } from "../shell/open-ref";
 import { useResolveUser } from "../use-resolve-user";
 import { ErrorState } from "../shell/error-state";
 import { useWalletStore } from "../shell/wallet-store";
-import { registerUsername, isValidUsername, USERNAME_FORMAT_HINT } from "../shell/register-username";
+import {
+  registerUsername,
+  isValidUsername,
+  USERNAME_FORMAT_HINT,
+  USERS_REGISTRY_PACKAGE,
+} from "../shell/register-username";
+import { gnowebTxLink } from "../shell/gnoweb-links";
+import { QrCode } from "../shell/qr-code";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 // How many recently-looked-up addresses show — mirrors island-clock.tsx's
@@ -62,6 +69,7 @@ function useRecentlyLookedUpAddresses(): string[] {
  * the search form uses, and offers to register one if not, via the real
  * Register() call on gno.land/r/gnoland/users/v1 (see register-username.ts). */
 function RegisterUsernameSection({ address }: { address: string }) {
+  const sdk = useSdk();
   const account = useWalletStore((s) => s.account);
   const { data: result, isPending, refetch } = useResolveUser(address);
   const [draft, setDraft] = useState("");
@@ -74,6 +82,36 @@ function RegisterUsernameSection({ address }: { address: string }) {
       <p className="state-line">
         Registered as <strong>{result.username}</strong>.
       </p>
+    );
+  }
+
+  // No Adena (gnokey CLI/mobile connect) means no way to sign a DoContract
+  // call from here — same TxLink + QR fallback Realm Actions uses, pointing
+  // straight at the Register function's real gnoweb form.
+  if (account.source === "manual") {
+    const gnowebUrl = sdk.networks.getActive().gnowebUrl;
+    if (!gnowebUrl) {
+      return (
+        <p className="state-line">
+          No registered username yet, and no gnoweb URL configured on this network to register one
+          via gnokey.
+        </p>
+      );
+    }
+    const txLink = gnowebTxLink(gnowebUrl, USERS_REGISTRY_PACKAGE, "Register");
+    return (
+      <div className="users-app__register">
+        <p className="state-line">
+          No registered username yet. Gnomputer can&rsquo;t sign for a gnokey-connected address —
+          open the real Register form and complete it with gnokey (CLI or mobile):
+        </p>
+        <p className="realm-actions__links">
+          <a className="realm-browser__gnoweb-link" href={txLink} target="_blank" rel="noopener noreferrer">
+            Register on gnoweb ↗
+          </a>
+        </p>
+        <QrCode value={txLink} size={140} />
+      </div>
     );
   }
 

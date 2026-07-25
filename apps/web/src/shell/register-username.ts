@@ -7,7 +7,7 @@ import type { WalletAccount } from "./wallet-store";
 // realm's Register(username) is the real entry point (regex, 1 GNOT
 // payment requirement, and the ResolveAny-visible result all confirmed
 // there too).
-const USERS_REGISTRY_PACKAGE = "gno.land/r/gnoland/users/v1";
+export const USERS_REGISTRY_PACKAGE = "gno.land/r/gnoland/users/v1";
 const REGISTER_PRICE_UGNOT = "1000000ugnot"; // matches registerPrice = 1_000_000 in users.gno
 const USERNAME_PATTERN = /^[a-z]{3}[_a-z0-9]{0,14}[0-9]{3}$/;
 
