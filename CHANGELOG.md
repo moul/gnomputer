@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-25
 
+- Fixed: a package with no Render() function (a pure library, or a realm
+  that never defined one) showed a generic error on its Render tab —
+  Gnomputer now recognizes this and auto-switches to Source, graying out
+  the Render tab instead.
 - The Source lens's import paths (`gno.land/r/...`/`gno.land/p/...`) are now
   clickable, opening that package's own Source view directly.
 - Shell fixes: the prompt no longer floats vertically centered in a mostly-

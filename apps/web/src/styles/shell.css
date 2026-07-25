@@ -782,6 +782,16 @@ main {
   color: var(--window-accent, var(--accent));
 }
 
+.lens-tab-bar__item:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.lens-tab-bar__item:disabled:hover {
+  background: transparent;
+  color: var(--text-faint);
+}
+
 .lens-tab-bar__overflow {
   position: relative;
   flex: 0 0 auto;
