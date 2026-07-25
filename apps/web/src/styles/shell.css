@@ -3267,18 +3267,33 @@ main {
     cypherpunk-grid-drift 3s linear infinite;
 }
 
-/* A CRT vignette darkening the desktop's corners, plus a synthwave "sun"
-   glow low on the horizon — separate from the scanline/grid layer so the
-   three textures can animate independently. */
+/* A CRT vignette darkening the desktop's corners, a synthwave "sun" glow
+   low on the horizon, and a bright scan-band sweeping top-to-bottom on its
+   own slow loop — separate from the scanline/grid layer so all the
+   textures can animate independently. */
 :root[data-theme="ascii-cypherpunk"] .desktop::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background:
+  background-image:
+    linear-gradient(to bottom, rgba(51, 255, 51, 0) 0%, rgba(51, 255, 51, 0.4) 50%, rgba(51, 255, 51, 0) 100%),
     radial-gradient(ellipse 55% 35% at 50% 100%, rgba(255, 51, 204, 0.3) 0%, rgba(255, 51, 204, 0) 70%),
     radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.35) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 100% 8px, auto, auto;
+  background-position: 0 -8px, 0 0, 0 0;
+  animation: cypherpunk-scan-sweep 7s linear infinite;
+}
+
+@keyframes cypherpunk-scan-sweep {
+  from {
+    background-position: 0 -8px, 0 0, 0 0;
+  }
+  to {
+    background-position: 0 calc(100% + 8px), 0 0, 0 0;
+  }
 }
 
 @keyframes cypherpunk-grid-drift {
@@ -3337,6 +3352,37 @@ main {
 :root[data-theme="ascii-cypherpunk"] .island__clock,
 :root[data-theme="ascii-cypherpunk"] .island__icon-dot {
   text-shadow: 0 0 6px currentColor;
+}
+
+/* A brief RGB-split "signal glitch" on the focused window's own title,
+   every ~9s — reinforces the CRT/signal-instability feel established by
+   the scanline/flicker/scan-sweep layers above, without being constant or
+   distracting (only the focused window, only a fraction of a second). */
+:root[data-theme="ascii-cypherpunk"] .window--focused .window__title {
+  animation: cypherpunk-title-glitch 9s linear infinite;
+}
+
+@keyframes cypherpunk-title-glitch {
+  0%,
+  97%,
+  100% {
+    text-shadow: 0 0 6px currentColor;
+  }
+  97.5% {
+    text-shadow:
+      -2px 0 rgba(255, 51, 204, 0.8),
+      2px 0 rgba(51, 255, 51, 0.8);
+  }
+  98.5% {
+    text-shadow: 0 0 6px currentColor;
+  }
+}
+
+/* A phosphor glow on hover, matching the existing focus-visible treatment
+   below — interactive elements should feel "lit" the moment you're about
+   to use them, not only once they're already focused. */
+:root[data-theme="ascii-cypherpunk"] button:hover:not(:disabled) {
+  text-shadow: 0 0 8px currentColor;
 }
 
 /* A terminal-prompt "> " before every window title, with a blinking block
