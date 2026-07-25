@@ -1,6 +1,10 @@
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { Discover } from "./discover";
+import { Users } from "./users";
+import { DiscoverPackages } from "./discover-packages";
+import { TransactionExplorer } from "./transaction-explorer";
+import { DiscoverTokens } from "./discover-tokens";
+import { DiscoverGovernance } from "./discover-governance";
 import { NetworkMonitor } from "./network-monitor";
 import { ValidatorMonitor } from "./validator-monitor";
 import { BlockExplorer } from "./block-explorer";
@@ -22,12 +26,13 @@ import { useWindowViewportReclamp } from "../shell/use-window-viewport-reclamp";
 import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
-  // Bumped to v8 when Users became a Discover tab instead of its own
-  // window ("users" id retired, "discover" added) — bumping the key is
-  // what makes that visible to existing visitors too, since ensureWindow()
+  // Bumped to v9 when Discover's shared-tab window was split into five
+  // fully independent windows ("discover" id retired, "users"/"packages"/
+  // "transactions"/"tokens"/"governance" added) — bumping the key is what
+  // makes that visible to existing visitors too, since ensureWindow()
   // otherwise never touches a window id that's already in a restored
   // layout (saved positions/sizes always win over a new default).
-  useWindowPersistence("window-layout:home:v8");
+  useWindowPersistence("window-layout:home:v9");
   useWindowViewportReclamp();
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
@@ -70,13 +75,49 @@ export function Home() {
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
           </Window>
           <Window
-            id="discover"
-            title="Discover"
+            id="users"
+            title="Users"
             accent="amber"
             startClosed
-            defaultGeometry={{ x: 180, y: 140, width: 640, height: 480 }}
+            defaultGeometry={{ x: 180, y: 140, width: 520, height: 480 }}
           >
-            <Discover />
+            <Users />
+          </Window>
+          <Window
+            id="packages"
+            title="Packages"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 200, y: 150, width: 560, height: 480 }}
+          >
+            <DiscoverPackages />
+          </Window>
+          <Window
+            id="transactions"
+            title="Transactions"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 220, y: 160, width: 720, height: 500 }}
+          >
+            <TransactionExplorer />
+          </Window>
+          <Window
+            id="tokens"
+            title="Tokens"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 240, y: 170, width: 560, height: 480 }}
+          >
+            <DiscoverTokens />
+          </Window>
+          <Window
+            id="governance"
+            title="Governance"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 260, y: 180, width: 600, height: 500 }}
+          >
+            <DiscoverGovernance />
           </Window>
           <Window
             id="resources"

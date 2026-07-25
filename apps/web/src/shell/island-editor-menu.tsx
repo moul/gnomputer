@@ -34,7 +34,7 @@ export function IslandEditorMenu() {
             <li key={script.id}>
               <button type="button" onClick={() => openScript(script.id)}>
                 <span aria-hidden="true">📝</span>
-                {script.name}
+                <span className="island-menu__list-label">{script.name}</span>
               </button>
             </li>
           ))}

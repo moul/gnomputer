@@ -7,7 +7,7 @@ import { IslandSettingsMenu } from "./island-settings-menu";
 import { IslandChainMenu } from "./island-chain-menu";
 import { IslandBrowserMenu } from "./island-browser-menu";
 import { IslandEditorMenu } from "./island-editor-menu";
-import { IslandDiscoverMenu } from "./island-discover-menu";
+import { IslandDiscoverMenu, DISCOVER_WINDOW_IDS } from "./island-discover-menu";
 import { IslandClock } from "./island-clock";
 import { useShellStore } from "../store";
 
@@ -146,7 +146,7 @@ export function IslandBar() {
         🔍
       </button>
       <span className="island__divider" aria-hidden="true" />
-      {ISLAND_ICONS.map((icon) => {
+      {ISLAND_ICONS.flatMap((icon) => {
         const trigger = (
           <button
             type="button"
@@ -162,47 +162,72 @@ export function IslandBar() {
             {isOpen(icon) && <span className="island__icon-dot" aria-hidden="true" />}
           </button>
         );
+        let rendered: JSX.Element;
         if (icon.key === "settings") {
-          return (
+          rendered = (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandSettingsMenu />
             </IslandPopover>
           );
-        }
-        if (icon.key === "chain") {
-          return (
+        } else if (icon.key === "chain") {
+          rendered = (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandChainMenu />
             </IslandPopover>
           );
-        }
-        if (icon.key === "editor") {
-          return (
+        } else if (icon.key === "editor") {
+          rendered = (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandEditorMenu />
             </IslandPopover>
           );
-        }
-        if (icon.key === "discover") {
-          return (
-            <IslandPopover key={icon.key} trigger={trigger}>
-              <IslandDiscoverMenu />
-            </IslandPopover>
-          );
-        }
-        // The Browser icon can have several windows open at once (pop out a
-        // tab) — a click only ever reaches whichever was focused most
-        // recently, so hovering lists every open one (title included) once
-        // there's at least one to show. Zero open windows has nothing to
-        // list, so it stays a plain click-to-open.
-        if (icon.key === "realm" && realmFamilyIds(windows).some((id) => windows[id] && !windows[id]!.closed)) {
-          return (
+        } else if (
+          // The Browser icon can have several windows open at once (pop out
+          // a tab) — a click only ever reaches whichever was focused most
+          // recently, so hovering lists every open one (title included)
+          // once there's at least one to show. Zero open windows has
+          // nothing to list, so it stays a plain click-to-open.
+          icon.key === "realm" &&
+          realmFamilyIds(windows).some((id) => windows[id] && !windows[id]!.closed)
+        ) {
+          rendered = (
             <IslandPopover key={icon.key} trigger={trigger}>
               <IslandBrowserMenu />
             </IslandPopover>
           );
+        } else {
+          rendered = <span key={icon.key}>{trigger}</span>;
         }
-        return <span key={icon.key}>{trigger}</span>;
+
+        // Discover isn't a real app/window of its own (see app-registry.ts)
+        // — it's a hover-only dropdown listing five genuinely independent
+        // apps, with no click behavior, since there's no single underlying
+        // window left to focus-or-open (unlike every other grouped icon
+        // here). Spliced in right after Browser, matching where "discover"
+        // used to sit in the app registry before the split.
+        if (icon.key === "realm") {
+          const discoverOpen = DISCOVER_WINDOW_IDS.some((id) => windows[id] && !windows[id]!.closed);
+          const discoverTrigger = (
+            <div
+              className="island__icon"
+              data-open={discoverOpen}
+              title="Discover"
+              aria-label="Discover"
+              onMouseEnter={() => setHoveredWindowIds(DISCOVER_WINDOW_IDS)}
+              onMouseLeave={() => setHoveredWindowIds([])}
+            >
+              🔭
+              {discoverOpen && <span className="island__icon-dot" aria-hidden="true" />}
+            </div>
+          );
+          return [
+            rendered,
+            <IslandPopover key="discover" trigger={discoverTrigger}>
+              <IslandDiscoverMenu />
+            </IslandPopover>,
+          ];
+        }
+        return [rendered];
       })}
       <IslandClock disabled={overviewOpen} />
     </div>

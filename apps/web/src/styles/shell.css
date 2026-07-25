@@ -165,6 +165,7 @@
   right: 0;
   z-index: 210;
   min-width: 200px;
+  max-width: 280px;
   padding: var(--space-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
@@ -230,12 +231,20 @@
   align-items: center;
   gap: var(--space-2);
   width: 100%;
+  min-width: 0;
   padding: var(--space-1) var(--space-2);
   border: 1px solid transparent;
   background: transparent;
   border-radius: var(--radius-sm);
   font-size: 12px;
   text-align: left;
+}
+
+.island-menu__list-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .island-menu__list button:hover {
@@ -2526,8 +2535,7 @@ main {
 }
 
 .settings-window,
-.resources-window,
-.discover-window {
+.resources-window {
   display: flex;
   flex-direction: column;
   height: 100%;

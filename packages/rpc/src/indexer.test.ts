@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { countPackagesByCreator, listRealms, realmHistory, chainActivityStats, dailyActivity } from "./indexer";
+import {
+  countPackagesByCreator,
+  listRealms,
+  realmHistory,
+  chainActivityStats,
+  dailyActivity,
+  listTransactions,
+} from "./indexer";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
@@ -339,5 +346,97 @@ describe("dailyActivity", () => {
 
   it("throws when the network has no indexer configured", async () => {
     await expect(dailyActivity({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+});
+
+describe("listTransactions", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("maps real fields and dedupes package paths across messages, including both success and failure", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          success: true,
+          gas_used: 500,
+          gas_wanted: 600,
+          gas_fee: { amount: 10 },
+          messages: [
+            { value: { pkg_path: "gno.land/r/demo/a" } },
+            { value: { pkg_path: "gno.land/r/demo/a" } },
+            { value: { package: { path: "gno.land/r/demo/b" } } },
+          ],
+          response: { events: [{ type: "Transfer" }, {}] },
+        },
+        {
+          block_height: 199,
+          index: 0,
+          success: false,
+          gas_used: 100,
+          gas_wanted: 200,
+          gas_fee: { amount: 5 },
+          messages: [{ value: null }],
+          response: null,
+        },
+      ],
+    });
+
+    const result = await listTransactions(NETWORK, NOW);
+
+    expect(result.data).toEqual([
+      {
+        height: 200,
+        txIndex: 0,
+        success: true,
+        gasUsed: 500,
+        gasWanted: 600,
+        feeUgnot: 10,
+        packagePaths: ["gno.land/r/demo/a", "gno.land/r/demo/b"],
+        eventCount: 2,
+      },
+      {
+        height: 199,
+        txIndex: 0,
+        success: false,
+        gasUsed: 100,
+        gasWanted: 200,
+        feeUgnot: 5,
+        packagePaths: [],
+        eventCount: 0,
+      },
+    ]);
+  });
+
+  it("respects the limit parameter", async () => {
+    mockIndexerResponse({
+      getTransactions: Array.from({ length: 5 }, (_, i) => ({
+        block_height: i,
+        index: 0,
+        success: true,
+        gas_used: 1,
+        gas_wanted: 1,
+        gas_fee: { amount: 1 },
+        messages: [],
+        response: { events: [] },
+      })),
+    });
+
+    const result = await listTransactions(NETWORK, NOW, 2);
+
+    expect(result.data).toHaveLength(2);
+  });
+
+  it("returns an empty list when getTransactions is null", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    const result = await listTransactions(NETWORK, NOW);
+    expect(result.data).toEqual([]);
+  });
+
+  it("throws when the network has no indexer configured", async () => {
+    await expect(listTransactions({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
   });
 });
