@@ -32,26 +32,6 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     capabilities: ["network.read", "indexer.read"],
   },
   {
-    id: "test13",
-    name: "Test13 (official testnet)",
-    chainId: "test-13",
-    rpcUrl: "https://rpc.test13.testnets.gno.land",
-    websocketUrl: withWebsocket("https://rpc.test13.testnets.gno.land"),
-    gnowebUrl: "https://test13.testnets.gno.land",
-    gnockpitUrl: "https://gnockpit.test13.testnets.gno.land",
-    environment: "testnet",
-    persistence: "rolling",
-    trust: "official",
-    capabilities: ["network.read"],
-    warnings: [
-      {
-        code: "indexed-history-unavailable",
-        message:
-          "No public transaction indexer is configured for this network yet; recent activity is derived by polling block headers, and transaction contents are not decoded.",
-      },
-    ],
-  },
-  {
     id: "betanet",
     name: "Betanet",
     chainId: "gnoland1",
