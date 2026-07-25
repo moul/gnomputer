@@ -25,9 +25,20 @@ export const DISCOVER_WINDOW_IDS = DISCOVER_ITEMS.map((item) => item.id);
 // the Explorer or Gnockpit windows.
 const FAUCET_HUB_URL = "https://faucet.gno.land";
 
+// gnoscan.io (Onbloc's own hosted explorer — a distinct tool from mygnoscan/
+// "Explorer" above, which is a separate, self-hosted-per-network instance)
+// selects its chain via a ?chainId= query param — confirmed live
+// (https://gnoscan.io/?chainId=topaz-1 returns 200). Opens externally like
+// Faucet, not as a dedicated window, since it's not one this app has any
+// tighter integration with (no per-realm/address deep links into it yet).
+function gnoscanUrl(chainId: string): string {
+  return `https://gnoscan.io/?chainId=${encodeURIComponent(chainId)}`;
+}
+
 export function IslandDiscoverMenu() {
   const sdk = useSdk();
-  const explorerUrl = sdk.networks.getActive().explorerUrl;
+  const network = sdk.networks.getActive();
+  const explorerUrl = network.explorerUrl;
 
   return (
     <div className="island-menu">
@@ -58,6 +69,13 @@ export function IslandDiscoverMenu() {
           🧭 Explorer →
         </button>
       )}
+      <button
+        type="button"
+        className="island-menu__action"
+        onClick={() => window.open(gnoscanUrl(network.chainId), "_blank", "noopener,noreferrer")}
+      >
+        🔎 gnoscan ↗
+      </button>
     </div>
   );
 }

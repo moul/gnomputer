@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-07-25
 
+- The Chain menu's Gnockpit entry now opens the real embedded dashboard
+  directly instead of the native mini-summary page first.
+- Added a gnoscan.io link to the Discover menu (opens externally, with the
+  active network's real chain ID).
+- The Shift+Tab app-switcher overlay now wraps to additional rows instead
+  of scrolling horizontally when many windows are open.
 - Fixed: Governance (and any other Render() output that packs several
   markdown headings/links onto separate lines without blank-line
   separation, like gno.land/r/gov/dao's real output) rendered literal "#"/
