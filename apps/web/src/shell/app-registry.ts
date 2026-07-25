@@ -39,6 +39,7 @@ export const APP_REGISTRY: AppDescriptor[] = [
   { id: "discover", label: "Discover", icon: "🔭", supportsMultiWindow: false },
   { id: "resources", label: "Resources", icon: "📚", supportsMultiWindow: false },
   { id: "editor", label: "Editor", icon: "📝", supportsMultiWindow: false },
+  { id: "shell", label: "Shell", icon: "⌨️", supportsMultiWindow: false },
   { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false, group: "chain" },
   { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false, group: "chain" },
   { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false, group: "chain" },

@@ -8,6 +8,7 @@ import { EventExplorer } from "./event-explorer";
 import { Gnockpit } from "./gnockpit";
 import { Resources } from "./resources";
 import { Editor } from "./editor";
+import { ShellApp } from "./shell-app";
 import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
@@ -92,6 +93,15 @@ export function Home() {
             defaultGeometry={{ x: 260, y: 190, width: 720, height: 540 }}
           >
             <Editor />
+          </Window>
+          <Window
+            id="shell"
+            title="Shell"
+            accent="green"
+            startClosed
+            defaultGeometry={{ x: 300, y: 220, width: 640, height: 420 }}
+          >
+            <ShellApp />
           </Window>
           <Window
             id="network-monitor"
