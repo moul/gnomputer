@@ -32,11 +32,6 @@ export const ISLAND_GROUPS: Record<string, IslandGroup> = {
 // come from an in-app "pop out" action, not from repeated icon clicks).
 export const APP_REGISTRY: AppDescriptor[] = [
   { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true },
-  // The approachable, everyone-oriented counterpart to the Chain group —
-  // users, packages, transactions, tokens, and governance, as tabs of one
-  // window (discover.tsx) rather than separate icons. Users used to be its
-  // own icon; it's a Discover tab now.
-  { id: "discover", label: "Discover", icon: "🔭", supportsMultiWindow: false },
   { id: "resources", label: "Resources", icon: "📚", supportsMultiWindow: false },
   { id: "editor", label: "Editor", icon: "📝", supportsMultiWindow: false },
   { id: "shell", label: "Shell", icon: "⌨️", supportsMultiWindow: false },
@@ -53,6 +48,16 @@ export const APP_REGISTRY: AppDescriptor[] = [
   // The generic "look up any address" viewer, opened contextually from
   // entity links (openRef) rather than from an island icon of its own.
   { id: "address", label: "Accounts", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
+  // Discover isn't a real app of its own — it's a hover-only dropdown
+  // (island-bar.tsx, hardcoded next to the Browser icon since it has no
+  // single underlying window to focus-or-open) listing these five genuinely
+  // independent apps, each with its own window. Each reachable only from
+  // that dropdown, not its own island icon.
+  { id: "users", label: "Users", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "packages", label: "Packages", icon: "📦", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "transactions", label: "Transactions", icon: "🧾", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "tokens", label: "Tokens", icon: "🪙", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "governance", label: "Governance", icon: "🏛️", supportsMultiWindow: false, hiddenFromIsland: true },
   // Dedicated windows for the real mygnoscan/Gnockpit instances — each
   // opened contextually from an "Open the explorer"/"Open Gnockpit" button
   // elsewhere in the app, not from an island icon of its own. Distinct app

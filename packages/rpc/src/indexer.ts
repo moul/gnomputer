@@ -486,3 +486,96 @@ export async function dailyActivity(
     schema: "gnomputer.indexer.daily-activity.v1",
   });
 }
+
+export interface IndexerTransaction {
+  height: number;
+  txIndex: number;
+  success: boolean;
+  gasUsed: number;
+  gasWanted: number;
+  feeUgnot: number;
+  packagePaths: string[];
+  eventCount: number;
+}
+
+interface ListTransactionsMessageValue {
+  pkg_path?: string;
+  package?: { path: string };
+}
+
+interface ListTransactionsTx {
+  block_height: number;
+  index: number;
+  success: boolean;
+  gas_used: number;
+  gas_wanted: number;
+  gas_fee: { amount: number } | null;
+  messages: { value: ListTransactionsMessageValue | null }[];
+  response: { events: unknown[] } | null;
+}
+
+// `where: {}` (no filter at all beyond the required argument itself) is
+// valid and returns BOTH successful and failed transactions — confirmed
+// live (863 real transactions on Topaz, including both) — unlike every
+// other query in this file, which filters by success/pkg_path/etc.
+const LIST_TRANSACTIONS_QUERY = `{
+  getTransactions(where: {}, order: { heightAndIndex: DESC }) {
+    block_height
+    index
+    success
+    gas_used
+    gas_wanted
+    gas_fee { amount }
+    messages {
+      value {
+        ... on MsgCall { pkg_path }
+        ... on MsgAddPackage { package { path } }
+      }
+    }
+    response { events { ... on GnoEvent { type } } }
+  }
+}`;
+
+export async function listTransactions(
+  network: { id: string; indexerGraphqlUrl?: string },
+  fetchedAt: string,
+  limit = 200
+): Promise<DataEnvelope<IndexerTransaction[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — transaction history needs one.`);
+  }
+
+  const data = await queryIndexer<{ getTransactions: ListTransactionsTx[] | null }>(
+    network.indexerGraphqlUrl,
+    LIST_TRANSACTIONS_QUERY
+  );
+
+  const transactions: IndexerTransaction[] = (data.getTransactions ?? []).slice(0, limit).map((tx) => {
+    const packagePaths = new Set<string>();
+    for (const message of tx.messages) {
+      const path = message.value?.pkg_path ?? message.value?.package?.path;
+      if (path) packagePaths.add(path);
+    }
+    return {
+      height: tx.block_height,
+      txIndex: tx.index,
+      success: tx.success,
+      gasUsed: tx.gas_used,
+      gasWanted: tx.gas_wanted,
+      feeUgnot: tx.gas_fee?.amount ?? 0,
+      packagePaths: [...packagePaths],
+      eventCount: tx.response?.events.length ?? 0,
+    };
+  });
+
+  return wrapEnvelope({
+    ref: { uri: `gno://${network.id}/network/${network.id}`, kind: "network", networkId: network.id },
+    data: transactions,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.transaction-list.v1",
+  });
+}

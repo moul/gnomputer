@@ -6,6 +6,17 @@ banner links here.
 
 ## 2026-07-25
 
+- Split "Discover" into five genuinely independent apps — Users, Packages,
+  Transactions, Tokens, Governance — each its own window instead of tabs
+  inside one shared one. The Discover island icon is now a pure hover
+  dropdown listing all five; it has no click-to-open action of its own.
+- Transactions now uses the indexer for a real, complete transaction
+  history (200 most recent, both successful and failed) instead of only
+  what's been seen live since the window opened, on networks with an
+  indexer configured.
+- Fixed: long realm paths and script names in the Browser/Editor icons'
+  hover menus now truncate with an ellipsis instead of overflowing the
+  popover.
 - Replaced the generic "Embed" window (a plain iframe box with a dynamic
   title) with two dedicated ones: Explorer (mygnoscan) and Gnockpit's
   embed, each a real app identity in its own right. The Faucet entry now

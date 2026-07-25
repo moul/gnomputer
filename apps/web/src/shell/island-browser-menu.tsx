@@ -31,7 +31,7 @@ export function IslandBrowserMenu() {
               }}
             >
               <span aria-hidden="true">🌐</span>
-              {windows[id]!.title}
+              <span className="island-menu__list-label">{windows[id]!.title}</span>
             </button>
           </li>
         ))}

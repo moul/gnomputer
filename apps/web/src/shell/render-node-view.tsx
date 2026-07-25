@@ -5,8 +5,8 @@ import type { RenderNode } from "@gnomputer/lenses";
 
 /** Renders one node of parseRenderMarkup's output tree — shared by the
  * Realm Browser's own Render lens and anywhere else that needs to show a
- * realm's Render() output with correctly-resolved internal links (Discover's
- * Governance tab, for gno.land/r/gov/dao). windowId is which Browser
+ * realm's Render() output with correctly-resolved internal links (the
+ * Governance app, for gno.land/r/gov/dao). windowId is which Browser
  * window/tab an internal /r/... link opens into. */
 export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId: string }) {
   switch (node.type) {

@@ -10,6 +10,7 @@ import {
   realmHistory,
   chainActivityStats,
   dailyActivity,
+  listTransactions,
   type RpcClient,
   type BlockSummary,
   type AccountInfo,
@@ -19,6 +20,7 @@ import {
   type IndexerEvent,
   type ChainActivityStats,
   type DailyActivity,
+  type IndexerTransaction,
   type ChainEvent,
   type BlockTxResult,
   type BlockEvents,
@@ -35,6 +37,7 @@ export type {
   IndexerEvent,
   ChainActivityStats,
   DailyActivity,
+  IndexerTransaction,
   ChainEvent,
   BlockTxResult,
   BlockEvents,
@@ -84,6 +87,7 @@ export interface GnomputerSDK {
     realmHistory(packagePath: string): Promise<DataEnvelope<IndexerEvent[]>>;
     chainActivityStats(): Promise<DataEnvelope<ChainActivityStats>>;
     dailyActivity(): Promise<DataEnvelope<DailyActivity[]>>;
+    listTransactions(): Promise<DataEnvelope<IndexerTransaction[]>>;
   };
   trails: TrailAPI;
   entities: { parse: typeof parseGnoUri; format: typeof formatGnoUri };
@@ -163,6 +167,7 @@ export function createGnomputerSDK(
       realmHistory: (packagePath) => realmHistory(activeNetwork, packagePath, new Date().toISOString()),
       chainActivityStats: () => chainActivityStats(activeNetwork, new Date().toISOString()),
       dailyActivity: () => dailyActivity(activeNetwork, new Date().toISOString()),
+      listTransactions: () => listTransactions(activeNetwork, new Date().toISOString()),
     },
     trails: trailApi,
     entities: { parse: parseGnoUri, format: formatGnoUri },

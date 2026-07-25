@@ -1,7 +1,20 @@
-import { DISCOVER_TABS } from "../routes/discover";
-import { openDiscoverTab } from "./open-discover";
+import { focusOrReopen } from "./open-ref";
 import { openExplorer } from "./open-explorer";
 import { useSdk } from "../sdk-context";
+
+// Discover isn't a real app of its own — each of these is a genuinely
+// independent app/window (app-registry.ts, hiddenFromIsland: true), just
+// grouped here as a hover-only dropdown since there's no reason each one
+// needs its own island icon too. Same emoji as each window's own icon.
+const DISCOVER_ITEMS: { id: string; emoji: string; label: string }[] = [
+  { id: "users", emoji: "👤", label: "Users" },
+  { id: "packages", emoji: "📦", label: "Packages" },
+  { id: "transactions", emoji: "🧾", label: "Transactions" },
+  { id: "tokens", emoji: "🪙", label: "Tokens" },
+  { id: "governance", emoji: "🏛️", label: "Governance" },
+];
+
+export const DISCOVER_WINDOW_IDS = DISCOVER_ITEMS.map((item) => item.id);
 
 // Faucet Hub covers every gno.land faucet (Topaz, Boards2 Mobile, ...) from
 // one shared page — confirmed live (lists "Topaz Faucet" among others). No
@@ -19,14 +32,14 @@ export function IslandDiscoverMenu() {
   return (
     <div className="island-menu">
       <p className="island-menu__title">Discover</p>
-      {DISCOVER_TABS.map((tab) => (
+      {DISCOVER_ITEMS.map((item) => (
         <button
-          key={tab.id}
+          key={item.id}
           type="button"
           className="island-menu__action"
-          onClick={() => openDiscoverTab(tab.id)}
+          onClick={() => focusOrReopen(item.id)}
         >
-          {tab.emoji} {tab.label} →
+          {item.emoji} {item.label} →
         </button>
       ))}
       <button
