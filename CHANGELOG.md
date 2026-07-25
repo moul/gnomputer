@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-25
 
+- Replaced the generic "Embed" window (a plain iframe box with a dynamic
+  title) with two dedicated ones: Explorer (mygnoscan) and Gnockpit's
+  embed, each a real app identity in its own right. The Faucet entry now
+  opens externally instead of embedding, since it's a one-off action.
 - Topaz's indexer now allows real browser access — Browser home's "Recently
   deployed" is a real, complete listing instead of only what's been seen
   since the window opened; the History lens shows real historical events

@@ -4,7 +4,7 @@ import { useSdk } from "../sdk-context";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
-import { openEmbed } from "../shell/open-embed";
+import { openGnockpitEmbed } from "../shell/open-gnockpit-embed";
 import type { ValidatorInfo } from "@gnomputer/app-sdk";
 
 type SortKey = "address" | "votingPower" | "proposerPriority";
@@ -87,11 +87,8 @@ export function ValidatorMonitor() {
         />
         {network.gnockpitUrl && (
           <span className="validator-monitor__links">
-            <a href={network.gnockpitUrl} target="_blank" rel="noopener noreferrer">
-              Open Gnockpit ↗
-            </a>
-            <button type="button" onClick={() => openEmbed(network.gnockpitUrl as string, "Gnockpit")}>
-              Embed here
+            <button type="button" onClick={() => openGnockpitEmbed(network.gnockpitUrl as string)}>
+              Open Gnockpit
             </button>
           </span>
         )}
