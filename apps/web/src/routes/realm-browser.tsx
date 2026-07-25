@@ -26,6 +26,7 @@ import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
 import { RenderNodeView } from "../shell/render-node-view";
 import { formatNumber } from "../format-number";
+import { useNoRenderStore } from "../shell/no-render-store";
 
 const LENS_TABS: { id: RealmLens; label: string }[] = [
   { id: "render", label: "Render" },
@@ -309,11 +310,14 @@ function RealmStatusBar({
     }
   }, [renderStats?.isFetching]);
 
+  const packageHasNoRender = useNoRenderStore((s) => s.packagesWithNoRender.has(tab.packagePath));
+
   const items: LensTabBarItem[] = [
     ...LENS_TABS.map((lensTab) => ({
       key: lensTab.id,
       label: lensTab.label,
       active: tab.lens === lensTab.id,
+      disabled: lensTab.id === "render" && packageHasNoRender,
       onClick: () => updateActiveTab(windowId, { lens: lensTab.id }),
     })),
     ...(gnowebUrl
@@ -402,7 +406,20 @@ function RealmRenderView({
     onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs, refetch: () => void refetch(), isFetching });
   }, [data, dataUpdatedAt, onStats, refetch, isFetching]);
 
+  // A package with no Render() function at all (a pure library p/ package,
+  // or an r/ realm that just never defined one) always fails this query the
+  // same way — confirmed live: the VM's real error type is
+  // "/vm.NoRenderDeclError". Rather than showing that as a generic error
+  // (there's nothing to "retry"), mark it so the lens tab bar can gray out
+  // Render, and jump straight to Source, which always works.
+  useEffect(() => {
+    if (!error?.message.includes("NoRenderDeclError")) return;
+    useNoRenderStore.getState().markNoRender(packagePath);
+    useRealmTabsStore.getState().updateActiveTab(windowId, { lens: "source" });
+  }, [error, packagePath, windowId]);
+
   if (error) {
+    if (error.message.includes("NoRenderDeclError")) return null;
     return (
       <ErrorState message={`Could not load this realm: ${error.message}`} onRetry={() => void refetch()} />
     );

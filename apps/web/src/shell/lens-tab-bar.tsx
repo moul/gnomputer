@@ -7,6 +7,9 @@ export interface LensTabBarItem {
   onClick?: () => void;
   /** An external link (e.g. "Open on gnoweb") instead of a same-window tab. */
   href?: string;
+  /** Grayed out and unclickable — e.g. the Render tab for a package
+   * confirmed to have no Render() function at all. */
+  disabled?: boolean;
 }
 
 /** A tab/action bar that collapses overflowing trailing items into a
@@ -114,6 +117,8 @@ function LensTabBarButton({ item, onAfterClick }: { item: LensTabBarItem; onAfte
       role="tab"
       aria-selected={item.active}
       data-active={item.active}
+      disabled={item.disabled}
+      title={item.disabled ? "Not available for this package" : undefined}
       className="lens-tab-bar__item"
       onClick={() => {
         item.onClick?.();
