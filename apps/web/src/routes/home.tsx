@@ -15,6 +15,7 @@ import { AddressWindow } from "../shell/address-window";
 import { EmbedWindow } from "../shell/embed-window";
 import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
+import { useWindowViewportReclamp } from "../shell/use-window-viewport-reclamp";
 import { useWindowStore } from "../shell/window-store";
 
 export function Home() {
@@ -24,6 +25,7 @@ export function Home() {
   // otherwise never touches a window id that's already in a restored
   // layout (saved positions/sizes always win over a new default).
   useWindowPersistence("window-layout:home:v8");
+  useWindowViewportReclamp();
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
   const search = useSearch({ strict: false }) as { pkg?: string; path?: string };

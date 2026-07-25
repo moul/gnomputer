@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useWindowStore } from "./window-store";
 import { desktopBounds } from "./desktop-bounds";
-import { ISLAND_CLEARANCE_PX } from "./viewport";
+import { ISLAND_CLEARANCE_PX, TITLEBAR_HEIGHT_PX } from "./viewport";
 
 const DEFAULTS = { x: 10, y: 10, width: 400, height: 300 };
 
@@ -95,12 +95,42 @@ describe("focus", () => {
 });
 
 describe("move and resize", () => {
-  it("moves a non-maximized window and clamps negative coordinates to 0", () => {
+  it("moves a non-maximized window freely within the on-screen-visibility walls", () => {
     useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
     useWindowStore.getState().move("a", -50, 123);
     const win = useWindowStore.getState().windows.a!;
-    expect(win.x).toBe(0);
+    expect(win.x).toBe(-50);
     expect(win.y).toBe(123);
+  });
+
+  it("clamps dragging far left so at least 20% of the window's width stays on-screen", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().move("a", -100000, ISLAND_CLEARANCE_PX);
+    const win = useWindowStore.getState().windows.a!;
+    expect(win.x).toBe(Math.round(DEFAULTS.width * 0.2 - DEFAULTS.width));
+  });
+
+  it("clamps dragging far right so at least 20% of the window's width stays on-screen", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().move("a", 100000, ISLAND_CLEARANCE_PX);
+    const win = useWindowStore.getState().windows.a!;
+    const bounds = desktopBounds();
+    expect(win.x).toBe(Math.round(bounds.width - DEFAULTS.width * 0.2));
+  });
+
+  it("clamps dragging far down so the titlebar's full height stays on-screen", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().move("a", 0, 100000);
+    const win = useWindowStore.getState().windows.a!;
+    const bounds = desktopBounds();
+    expect(win.y).toBe(Math.round(bounds.height - TITLEBAR_HEIGHT_PX));
+  });
+
+  it("never lets the titlebar go above the island, even dragging far up", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    useWindowStore.getState().move("a", 0, -100000);
+    const win = useWindowStore.getState().windows.a!;
+    expect(win.y).toBe(ISLAND_CLEARANCE_PX);
   });
 
   it("does not move a maximized window", () => {
@@ -224,6 +254,41 @@ describe("toggleMaximize", () => {
     expect(restored.width).toBe(before.width);
     expect(restored.height).toBe(before.height);
     expect(restored.preMaximizeGeometry).toBeNull();
+  });
+});
+
+describe("reclampAll", () => {
+  it("pulls an out-of-bounds window back within the visibility walls", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS);
+    // Force an out-of-bounds position directly (bypassing move()'s own
+    // clamp) to simulate a window that was fine before the browser shrank.
+    useWindowStore.setState((s) => ({
+      windows: { ...s.windows, a: { ...s.windows.a!, x: 999999, y: 999999 } },
+    }));
+
+    useWindowStore.getState().reclampAll();
+
+    const win = useWindowStore.getState().windows.a!;
+    const bounds = desktopBounds();
+    expect(win.x).toBe(Math.round(bounds.width - DEFAULTS.width * 0.2));
+    expect(win.y).toBe(Math.round(bounds.height - TITLEBAR_HEIGHT_PX));
+  });
+
+  it("leaves closed and maximized windows untouched", () => {
+    useWindowStore.getState().ensureWindow("a", "Alpha", DEFAULTS, { startClosed: true });
+    useWindowStore.getState().ensureWindow("b", "Beta", DEFAULTS, { startMaximized: true });
+    useWindowStore.setState((s) => ({
+      windows: {
+        ...s.windows,
+        a: { ...s.windows.a!, x: 999999, y: 999999 },
+      },
+    }));
+    const bBefore = useWindowStore.getState().windows.b!;
+
+    useWindowStore.getState().reclampAll();
+
+    expect(useWindowStore.getState().windows.a!.x).toBe(999999);
+    expect(useWindowStore.getState().windows.b!).toEqual(bBefore);
   });
 });
 

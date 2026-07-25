@@ -1091,7 +1091,11 @@ main {
   z-index: 0;
   flex: 1;
   min-height: 320px;
-  overflow: auto;
+  /* Windows are always kept in bounds (window-store.ts's clampWindowOrigin
+     + reclampAll on browser resize), so the desktop itself never needs to
+     scroll — a real desktop doesn't, and stray scroll from a window
+     temporarily exceeding the viewport (e.g. mid-drag) reads as broken. */
+  overflow: hidden;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   /* Clears the floating island bar (position:fixed, ~52px tall including
