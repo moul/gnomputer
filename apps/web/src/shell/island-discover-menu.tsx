@@ -1,6 +1,7 @@
 import { DISCOVER_TABS } from "../routes/discover";
 import { openDiscoverTab } from "./open-discover";
 import { openEmbed } from "./open-embed";
+import { useSdk } from "../sdk-context";
 
 // Faucet Hub covers every gno.land faucet (Topaz, Boards2 Mobile, ...) from
 // one shared page — confirmed live (lists "Topaz Faucet" among others) and
@@ -11,6 +12,9 @@ import { openEmbed } from "./open-embed";
 const FAUCET_HUB_URL = "https://faucet.gno.land";
 
 export function IslandDiscoverMenu() {
+  const sdk = useSdk();
+  const explorerUrl = sdk.networks.getActive().explorerUrl;
+
   return (
     <div className="island-menu">
       <p className="island-menu__title">Discover</p>
@@ -31,6 +35,15 @@ export function IslandDiscoverMenu() {
       >
         🚰 Faucet →
       </button>
+      {explorerUrl && (
+        <button
+          type="button"
+          className="island-menu__action"
+          onClick={() => openEmbed(explorerUrl, "Explorer")}
+        >
+          🔭 Explorer →
+        </button>
+      )}
     </div>
   );
 }

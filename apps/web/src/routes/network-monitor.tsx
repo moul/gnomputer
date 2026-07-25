@@ -48,7 +48,9 @@ export function NetworkMonitor() {
       {(network.explorerUrl || network.statusUrl) && (
         <p className="network-monitor__external-links">
           {network.explorerUrl && (
-            <ExplorerLinks explorerUrl={network.explorerUrl} />
+            <button type="button" onClick={() => openEmbed(network.explorerUrl as string, "Explorer")}>
+              Open the explorer
+            </button>
           )}
           {network.statusUrl && (
             <a
@@ -62,19 +64,6 @@ export function NetworkMonitor() {
           )}
         </p>
       )}
-    </>
-  );
-}
-
-function ExplorerLinks({ explorerUrl }: { explorerUrl: string }) {
-  return (
-    <>
-      <a className="realm-browser__gnoweb-link" href={explorerUrl} target="_blank" rel="noopener noreferrer">
-        Open in Explorer ↗
-      </a>
-      <button type="button" onClick={() => openEmbed(explorerUrl, "Explorer")}>
-        Embed here
-      </button>
     </>
   );
 }

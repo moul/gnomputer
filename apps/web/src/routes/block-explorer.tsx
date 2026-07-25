@@ -9,6 +9,7 @@ import { formatTimeAgo } from "../format-time-ago";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
+import { openEmbed } from "../shell/open-embed";
 import { BlockStrip } from "./block-strip";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
@@ -177,14 +178,9 @@ export function BlockExplorer() {
               {latest ? "● Latest" : "○ Latest"}
             </button>
             {explorerUrl && (
-              <a
-                className="realm-browser__gnoweb-link"
-                href={explorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open in Explorer ↗
-              </a>
+              <button type="button" onClick={() => openEmbed(explorerUrl, "Explorer")}>
+                Open the explorer
+              </button>
             )}
           </form>
 
