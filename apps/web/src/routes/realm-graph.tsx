@@ -2,6 +2,7 @@ import { useSdk } from "../sdk-context";
 import { useRealmImports } from "../use-realm-imports";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { ErrorState } from "../shell/error-state";
+import { EmbedFrame } from "../shell/embed-frame";
 
 // mygnoscan's dependency graph (confirmed live: a real SVG graph including
 // REVERSE references, something this app can't produce on its own — the
@@ -95,17 +96,12 @@ export function RealmGraph({ packagePath, windowId }: { packagePath: string; win
   const graphUrl = mygnoscanGraphUrl(explorerUrl, packagePath);
   return (
     <div className="realm-graph realm-graph--embed">
-      <div className="realm-graph__embed-toolbar">
-        <a
-          className="realm-browser__gnoweb-link"
-          href={graphUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open in mygnoscan ↗
-        </a>
-      </div>
-      <iframe className="realm-graph__embed-frame" src={graphUrl} title={`${packagePath} dependency graph`} />
+      <EmbedFrame
+        url={graphUrl}
+        title={`${packagePath} dependency graph`}
+        showUrl={false}
+        externalLinkLabel="Open in mygnoscan ↗"
+      />
     </div>
   );
 }
