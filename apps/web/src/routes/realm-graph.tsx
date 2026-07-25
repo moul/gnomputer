@@ -4,9 +4,12 @@ import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { ErrorState } from "../shell/error-state";
 
 // mygnoscan's dependency graph (confirmed live: a real SVG graph including
-// REVERSE references, something this app can't produce on its own — that
-// needs the indexer's full graph, not reachable from the browser,
-// ADR-012/015) — its own path convention is /realm/<path without the
+// REVERSE references, something this app can't produce on its own — the
+// indexer's GraphQL schema has no "imports" field at all (confirmed via
+// live introspection), since import declarations are a source-level
+// concept, not something on-chain transactions carry; mygnoscan builds its
+// reverse graph by parsing every deployed package's own source
+// server-side) — its own path convention is /realm/<path without the
 // "gno.land/" prefix>, confirmed via mygnoscan's own router (path.slice(7)
 // then re-prepending "gno.land/"), with ?tab=graph landing straight on it.
 function mygnoscanGraphUrl(explorerUrl: string, packagePath: string): string {

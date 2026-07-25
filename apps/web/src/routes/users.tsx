@@ -162,9 +162,14 @@ function RegisterUsernameSection({ address }: { address: string }) {
 
 // gno.land/r/sys/users has no function that enumerates registered users —
 // only per-user lookups (ResolveAny/ResolveAddress/ResolveName) and the two
-// aggregate counts its own Render() shows. A real directory listing would
-// need the indexer (unreachable from the browser, ADR-012/015), so this app
-// is a lookup tool plus those same two counts, not a browsable list.
+// aggregate counts its own Render() shows. The indexer's GraphQL endpoint
+// now allows browser access, but it has no field that enumerates users
+// either, and filtering getTransactions for calls to the registry realm
+// (gno.land/r/gnoland/users/v1) came back empty even though 22 real
+// usernames are registered (confirmed live) — this indexer instance
+// apparently doesn't have those registrations in its indexed range, so a
+// real directory listing still isn't reliably available. This app stays a
+// lookup tool plus those same two counts, not a browsable list.
 export function Users() {
   const sdk = useSdk();
   const account = useWalletStore((s) => s.account);

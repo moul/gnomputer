@@ -199,11 +199,7 @@ function AddressContent({ address }: { address: string }) {
             )}
             <dt>Packages deployed</dt>
             <dd>
-              {packageCountPending
-                ? "Checking…"
-                : packageCountError
-                  ? "Not available (indexer unreachable from the browser)"
-                  : packageCount}
+              {packageCountPending ? "Checking…" : packageCountError ? "Not available" : packageCount}
             </dd>
           </dl>
           {!info.initialized && (

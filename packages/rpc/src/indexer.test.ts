@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { countPackagesByCreator, listRealms } from "./indexer";
+import { countPackagesByCreator, listRealms, realmHistory } from "./indexer";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
@@ -36,6 +36,12 @@ describe("countPackagesByCreator", () => {
 
   it("returns a count of 0 when there are no matching transactions", async () => {
     mockIndexerResponse({ getTransactions: [] });
+    const result = await countPackagesByCreator(NETWORK, "g1abc", NOW);
+    expect(result.data.count).toBe(0);
+  });
+
+  it("returns a count of 0 when getTransactions is null (confirmed live behavior for zero matches, not [])", async () => {
+    mockIndexerResponse({ getTransactions: null });
     const result = await countPackagesByCreator(NETWORK, "g1abc", NOW);
     expect(result.data.count).toBe(0);
   });
@@ -118,5 +124,104 @@ describe("listRealms", () => {
 
   it("throws when the network has no indexer configured", async () => {
     await expect(listRealms({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+
+  it("returns an empty list when getTransactions is null (confirmed live behavior for zero matches)", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    const result = await listRealms(NETWORK, NOW);
+    expect(result.data).toEqual([]);
+  });
+});
+
+describe("realmHistory", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("extracts this realm's own GnoEvents, most recent first", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          response: {
+            events: [
+              { type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [{ key: "to", value: "g1abc" }] },
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
+
+    expect(result.data).toEqual([
+      { height: 200, txIndex: 0, type: "Transfer", attrs: [{ key: "to", value: "g1abc" }] },
+    ]);
+    expect(result.source).toBe("indexer");
+  });
+
+  it("ignores events belonging to a different package (a nested call touching another realm)", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          response: {
+            events: [
+              { type: "Approval", pkg_path: "gno.land/p/demo/tokens/grc20", attrs: [] },
+              { type: "Swap", pkg_path: "gno.land/r/demo/a", attrs: [] },
+            ],
+          },
+        },
+      ],
+    });
+
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
+
+    expect(result.data).toEqual([{ height: 200, txIndex: 0, type: "Swap", attrs: [] }]);
+  });
+
+  it("skips non-GnoEvent union members that come back as an empty object", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          block_height: 200,
+          index: 0,
+          response: { events: [{}, { type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+        },
+      ],
+    });
+
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
+
+    expect(result.data).toEqual([{ height: 200, txIndex: 0, type: "Transfer", attrs: [] }]);
+  });
+
+  it("returns an empty list when getTransactions is null", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
+    expect(result.data).toEqual([]);
+  });
+
+  it("respects the limit parameter", async () => {
+    mockIndexerResponse({
+      getTransactions: Array.from({ length: 5 }, (_, i) => ({
+        block_height: i,
+        index: 0,
+        response: { events: [{ type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+      })),
+    });
+
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW, 2);
+
+    expect(result.data).toHaveLength(2);
+  });
+
+  it("throws when the network has no indexer configured", async () => {
+    await expect(realmHistory({ id: "gnodev" }, "gno.land/r/demo/a", NOW)).rejects.toThrow(
+      "gnodev has no indexer configured"
+    );
   });
 });
