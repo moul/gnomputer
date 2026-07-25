@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
+import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 
 // A general-purpose vm/qeval REPL — not scoped to one realm/tab the way
 // realm-state.tsx's "Eval" lens is. `cd <packagePath>` sets the current
@@ -70,6 +72,7 @@ const HELP_TEXT = [
   '<expression>       Evaluate a Gno expression against the current package (e.g. Render(""))',
   "",
   "↑ / ↓ recall previous commands",
+  "Autocomplete suggests package paths after \"cd \", and function names once a package is set",
 ].join("\n");
 
 export function ShellApp() {
@@ -169,6 +172,43 @@ export function ShellApp() {
     });
   }
 
+  // Autocomplete, native-<datalist>-based (same pattern the Browser's own
+  // realm-path field uses) — two distinct sources depending on what's
+  // being typed:
+  //  1. "cd <partial path>" reuses useRealmSuggestions, the exact same
+  //     RPC-prefix + indexer-substring + known-realms + live-activity
+  //     mix the Browser's url bar already uses.
+  //  2. Once a package is set, a bare identifier being typed (no "("
+  //     yet — past that, they're typing arguments, not a function name)
+  //     suggests real exported function names via the same vm/qfuncs
+  //     data the `funcs` command already fetches.
+  const cdMatch = /^cd\s+(\S*)$/.exec(draft);
+  const cdQuery = cdMatch?.[1] ?? "";
+  const realmSuggestions = useRealmSuggestions(cdMatch !== null, cdQuery);
+
+  const networkId = sdk.networks.getActive().id;
+  const { data: funcSignatures } = useQuery({
+    queryKey: ["shell-funcs", networkId, pkg],
+    queryFn: async () => {
+      const env = await sdk.rpc.queryFuncs(pkg, new Date().toISOString());
+      return JSON.parse(env.data) as FuncSignature[];
+    },
+    enabled: pkg !== "",
+  });
+
+  const bareIdentifier = /^[A-Za-z_][A-Za-z0-9_]*$/.test(draft.trim()) ? draft.trim() : null;
+  const funcNameSuggestions =
+    pkg && cdMatch === null && bareIdentifier
+      ? (funcSignatures ?? [])
+          .map((f) => f.FuncName)
+          .filter((name) => name.toLowerCase().startsWith(bareIdentifier.toLowerCase()))
+      : [];
+
+  const suggestions: { value: string; label: string }[] =
+    cdMatch !== null
+      ? realmSuggestions.map((s) => ({ value: `cd ${s.packagePath}`, label: s.label }))
+      : funcNameSuggestions.map((name) => ({ value: name, label: name }));
+
   return (
     <div className="shell-app" onClick={() => inputRef.current?.focus()}>
       <div className="shell-app__scrollback" ref={scrollRef}>
@@ -211,6 +251,7 @@ export function ShellApp() {
             data-lpignore="true"
             data-bwignore="true"
             className="shell-app__input"
+            list="shell-app-suggestions"
             value={draft}
             disabled={pending}
             onChange={(e) => setDraft(e.target.value)}
@@ -225,6 +266,11 @@ export function ShellApp() {
             }}
             autoFocus
           />
+          <datalist id="shell-app-suggestions">
+            {suggestions.map((s) => (
+              <option key={s.value} value={s.value} label={s.label} />
+            ))}
+          </datalist>
         </form>
       </div>
     </div>
