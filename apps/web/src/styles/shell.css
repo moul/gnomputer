@@ -632,6 +632,20 @@ main {
   color: var(--accent);
 }
 
+.realm-browser__refresh[data-spinning="true"] {
+  color: var(--accent);
+  animation: realm-browser-refresh-spin 700ms linear infinite;
+}
+
+@keyframes realm-browser-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Every lens (Render/Source/.../Raw) plus "Open on gnoweb" now lives ONLY
    here — the footer — collapsing overflow into a "•••" menu (lens-tab-bar.tsx)
    instead of a separate always-visible tab row above the lens body. */
@@ -2357,6 +2371,22 @@ main {
   gap: var(--space-2);
   font-size: 13px;
   color: var(--text);
+}
+
+.settings-bug-tab__preview {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
 }
 
 .settings-bug-tab__submit,

@@ -224,6 +224,7 @@ interface RenderStats {
   updatedAt: number;
   loadMs: number;
   refetch: () => void;
+  isFetching: boolean;
 }
 
 function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
@@ -311,6 +312,8 @@ function RealmStatusBar({
             <button
               type="button"
               className="realm-browser__refresh"
+              data-spinning={renderStats.isFetching}
+              disabled={renderStats.isFetching}
               aria-label="Refresh"
               title="Refresh"
               onClick={renderStats.refetch}
@@ -348,6 +351,7 @@ function RealmRenderView({
     data,
     error,
     isPending,
+    isFetching,
     dataUpdatedAt,
     refetch,
   } = useQuery({
@@ -361,8 +365,9 @@ function RealmRenderView({
   });
 
   useEffect(() => {
-    if (data) onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs, refetch: () => void refetch() });
-  }, [data, dataUpdatedAt, onStats, refetch]);
+    if (!data) return;
+    onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs, refetch: () => void refetch(), isFetching });
+  }, [data, dataUpdatedAt, onStats, refetch, isFetching]);
 
   if (error) {
     return (

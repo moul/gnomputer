@@ -42,6 +42,8 @@ describe("generalBugReportUrl", () => {
       network: false,
       build: true,
       userAgent: false,
+      trail: false,
+      windowSetup: false,
     });
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("body")).toContain(`Build: ${__GIT_HASH__}`);
@@ -56,8 +58,42 @@ describe("generalBugReportUrl", () => {
       network: false,
       build: false,
       userAgent: false,
+      trail: false,
+      windowSetup: false,
     });
     const params = new URLSearchParams(url.split("?")[1]);
     expect(params.get("body")).not.toContain("**Context**");
+  });
+
+  it("includes the trail summary only when trail is checked and a summary was supplied", () => {
+    const checked = generalBugReportUrl(
+      fakeSdk(),
+      "",
+      { url: false, network: false, build: false, userAgent: false, trail: true, windowSetup: false },
+      { trailSummary: "Home → gno.land/r/gnoland/blog" },
+    );
+    expect(new URLSearchParams(checked.split("?")[1]).get("body")).toContain(
+      "Trail: Home → gno.land/r/gnoland/blog",
+    );
+
+    const uncheckedButSupplied = generalBugReportUrl(
+      fakeSdk(),
+      "",
+      { url: false, network: false, build: false, userAgent: false, trail: false, windowSetup: false },
+      { trailSummary: "Home → gno.land/r/gnoland/blog" },
+    );
+    expect(new URLSearchParams(uncheckedButSupplied.split("?")[1]).get("body")).not.toContain("Trail:");
+  });
+
+  it("includes the window setup summary only when windowSetup is checked and a summary was supplied", () => {
+    const url = generalBugReportUrl(
+      fakeSdk(),
+      "",
+      { url: false, network: false, build: false, userAgent: false, trail: false, windowSetup: true },
+      { windowSetupSummary: "Browser (open), Discover (closed)" },
+    );
+    expect(new URLSearchParams(url.split("?")[1]).get("body")).toContain(
+      "Windows: Browser (open), Discover (closed)",
+    );
   });
 });
