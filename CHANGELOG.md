@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-07-26
 
+- Performance: the Gno/Tendermint2 RPC client stack (@gnolang/tm2-*,
+  @cosmjs/*, protobufjs) is now its own build chunk, separate from app
+  code — it dropped the main chunk from ~937KB to ~403KB, and a future
+  app-only deploy no longer invalidates that ~532KB of rarely-changing
+  dependency code for a returning visitor's cache.
+
 - Renamed the "Clean" theme family to "Modern" (matches its own internal
   id, and no longer reads as a near-synonym of the separate "Minimal"
   theme) and darkened its borders and faint/secondary text — both sat
