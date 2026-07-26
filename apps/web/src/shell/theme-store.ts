@@ -17,11 +17,14 @@ export const THEME_ORDER: ThemeId[] = [
   "modern-minimal",
 ];
 
+// "Modern" matches these themes' own internal ids (modern-light/-dark) —
+// previously labeled "Clean", which read as a near-synonym of the
+// separate "Minimal" theme and was a real source of confusion.
 export const THEME_LABELS: Record<ThemeId, string> = {
   "ascii-dark": "ASCII · Dark",
   "ascii-light": "ASCII · Light",
-  "modern-light": "Clean · Light",
-  "modern-dark": "Clean · Dark",
+  "modern-light": "Modern · Light",
+  "modern-dark": "Modern · Dark",
   "ascii-cypherpunk": "Cypherpunk",
   "modern-minimal": "Minimal",
 };
