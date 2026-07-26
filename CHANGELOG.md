@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-07-26
 
+- Windows now play a quick pop-in (fade + scale) when they open instead of
+  appearing instantly — respects reduced-motion like every other animation
+  in the app.
+
 - Fixed: on a phone-width viewport, the island bar (search, apps, clock)
   was wider than the screen and overflowed off both edges equally —
   the search icon and the clock were genuinely unreachable past the
