@@ -50,21 +50,23 @@ export default defineConfig({
     // The bundle sits around 1MB largely because of @gnolang/tm2-rpc and
     // @gnolang/tm2-js-client's own dependency chain (@cosmjs/*, protobufjs,
     // @bufbuild/protobuf) — the price of using the maintained Gno/Tendermint2
-    // clients instead of hand-rolling wire-protocol encoding. Splitting
-    // vendor code into its own chunk doesn't shrink that, but it means a
-    // future app-code-only change doesn't invalidate the cached vendor chunk
-    // for returning visitors.
+    // clients instead of hand-rolling wire-protocol encoding. That chain is
+    // its own manual chunk (below), separate from both "vendor" (react et
+    // al.) and the app-code chunk — none of the three change together, so a
+    // future app-code-only deploy invalidates only the smallest of the
+    // three for a returning visitor instead of one ~1MB blob.
     chunkSizeWarningLimit: 1100,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: [
-            "react",
-            "react-dom",
-            "@tanstack/react-router",
-            "@tanstack/react-query",
-            "zustand",
-          ],
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/]node_modules[\\/](@gnolang|@cosmjs|protobufjs|@bufbuild)[\\/]/.test(id)) {
+            return "chain-client";
+          }
+          if (/[\\/]node_modules[\\/](react|react-dom|@tanstack|zustand)[\\/]/.test(id)) {
+            return "vendor";
+          }
+          return undefined;
         },
       },
     },
