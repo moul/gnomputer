@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-07-26
 
+- Fixed: on a phone-width viewport, the island bar (search, apps, clock)
+  was wider than the screen and overflowed off both edges equally —
+  the search icon and the clock were genuinely unreachable past the
+  viewport's own edge. It now caps to the viewport width and scrolls
+  horizontally within its own pill instead, so every icon stays reachable.
+
 - Performance: the Gno/Tendermint2 RPC client stack (@gnolang/tm2-*,
   @cosmjs/*, protobufjs) is now its own build chunk, separate from app
   code — it dropped the main chunk from ~937KB to ~403KB, and a future

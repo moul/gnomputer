@@ -17,6 +17,21 @@
   box-shadow: var(--shadow-modal);
   font-family: var(--ui-font);
   transition: opacity 150ms ease;
+  /* On a narrow (phone-width) viewport the full icon row is wider than the
+     screen — previously that meant the pill just overflowed off both edges
+     equally, leaving the search icon and the clock genuinely unreachable
+     past the viewport's own edge. Capping width and scrolling internally
+     keeps every icon reachable (via a horizontal swipe) instead. No effect
+     at any width wide enough to fit everything, which is every desktop
+     width this was designed for. */
+  max-width: calc(100vw - 2 * var(--space-3));
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.island::-webkit-scrollbar {
+  display: none;
 }
 
 /* Overview mode (island-bar.tsx): the whole island becomes one button
