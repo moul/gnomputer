@@ -5,13 +5,15 @@ import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 // order): ASCII on top, Clean (modern) in the middle, both as light/dark
 // pairs so that block reads as two clear axes; the two standalone opinionated
 // themes (each a deliberate one-off, not part of a light/dark pair) go last.
+// Every row keeps light on the left, dark on the right, including the last
+// one — Minimal (light) then Cypherpunk (dark).
 const THEME_GRID_ORDER: ThemeId[] = [
   "ascii-light",
   "ascii-dark",
   "modern-light",
   "modern-dark",
-  "ascii-cypherpunk",
   "modern-minimal",
+  "ascii-cypherpunk",
 ];
 
 const THEME_PREVIEW: Record<ThemeId, string> = {

@@ -4,6 +4,11 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-07-26
+
+- Settings → Theme: the last row of the grid (Minimal, Cypherpunk) now
+  matches every other row's light-left/dark-right order.
+
 ## 2026-07-25
 
 - Cypherpunk theme pushed further: a bright scan-band now sweeps top-to-
