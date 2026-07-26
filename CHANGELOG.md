@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-07-26
 
+- The connection status dot now blinks on any red state, including a
+  plain RPC failure ("Failed to fetch") — previously only a fully offline
+  browser pulsed; a reachable-but-erroring RPC just sat there static red.
 - Settings → Theme: the last row of the grid (Minimal, Cypherpunk) now
   matches every other row's light-left/dark-right order.
 
