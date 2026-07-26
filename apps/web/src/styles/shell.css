@@ -344,10 +344,7 @@
   background: var(--warning);
 }
 
-.status-dot[data-state="error"] {
-  background: var(--danger);
-}
-
+.status-dot[data-state="error"],
 .status-dot[data-state="offline"] {
   background: var(--danger);
   animation: status-dot-offline-pulse 1.6s ease-in-out infinite;
