@@ -1587,6 +1587,25 @@ main {
      dragging/resizing (window.tsx) so per-pixel pointer updates aren't
      laggily eased too. */
   transition: left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease;
+  /* window.tsx unmounts a closed window entirely (returns null) and mounts
+     a fresh one on reopen — unlike `transition` above (which only reacts to
+     a property changing on an already-mounted element), `animation` plays
+     once on every mount, so this runs each time a window opens with no
+     component-level "is it opening" state needed. Respects
+     prefers-reduced-motion via the global `* { animation: none }` override
+     in theme.css. */
+  animation: window-open 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes window-open {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .window::before,
