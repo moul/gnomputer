@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-07-26
 
+- Renamed the "Clean" theme family to "Modern" (matches its own internal
+  id, and no longer reads as a near-synonym of the separate "Minimal"
+  theme) and darkened its borders and faint/secondary text — both sat
+  under a 1.3:1 (border) / 3:1 (faint text) contrast ratio against the
+  window background, reading as washed-out. Same fix applied to ASCII ·
+  Light and Minimal, the app's two other light themes with the same gap.
 - The connection status dot now blinks on any red state, including a
   plain RPC failure ("Failed to fetch") — previously only a fully offline
   browser pulsed; a reachable-but-erroring RPC just sat there static red.
