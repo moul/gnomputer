@@ -174,10 +174,13 @@
   display: flex;
 }
 
+/* Positioned via an inline style (position: fixed + computed top/left/
+   right) from island-popover.tsx, not here — it's portaled to <body> so
+   .island's own horizontal scrolling (a narrow-viewport fix, see .island
+   below) can't clip it, and a portaled element needs its real screen
+   position computed from its trigger's actual bounding rect rather than a
+   plain CSS top/left/right relative to a parent it's no longer inside. */
 .island__popover {
-  position: absolute;
-  top: calc(100% + var(--space-2));
-  right: 0;
   z-index: 210;
   min-width: 200px;
   max-width: 280px;
@@ -189,11 +192,6 @@
   text-align: left;
   font-weight: 400;
   font-size: 12px;
-}
-
-.island__popover[data-align="left"] {
-  left: 0;
-  right: auto;
 }
 
 .island-menu__title {
