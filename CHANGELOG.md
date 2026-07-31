@@ -4,6 +4,17 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-07-31
+
+- **Security fix:** a realm's `Render()` output could include a
+  `javascript:` (or `data:`/`vbscript:`) markdown link, which rendered as a
+  real clickable link — React does not sanitize `href` attributes, so
+  clicking it would execute that realm author's code inside Gnomputer.
+  External links from on-chain content are now allowlisted to
+  `http(s)`/`mailto` (rejecting protocol tricks, control-character
+  obfuscation, and embedded credentials) and unsafe ones render as plain
+  text. Internal realm links are unaffected.
+
 ## 2026-07-30
 
 - Fixed a regression: the island bar's hover menus (Chain, Discover,

@@ -1,4 +1,5 @@
 import type { EntityRef } from "@gnomputer/entities";
+import { safeExternalUrl } from "./safe-url";
 
 export interface RenderNode {
   type: "text" | "heading" | "paragraph" | "link" | "code" | "list-item";
@@ -71,7 +72,14 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
     nodes.push({
       type: "link",
       content: unescapeMarkdown(label!),
-      href,
+      // An internally-resolved link (a realm/package path) keeps its raw
+      // relative href — consumers navigate via `ref`/`renderPath`, and
+      // render-node-view builds its own in-app href, so the raw value is
+      // never used as a navigation target. Anything NOT internally resolved
+      // falls through to render-node-view's plain `<a href>`, so it is
+      // sanitized here: a `javascript:`/`data:` link from untrusted Render()
+      // output never even reaches a RenderNode as a usable href.
+      href: resolved.ref ? href : safeExternalUrl(href),
       ref: resolved.ref,
       renderPath: resolved.renderPath,
     });
