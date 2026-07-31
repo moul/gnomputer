@@ -31,8 +31,9 @@ app:
   lens with real syntax highlighting shows the realm's file tree and source, fetched
   directly from the chain; URL and search autocomplete against the chain's own package
   list.
-- **Editor** — write Gno code, save scripts locally, load community example templates,
-  and run them against the chain.
+- **Editor** — write Gno code, save scripts locally, and load community example
+  templates. Running a script against the chain is not available yet: it needs
+  transaction signing, which this guest-mode build doesn't do.
 - **Resources** — the Gno monorepo's own `docs/` (live, with full folder navigation and
   rendered markdown), the awesome-gno list, and an About page for Gnomputer itself.
 - **Users** — look up a registered username or address; results link through to
@@ -50,16 +51,18 @@ app:
 - **History** — every realm/block/address you've visited this session, recorded as a
   Trail.
 - **Settings** — Network (switch networks, see all known endpoints for one), User
-  (guest identity, address lookup), and Theme (six: ASCII and Clean each in light/dark,
+  (guest identity, address lookup), and Theme (six: ASCII and Modern each in light/dark,
   plus Cypherpunk and Minimal).
 
 Windows are draggable, resizable, and closable; an overview/expose mode (click the
 desktop background) shows every open window at once, with a close-all button and a
 per-window close button of its own. Unopened apps live behind the island bar's icons
 and a command palette (⌘K). Layout, theme, and zoom persist across reloads, and a
-banner appears if a newer build has been deployed while you had the page open. The
-shell is responsive down to phone widths — a fresh mobile visit gets a more
-zoomed-out, maximized-window default.
+banner appears if a newer build has been deployed while you had the page open.
+
+The desktop metaphor is built for a real screen. On a phone it adapts rather than
+reflows — a fresh mobile visit gets a zoomed-out, maximized-window default — so it
+is usable but not yet a first-class mobile layout.
 
 ## Development
 
