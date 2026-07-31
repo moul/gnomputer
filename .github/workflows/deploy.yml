@@ -1,6 +1,12 @@
 name: Deploy
+# Deploy is deliberately NOT triggered directly by `push`. It used to be, which
+# meant it ran in parallel with (and independently of) CI — so a commit that
+# failed lint/typecheck/test/e2e still shipped to production. It now waits for
+# the CI workflow to finish on main and only proceeds when CI actually passed.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
   workflow_dispatch: {}
 permissions:
@@ -10,9 +16,18 @@ permissions:
 concurrency: { group: "pages", cancel-in-progress: true }
 jobs:
   build:
+    # A manual run is trusted; a CI-triggered run must have actually succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch's HEAD by default, which
+          # is not necessarily the commit CI just verified. Pin to the exact
+          # SHA that passed so we never deploy something CI didn't check.
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - run: npm i -g pnpm@9.15.0

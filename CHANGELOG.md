@@ -6,6 +6,13 @@ banner links here.
 
 ## 2026-07-31
 
+- Production deploys now wait for CI to pass. Previously the deploy workflow ran
+  on every push to `main` independently of CI, so a commit that failed
+  lint/typecheck/tests/e2e could still ship.
+- README corrections: the Editor cannot "run scripts against the chain" (that
+  needs transaction signing this guest build doesn't do), the theme family is
+  "Modern" not "Clean", and mobile is described honestly as adapting rather than
+  reflowing.
 - **Security fix:** a realm's `Render()` output could include a
   `javascript:` (or `data:`/`vbscript:`) markdown link, which rendered as a
   real clickable link — React does not sanitize `href` attributes, so
