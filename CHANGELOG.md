@@ -4,17 +4,6 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
-## 2026-07-30
-
-- Fixed a regression: the island bar's hover menus (Chain, Discover,
-  Browser, Editor, Settings) stopped showing at all on a narrow viewport.
-  Cause: the mobile fix that made the island bar scroll horizontally
-  instead of overflowing off-screen also (per the CSS overflow-x/overflow-y
-  coupling rule) made it clip its own popovers, which always extend below
-  its own short pill. Popovers now render via a portal straight into
-  `<body>`, positioned from their trigger's real screen position, so
-  they're no longer inside anything that can clip them.
-
 ## 2026-07-31
 
 - **Security fix:** a realm's `Render()` output could include a
@@ -25,6 +14,17 @@ banner links here.
   `http(s)`/`mailto` (rejecting protocol tricks, control-character
   obfuscation, and embedded credentials) and unsafe ones render as plain
   text. Internal realm links are unaffected.
+
+## 2026-07-30
+
+- Fixed a regression: the island bar's hover menus (Chain, Discover,
+  Browser, Editor, Settings) stopped showing at all on a narrow viewport.
+  Cause: the mobile fix that made the island bar scroll horizontally
+  instead of overflowing off-screen also (per the CSS overflow-x/overflow-y
+  coupling rule) made it clip its own popovers, which always extend below
+  its own short pill. Popovers now render via a portal straight into
+  `<body>`, positioned from their trigger's real screen position, so
+  they're no longer inside anything that can clip them.
 
 ## 2026-07-26
 
