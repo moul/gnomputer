@@ -6,6 +6,14 @@ banner links here.
 
 ## 2026-07-31
 
+- **Data-loss fix:** the crash screen's one-click "Clear state & reload" deleted
+  Gnomputer's entire local database — including your **saved Editor scripts and
+  Trails** — while its own text said it "only clears local settings/layout."
+  Recovery is now tiered: a plain **Reload** that changes nothing, a **scoped
+  reset** that clears only layout/theme/cached chain data (what the old copy
+  claimed), and an **erase everything** option behind a confirmation that names
+  what will be lost and offers a JSON backup first. Failures are now reported
+  instead of silently reloading as if they had worked.
 - Production deploys now wait for CI to pass. Previously the deploy workflow ran
   on every push to `main` independently of CI, so a commit that failed
   lint/typecheck/tests/e2e could still ship.
