@@ -15,6 +15,17 @@ banner links here.
   `<body>`, positioned from their trigger's real screen position, so
   they're no longer inside anything that can clip them.
 
+## 2026-07-31
+
+- **Security fix:** a realm's `Render()` output could include a
+  `javascript:` (or `data:`/`vbscript:`) markdown link, which rendered as a
+  real clickable link — React does not sanitize `href` attributes, so
+  clicking it would execute that realm author's code inside Gnomputer.
+  External links from on-chain content are now allowlisted to
+  `http(s)`/`mailto` (rejecting protocol tricks, control-character
+  obfuscation, and embedded credentials) and unsafe ones render as plain
+  text. Internal realm links are unaffected.
+
 ## 2026-07-26
 
 - Windows now play a quick pop-in (fade + scale) when they open instead of

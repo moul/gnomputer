@@ -1,7 +1,7 @@
 import { Linkified } from "./linkify";
 import { CodeEditor } from "./code-editor-lazy";
 import { openInRealmTab } from "./open-in-realm-tab";
-import type { RenderNode } from "@gnomputer/lenses";
+import { safeExternalUrl, type RenderNode } from "@gnomputer/lenses";
 
 /** Renders one node of parseRenderMarkup's output tree — shared by the
  * Realm Browser's own Render lens and anywhere else that needs to show a
@@ -69,8 +69,16 @@ function GnoLink({ node, windowId }: { node: RenderNode; windowId: string }) {
     );
   }
 
+  // Sanitized again here, not just at parse time (render-markup.ts), because
+  // React does NOT sanitize href attributes — so this is the last line
+  // before an untrusted string becomes a clickable navigation target. An
+  // unsafe or missing href renders as plain text rather than a dead link, so
+  // there's nothing to click at all.
+  const safeHref = safeExternalUrl(node.href);
+  if (!safeHref) return <>{node.content}</>;
+
   return (
-    <a href={node.href} target="_blank" rel="noopener noreferrer">
+    <a href={safeHref} target="_blank" rel="noopener noreferrer">
       {node.content}
     </a>
   );
