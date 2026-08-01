@@ -3,3 +3,4 @@ export * from "./render-markup";
 export * from "./safe-url";
 export * from "./source-symbols";
 export * from "./user-data";
+export * from "./gno-literal";

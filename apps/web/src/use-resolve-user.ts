@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useSdk } from "./sdk-context";
-import type { ParsedUserData } from "@gnomputer/lenses";
+import { encodeGnoString, type ParsedUserData } from "@gnomputer/lenses";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 
@@ -17,7 +17,10 @@ export function useResolveUser(query: string | null): UseQueryResult<ParsedUserD
     queryFn: async () => {
       const env = await sdk.rpc.evalExpression(
         USERS_PACKAGE,
-        `ResolveAny("${normalized}")`,
+        // Encoded, not interpolated: a quote in the input used to close
+        // the string literal and let the rest be parsed as Gno expression
+        // syntax (AUD-029).
+        `ResolveAny(${encodeGnoString(normalized)})`,
         new Date().toISOString()
       );
       return sdk.lenses.parseUserData(env.data);

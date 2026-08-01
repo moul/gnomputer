@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Username and address lookups no longer build their chain query by
+  pasting your input into it. Text containing a quote used to escape the
+  query and be interpreted as code by the node; it is now encoded as
+  data. Read-only queries either way, but the node was parsing input it
+  should never have seen as syntax.
 - Small text now meets the WCAG AA contrast bar in every theme. Window
   titles, secondary paths and other muted text were between 2.7:1 and
   4.4:1 against their backgrounds — legible on a good monitor, not
