@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useSdk } from "./sdk-context";
+import { useChainHeight } from "./use-chain-height";
 import type { BlockEvents } from "@gnomputer/app-sdk";
 
-const POLL_INTERVAL_MS = 4000;
 const MAX_TXS_SHOWN = 60;
 const MAX_BACKFILL_PER_TICK = 5;
 
@@ -40,24 +40,22 @@ export function useLiveTransactions(paused = false): { transactions: LiveTransac
   const [transactions, setTransactions] = useState<LiveTransaction[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
 
+  const { height } = useChainHeight(!paused);
+  const inFlight = useRef(false);
+
   useEffect(() => {
-    if (paused) return;
+    if (paused || height === null || inFlight.current) return;
+    if (lastSeenHeight.current === null) lastSeenHeight.current = height - 1;
+    if (height <= lastSeenHeight.current) return;
+
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    inFlight.current = true;
 
-    async function tick() {
+    void (async () => {
       try {
-        const statusEnv = await sdk.rpc.getStatus();
-        if (cancelled) return;
-        const latest = statusEnv.data.latestHeight;
-
-        if (lastSeenHeight.current === null) {
-          lastSeenHeight.current = latest - 1;
-        }
-
-        const from = Math.max(lastSeenHeight.current + 1, latest - MAX_BACKFILL_PER_TICK + 1);
+        const from = Math.max(lastSeenHeight.current! + 1, height - MAX_BACKFILL_PER_TICK + 1);
         const heights: number[] = [];
-        for (let h = from; h <= latest; h++) heights.push(h);
+        for (let h = from; h <= height; h++) heights.push(h);
 
         const results = await Promise.all(
           heights.map((h) => sdk.rpc.getBlockEvents(h, new Date().toISOString()).then((env) => env.data))
@@ -65,27 +63,22 @@ export function useLiveTransactions(paused = false): { transactions: LiveTransac
         if (cancelled) return;
 
         const newTxs: LiveTransaction[] = results.flatMap(blockToTransactions);
-
-        if (heights.length > 0) {
-          lastSeenHeight.current = latest;
-          if (newTxs.length > 0) {
-            setTransactions((prev) => [...newTxs].reverse().concat(prev).slice(0, MAX_TXS_SHOWN));
-          }
+        lastSeenHeight.current = height;
+        if (newTxs.length > 0) {
+          setTransactions((prev) => [...newTxs].reverse().concat(prev).slice(0, MAX_TXS_SHOWN));
         }
       } catch {
-        // A transient RPC hiccup shouldn't take the whole feed down — the
-        // next tick just tries again.
+        // A transient RPC hiccup shouldn't take the feed down — the next
+        // height tick retries from the same lastSeenHeight.
       } finally {
-        if (!cancelled) timer = setTimeout(tick, POLL_INTERVAL_MS);
+        inFlight.current = false;
       }
-    }
+    })();
 
-    void tick();
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
     };
-  }, [sdk, paused]);
+  }, [sdk, paused, height]);
 
   return { transactions };
 }
