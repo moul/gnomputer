@@ -6,6 +6,17 @@ banner links here.
 
 ## 2026-08-01
 
+- **Fixed: a stylesheet corruption that silently disabled part of the app's
+  CSS.** Two rules had lost their closing braces during an earlier merge, so
+  the browser parsed everything after them as nested rules and dropped it —
+  the transaction-review dialog's styling among them.
+- **Mobile:** the app had no width-based responsive rules at all; narrow
+  screens just got a shrunken desktop. Side-by-side panes (Source's file
+  tree, the Editor sidebar, Docs) now stack, toolbars wrap, and touch
+  targets meet the 44px minimum — measured at 375px, the Render refresh
+  button went from 14x14 to 44x44 and the code pane from 200px wide to full
+  width. Mobile also no longer starts at 75% zoom, which had been shrinking
+  every control by a quarter.
 - Fixed: changing a setting (theme, zoom, window layout, network choice)
   and reloading straight away could silently lose it — navigating away
   aborts the in-flight browser-storage write. Those small preferences are

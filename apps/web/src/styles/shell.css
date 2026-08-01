@@ -3764,6 +3764,10 @@ main {
 }
 
 .editor-window__save-state[data-state="error"] {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 /* Transaction review — shown before any signature request. Deliberately a
    modal: approving a fund-moving call is not something to do by reflex. */
 .tx-review {
@@ -3836,6 +3840,8 @@ main {
 
 .editor-window__save-state[data-state="saved"] {
   color: var(--accent-green);
+}
+
 .tx-review__actions {
   display: flex;
   gap: var(--space-2);
@@ -3846,4 +3852,91 @@ main {
   border-color: var(--accent);
   color: var(--bg);
   font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Narrow-screen layout.
+
+   Until now the app had ZERO width media queries — "responsive" meant
+   scaling a desktop canvas down (zoom-store's 0.75 mobile default) and
+   starting windows maximized. Measured at 375px that left 31 of 35 buttons
+   under the 44px touch minimum (the Render refresh button was 14x15px),
+   and the Source lens gave code just 200px beside a fixed 135px file tree.
+
+   Keyed on width rather than `pointer: coarse` so a narrow desktop window
+   gets the same treatment — and so it's testable, since headless browsers
+   report a fine pointer. Target sizing additionally applies to any coarse
+   pointer, which covers tablets at wider widths.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Side-by-side panes have no room at this width — stack them and let the
+     content pane have the whole screen. */
+  .source-explorer,
+  .editor-window,
+  .resources-docs {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .file-tree,
+  .editor-window__sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    /* Enough to browse without starving the content pane below it; the
+       tree scrolls internally. */
+    max-height: 22vh;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Dragging and resizing are pointer-precision gestures with no place on a
+     phone; windows are maximized here anyway. */
+  .window__resize-handle {
+    display: none;
+  }
+
+  .window__body {
+    padding: var(--space-3);
+  }
+
+  /* Toolbars wrap instead of overflowing or squeezing their controls. */
+  .realm-browser__statusbar,
+  .editor-window__toolbar,
+  .recent-activity__toolbar,
+  .discover-packages__toolbar,
+  .embed-window__bar {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+}
+
+/* Touch targets. WCAG 2.2 asks for 24x24 minimum; 44px is the platform
+   convention and what these controls actually need to be hittable. Applied
+   via padding + min-size so nothing has to be repositioned. */
+@media (max-width: 640px), (pointer: coarse) {
+  .island__icon,
+  .island__clock {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .realm-browser__refresh,
+  .realm-browser__tab-close,
+  .realm-browser__tab-new,
+  .realm-browser__tab-popout,
+  .realm-browser__tabstrip-item button,
+  .window__control,
+  .lens-tab-bar__item,
+  .window-tab {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* A menu row is already full-width; it just needs vertical room. */
+  .island-menu__list button,
+  .island-menu__action {
+    min-height: 44px;
+  }
 }
