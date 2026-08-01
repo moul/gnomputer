@@ -78,3 +78,8 @@ pnpm build
 Default network: Topaz. Switch networks from the island bar's Settings icon (Network
 tab), which also lists every other endpoint (gnoweb, tx-indexer, Gnockpit, explorer)
 known for the active network.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the repo layout, the architecture rules
+CI enforces, and the habits this codebase has learned the hard way.
+[SECURITY.md](SECURITY.md) covers the threat model, the invariants around signing,
+and how to report a vulnerability.
