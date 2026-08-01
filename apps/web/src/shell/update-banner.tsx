@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useVersionCheck } from "./use-version-check";
-import { useSwUpdate } from "./use-sw-update";
+import { useSwUpdate, activateNewVersionAndReload } from "./use-sw-update";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -16,17 +17,29 @@ function changelogUrl(buildTimeIso: string): string {
 export function UpdateBanner() {
   const newVersion = useVersionCheck();
   const { needRefresh, updateServiceWorker } = useSwUpdate();
+  const [busy, setBusy] = useState(false);
 
   if (!newVersion && !needRefresh) return null;
 
-  function refresh() {
-    // needRefresh means a new service worker is actually installed and
+  async function refresh() {
+    if (busy) return;
+    setBusy(true);
+    // needRefresh means a new service worker is already installed and
     // waiting — updateServiceWorker(true) tells it to take over and waits
-    // for that to actually happen before reloading. A plain reload can
-    // still be served by the OLD (still "active" at that instant) worker,
-    // silently requiring a second manual reload to see anything new.
-    if (needRefresh) void updateServiceWorker(true);
-    else window.location.reload();
+    // for that before reloading.
+    //
+    // Otherwise the banner is here because version.json (which bypasses the
+    // service worker entirely) spotted a deploy the worker hasn't noticed
+    // yet. A plain reload in that window gets served the OLD build straight
+    // back out of the current worker's precache — the tab never updates and
+    // this banner reappears, which is exactly the "Refresh does nothing"
+    // bug. So force an update check and activate the new worker first.
+    try {
+      if (needRefresh) await updateServiceWorker(true);
+      else await activateNewVersionAndReload();
+    } finally {
+      setBusy(false);
+    }
   }
 
   const newBuildTime = newVersion?.buildTime ?? __BUILD_TIME__;
@@ -40,8 +53,8 @@ export function UpdateBanner() {
       <a href={changelogUrl(newBuildTime)} target="_blank" rel="noopener noreferrer">
         Changelog
       </a>
-      <button type="button" onClick={refresh}>
-        Refresh
+      <button type="button" onClick={() => void refresh()} disabled={busy}>
+        {busy ? "Updating…" : "Refresh"}
       </button>
     </div>
   );

@@ -85,13 +85,18 @@ export default defineConfig({
       registerType: "prompt",
       injectRegister: false,
       workbox: {
-        // Without these, an updated service worker installs but stays
-        // "waiting" until every open tab is fully closed — the classic PWA
-        // "I reloaded and it's still the old version" bug. skipWaiting lets
-        // the new SW activate immediately; clientsClaim lets it take control
-        // of already-open pages instead of only new navigations.
-        skipWaiting: true,
-        clientsClaim: true,
+        // NOT skipWaiting/clientsClaim. Those were set to avoid the classic
+        // "I reloaded and it's still the old version" bug, but combined with
+        // registerType: "prompt" they caused it instead: a new worker that
+        // never *waits* never sets the `needRefresh` flag the update banner
+        // keys off, so the banner's Refresh button fell through to a plain
+        // reload — which the OLD worker still served from its own precache.
+        // Reproduced end to end (see update-banner.tsx): the tab stayed on
+        // the old build and the banner reappeared, forever.
+        //
+        // Letting the new worker wait is what makes the prompt flow work:
+        // `needRefresh` becomes true, and the banner's Refresh posts
+        // SKIP_WAITING and reloads only after controllerchange.
         // version.json must always hit the network (use-version-check.ts
         // already fetches it with cache: "no-store" and a cache-busting
         // query param) — precaching it here would let the service worker
