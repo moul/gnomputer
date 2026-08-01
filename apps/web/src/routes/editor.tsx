@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { CodeEditor } from "../shell/code-editor-lazy";
@@ -7,6 +7,16 @@ import { ErrorState } from "../shell/error-state";
 import { useEditorSignalStore } from "../shell/editor-store";
 
 const AUTOSAVE_DELAY_MS = 600;
+
+type SaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+
+const SAVE_LABEL: Record<SaveState, string> = {
+  idle: "",
+  dirty: "Unsaved changes",
+  saving: "Saving…",
+  saved: "Saved",
+  error: "Not saved",
+};
 
 export function Editor() {
   const sdk = useSdk();
@@ -52,13 +62,88 @@ export function Editor() {
     // whatever the user typed after that save fired.
   }, [active?.id]);
 
+  // Autosave. The previous version cleared its debounce timer on cleanup,
+  // and since `draftCode` is a dependency that cleanup ran on every
+  // keystroke — which is correct for debouncing, but it also meant that
+  // switching scripts, closing the window, or an update-refresh inside the
+  // 600ms window silently threw away the newest edits. It also ignored
+  // rejected writes and surfaced no state at all, so the user had no way to
+  // know whether their work was safe.
+  //
+  // `pendingRef` holds the newest unsaved edit so it can be flushed from any
+  // of those exit paths instead of dropped.
+  const pendingRef = useRef<{ id: string; code: string } | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const flush = useCallback(async () => {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    pendingRef.current = null;
+    setSaveState("saving");
+    try {
+      await sdk.scripts.update(pending.id, { code: pending.code });
+      await refetch();
+      setSaveState("saved");
+      setSaveError(null);
+    } catch (e) {
+      // Put it back so a later flush (or retry) can still save it, and say
+      // so — a failed write used to vanish silently.
+      pendingRef.current = pending;
+      setSaveState("error");
+      setSaveError(e instanceof Error ? e.message : String(e));
+    }
+  }, [sdk, refetch]);
+
+  // Kept in a ref so the exit-path effects below don't re-run (and therefore
+  // don't flush) just because `flush` was re-created.
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+
   useEffect(() => {
     if (!active || draftCode === active.code) return;
-    const timer = window.setTimeout(() => {
-      void sdk.scripts.update(active.id, { code: draftCode }).then(() => refetch());
-    }, AUTOSAVE_DELAY_MS);
+    pendingRef.current = { id: active.id, code: draftCode };
+    setSaveState("dirty");
+    const timer = window.setTimeout(() => void flushRef.current(), AUTOSAVE_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [draftCode, active, sdk, refetch]);
+  }, [draftCode, active]);
+
+  // Switching scripts or unmounting: flush rather than drop. Deliberately
+  // keyed on the script id alone, so this cleanup does NOT run per keystroke
+  // (which would defeat the debounce entirely).
+  useEffect(() => {
+    return () => {
+      void flushRef.current();
+    };
+  }, [active?.id]);
+
+  // Tab hidden / navigating away / the update banner reloading. An async
+  // IndexedDB write isn't guaranteed to finish during unload, but attempting
+  // it is strictly better than the previous behaviour of discarding it.
+  useEffect(() => {
+    function onHide() {
+      if (document.visibilityState === "hidden") void flushRef.current();
+    }
+    function onPageHide() {
+      void flushRef.current();
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        // Stop the browser's own "save page" dialog — in an editor, Cmd+S
+        // should mean save the script.
+        e.preventDefault();
+        void flushRef.current();
+      }
+    }
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   async function createScript(name: string, code: string) {
     const record = await sdk.scripts.create(name, code);
@@ -145,6 +230,17 @@ export function Editor() {
               <button type="button" onClick={() => void deleteActive()}>
                 Delete
               </button>
+              {saveState !== "idle" && (
+                <span
+                  className="editor-window__save-state"
+                  data-state={saveState}
+                  role={saveState === "error" ? "alert" : "status"}
+                  title={saveError ?? undefined}
+                >
+                  {SAVE_LABEL[saveState]}
+                  {saveState === "error" && saveError ? `: ${saveError}` : ""}
+                </span>
+              )}
               <span className="editor-window__spacer" />
               <button type="button" disabled title="Wallet connection isn't available yet">
                 Run…
