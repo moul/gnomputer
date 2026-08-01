@@ -171,7 +171,10 @@ export function Window({
               aria-label={`Close ${title}`}
               onClick={() => (onClose ? onClose() : close(id))}
             >
-              {isModern ? "🔴" : "[x]"}
+              {/* Decorative: the accessible name is "Close <title>", and a
+                  visible "[x]" that isn't part of that name is a
+                  label-mismatch (flagged by Lighthouse). */}
+              <span aria-hidden="true">{isModern ? "🔴" : "[x]"}</span>
             </button>
           </span>
           <span className="window__title">

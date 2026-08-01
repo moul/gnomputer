@@ -51,6 +51,11 @@ function RootLayout() {
         <UpdateBanner />
       </ErrorBoundary>
       <main>
+        {/* The page had no <h1> at all, so screen-reader heading navigation
+            started at some window's h2 with nothing naming the page itself.
+            Visually hidden because the desktop's identity is carried by the
+            island bar, not by a banner. */}
+        <h1 className="visually-hidden">Gnomputer — a desktop for gno.land</h1>
         <Outlet />
       </main>
     </>

@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- Screen-reader navigation improvements: the page now has a top-level
+  heading, and a realm's own headings keep their real levels instead of all
+  being flattened to the same one, so its structure is navigable again.
 - A first visit no longer downloads every app up front. The service worker
   used to pre-download all ~1.86MB of the build — including the code editor
   and every app you hadn't opened — which undid the on-demand loading. It
