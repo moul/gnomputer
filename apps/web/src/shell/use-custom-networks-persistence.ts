@@ -20,8 +20,10 @@ function deserialize(raw: string): { networks: NetworkConfig[] } | null {
   }
 }
 
-export function useCustomNetworksPersistence() {
-  useStorePersistence(STORAGE_KEY, useCustomNetworksStore, {
+/** Returns whether the stored list has been read yet — the difference
+ * between "you have no custom networks" and "we haven't looked". */
+export function useCustomNetworksPersistence(): boolean {
+  return useStorePersistence(STORAGE_KEY, useCustomNetworksStore, {
     serialize: (state) => JSON.stringify(state.networks),
     deserialize,
   });

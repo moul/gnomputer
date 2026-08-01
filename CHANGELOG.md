@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- The network you pick now survives a reload. Custom network definitions
+  were saved but the selection wasn't, so switching to betanet and
+  reloading quietly put you back on Topaz — same interface, different
+  chain, no indication. And if a saved network no longer exists, the app
+  says so instead of silently moving you.
 - Resources now explains a GitHub rate limit instead of showing "403
   Forbidden", which read as a permissions problem and gave no hint that
   waiting would fix it. The docs and awesome-gno fetches also gained the

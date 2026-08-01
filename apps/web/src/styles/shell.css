@@ -73,6 +73,16 @@
 /* New-version banner (use-version-check.ts) — sits just below the island,
    in the same spot the old overview hint used to occupy, so it doesn't
    compete with the island's own fixed position at the top of the screen. */
+/* Same placement as the update banner, but this one reports a problem
+   rather than an offer, so it borrows the danger colour. */
+.network-recovery-banner {
+  border-color: var(--danger);
+}
+
+.network-recovery-banner code {
+  font-family: var(--font-mono);
+}
+
 .update-banner {
   position: fixed;
   top: calc(var(--island-clearance) + var(--space-2));
