@@ -573,3 +573,42 @@ describe("indexer response validation", () => {
     await expect(listRealms(NETWORK, NOW)).rejects.toThrow("Indexer query failed");
   });
 });
+
+describe("per-query field validation", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("rejects a field whose type changed, naming the field", async () => {
+    // Before this, `json.data as T` meant a string where a number belonged
+    // became a "valid" typed value and blew up later, somewhere unrelated,
+    // as a confusing TypeError (AUD-022).
+    mockIndexerResponse({
+      getTransactions: [
+        { block_height: "200", messages: [{ value: { package: { path: "gno.land/r/demo/a" } } }] },
+      ],
+    });
+
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(
+      /getTransactions\.0\.block_height/
+    );
+  });
+
+  it("rejects a missing required field rather than yielding undefined", async () => {
+    mockIndexerResponse({ getTransactions: [{ block_height: 200 }] });
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(/getTransactions\.0\.messages/);
+  });
+
+  it("names the endpoint, so it is obvious which service is wrong", async () => {
+    mockIndexerResponse({ getTransactions: "not an array" });
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(/indexer\.example/);
+  });
+
+  it("still accepts the null the indexer really returns for no matches", async () => {
+    // getTransactions is null, not [], when nothing matches — confirmed live.
+    // A schema that forgot this would break the most common case.
+    mockIndexerResponse({ getTransactions: null });
+    await expect(listRealms(NETWORK, NOW)).resolves.toMatchObject({ data: [] });
+  });
+});

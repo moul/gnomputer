@@ -252,6 +252,9 @@ importers:
       '@gnomputer/networks':
         specifier: workspace:*
         version: link:../networks
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
     devDependencies:
       nock:
         specifier: ^14.0.16

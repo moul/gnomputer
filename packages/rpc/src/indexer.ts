@@ -1,4 +1,5 @@
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
+import { z } from "zod";
 import { fetchWithDeadline } from "./fetch-with-deadline";
 
 // As of 2026-07-25, Topaz's indexer (indexer.topaz.testnets.gno.land) sends
@@ -27,22 +28,34 @@ export interface IndexerEvent {
   attrs: { key: string; value: string }[];
 }
 
-interface AddPackageTx {
-  block_height: number;
-  messages: { value: { package?: { path: string } } | null }[];
-}
+// Two schemas, not one, because the two queries that return add_package
+// transactions select DIFFERENT fields: CountByCreator asks only for the
+// messages, ListRealms also asks for block_height. Sharing one schema made
+// the narrower query fail validation on a field it never requested — which
+// is precisely the mismatch per-query schemas exist to catch, and it showed
+// up the moment they were introduced.
+const AddPackageMessagesSchema = z.object({
+  messages: z.array(
+    z.object({ value: z.object({ package: z.object({ path: z.string() }).nullish() }).nullable() })
+  ),
+});
+const AddPackageTxSchema = AddPackageMessagesSchema.extend({ block_height: z.number() });
 
-interface GnoEventNode {
-  type?: string;
-  pkg_path?: string;
-  attrs?: { key: string; value: string }[];
-}
+// nullish(), not optional(). GraphQL returns JSON null for an absent field
+// rather than omitting the key, and optional() accepts undefined only —
+// live Topaz really does send `attrs: null` on some events, which a
+// fixture-only test would never have shown.
+const GnoEventNodeSchema = z.object({
+  type: z.string().nullish(),
+  pkg_path: z.string().nullish(),
+  attrs: z.array(z.object({ key: z.string(), value: z.string() })).nullish(),
+});
 
-interface RealmHistoryTx {
-  block_height: number;
-  index: number;
-  response: { events: (GnoEventNode | null)[] } | null;
-}
+const RealmHistoryTxSchema = z.object({
+  block_height: z.number(),
+  index: z.number(),
+  response: z.object({ events: z.array(GnoEventNodeSchema.nullable()) }).nullable(),
+});
 
 export interface RealmGasStat {
   packagePath: string;
@@ -79,21 +92,23 @@ export interface ChainActivityStats {
   topDeployers: AddressActivityStat[];
 }
 
-interface ActivityMessageValue {
-  pkg_path?: string;
-  caller?: string;
-  creator?: string;
-  package?: { path: string };
-}
+const ActivityMessageValueSchema = z.object({
+  pkg_path: z.string().nullish(),
+  caller: z.string().nullish(),
+  creator: z.string().nullish(),
+  package: z.object({ path: z.string() }).nullish(),
+});
 
-interface ActivityTx {
-  block_height: number;
-  index: number;
-  gas_used: number;
-  gas_wanted: number;
-  gas_fee: { amount: number } | null;
-  messages: { typeUrl: string; value: ActivityMessageValue | null }[];
-}
+const ActivityTxSchema = z.object({
+  block_height: z.number(),
+  index: z.number(),
+  gas_used: z.number(),
+  gas_wanted: z.number(),
+  gas_fee: z.object({ amount: z.number() }).nullable(),
+  messages: z.array(
+    z.object({ typeUrl: z.string(), value: ActivityMessageValueSchema.nullable() })
+  ),
+});
 
 const LIST_REALMS_QUERY = `{
   getTransactions(where: { success: { eq: true }, messages: { typeUrl: { eq: "add_package" } } }) {
@@ -102,11 +117,12 @@ const LIST_REALMS_QUERY = `{
   }
 }`;
 
-async function queryIndexer<T>(
+async function queryIndexer<T extends z.ZodTypeAny>(
   graphqlUrl: string,
   query: string,
+  schema: T,
   variables?: Record<string, unknown>
-): Promise<T> {
+): Promise<z.infer<T>> {
   const res = await fetchWithDeadline(graphqlUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -120,11 +136,12 @@ async function queryIndexer<T>(
   // so a malformed or unexpected payload became a "valid" typed value and
   // failed later, somewhere unrelated, as a confusing TypeError (AUD-022).
   //
-  // This validates the GraphQL ENVELOPE, not every field: that the body is
-  // JSON, that `errors` (when present) is really an array of messages, and
-  // that `data` is an object. Per-query field schemas would be stronger and
-  // are worth adding, but envelope validation is what turns "silently wrong
-  // data" into "a clear error naming the endpoint".
+  // Two layers. First the GraphQL ENVELOPE: that the body is JSON, that
+  // `errors` (when present) is really an array of messages, and that `data`
+  // is an object. Then the caller's own schema over `data`, so a field that
+  // changed type or went missing fails here, naming the endpoint and the
+  // field, instead of becoming `undefined` and surfacing later as a
+  // TypeError somewhere unrelated.
   let json: unknown;
   try {
     json = await res.json();
@@ -145,7 +162,18 @@ async function queryIndexer<T>(
       `Indexer at ${new URL(graphqlUrl).host} returned no data for this query.`
     );
   }
-  return body.data as T;
+  const parsed = schema.safeParse(body.data);
+  if (!parsed.success) {
+    // Name the field and what was wrong with it. "Unexpected response" sends
+    // the next person to read the whole GraphQL schema; "getTransactions.0.
+    // gas_used: expected number, received string" does not.
+    const issue = parsed.error.issues[0];
+    const path = issue?.path.join(".") ?? "(root)";
+    throw new Error(
+      `Indexer at ${new URL(graphqlUrl).host} returned an unexpected shape at ${path}: ${issue?.message ?? "validation failed"}`
+    );
+  }
+  return parsed.data;
 }
 
 // `creator` is a real filter field on MsgAddPackage, confirmed via
@@ -170,9 +198,10 @@ export async function countPackagesByCreator(
     throw new Error(`${network.id} has no indexer configured — package discovery needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: AddPackageTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
     COUNT_BY_CREATOR_QUERY,
+    z.object({ getTransactions: z.array(AddPackageMessagesSchema).nullable() }),
     { address }
   );
   const paths = new Set<string>();
@@ -212,9 +241,10 @@ export async function listRealms(
     throw new Error(`${network.id} has no indexer configured — realm discovery needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: AddPackageTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
-    LIST_REALMS_QUERY
+    LIST_REALMS_QUERY,
+    z.object({ getTransactions: z.array(AddPackageTxSchema).nullable() })
   );
 
   const latestHeightByPath = new Map<string, number>();
@@ -292,9 +322,10 @@ export async function recentEvents(
     throw new Error(`${network.id} has no indexer configured — event history needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: RealmHistoryTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
-    RECENT_EVENTS_QUERY
+    RECENT_EVENTS_QUERY,
+    z.object({ getTransactions: z.array(RealmHistoryTxSchema).nullable() })
   );
 
   const events: IndexerRecentEvent[] = [];
@@ -334,9 +365,10 @@ export async function realmHistory(
     throw new Error(`${network.id} has no indexer configured — realm history needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: RealmHistoryTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
     REALM_HISTORY_QUERY,
+    z.object({ getTransactions: z.array(RealmHistoryTxSchema).nullable() }),
     { pkgPath: packagePath }
   );
 
@@ -409,9 +441,10 @@ export async function chainActivityStats(
     throw new Error(`${network.id} has no indexer configured — chain activity stats need one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: ActivityTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
-    CHAIN_ACTIVITY_QUERY
+    CHAIN_ACTIVITY_QUERY,
+    z.object({ getTransactions: z.array(ActivityTxSchema).nullable() })
   );
   const txs = data.getTransactions ?? [];
 
@@ -513,10 +546,7 @@ export interface DailyActivity {
   txCount: number;
 }
 
-interface DailyActivityBlock {
-  time: string;
-  num_txs: number;
-}
+const DailyActivityBlockSchema = z.object({ time: z.string(), num_txs: z.number() });
 
 // Neither Gnomputer nor mygnoscan has a time-series chart at all (confirmed
 // live: mygnoscan's own client has zero chart/canvas/sparkline code, and
@@ -545,9 +575,10 @@ export async function dailyActivity(
     throw new Error(`${network.id} has no indexer configured — daily activity needs one.`);
   }
 
-  const data = await queryIndexer<{ getBlocks: DailyActivityBlock[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
-    DAILY_ACTIVITY_QUERY
+    DAILY_ACTIVITY_QUERY,
+    z.object({ getBlocks: z.array(DailyActivityBlockSchema).nullable() })
   );
 
   const byDate = new Map<string, { blockCount: number; txCount: number }>();
@@ -586,21 +617,21 @@ export interface IndexerTransaction {
   eventCount: number;
 }
 
-interface ListTransactionsMessageValue {
-  pkg_path?: string;
-  package?: { path: string };
-}
+const ListTransactionsMessageValueSchema = z.object({
+  pkg_path: z.string().nullish(),
+  package: z.object({ path: z.string() }).nullish(),
+});
 
-interface ListTransactionsTx {
-  block_height: number;
-  index: number;
-  success: boolean;
-  gas_used: number;
-  gas_wanted: number;
-  gas_fee: { amount: number } | null;
-  messages: { value: ListTransactionsMessageValue | null }[];
-  response: { events: unknown[] } | null;
-}
+const ListTransactionsTxSchema = z.object({
+  block_height: z.number(),
+  index: z.number(),
+  success: z.boolean(),
+  gas_used: z.number(),
+  gas_wanted: z.number(),
+  gas_fee: z.object({ amount: z.number() }).nullable(),
+  messages: z.array(z.object({ value: ListTransactionsMessageValueSchema.nullable() })),
+  response: z.object({ events: z.array(z.unknown()) }).nullable(),
+});
 
 // `where: {}` (no filter at all beyond the required argument itself) is
 // valid and returns BOTH successful and failed transactions — confirmed
@@ -633,9 +664,10 @@ export async function listTransactions(
     throw new Error(`${network.id} has no indexer configured — transaction history needs one.`);
   }
 
-  const data = await queryIndexer<{ getTransactions: ListTransactionsTx[] | null }>(
+  const data = await queryIndexer(
     network.indexerGraphqlUrl,
-    LIST_TRANSACTIONS_QUERY
+    LIST_TRANSACTIONS_QUERY,
+    z.object({ getTransactions: z.array(ListTransactionsTxSchema).nullable() })
   );
 
   const transactions: IndexerTransaction[] = (data.getTransactions ?? []).slice(0, limit).map((tx) => {
