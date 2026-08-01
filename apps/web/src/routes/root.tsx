@@ -19,7 +19,8 @@ import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence
 import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
-import { useCustomNetworksPersistence } from "../shell/use-custom-networks-persistence";
+import { useNetworkPersistence } from "../shell/use-network-persistence";
+import { NetworkRecoveryBanner } from "../shell/network-recovery-banner";
 import { useGlobalShortcuts } from "../shell/use-global-shortcuts";
 import { useWalletInit } from "../shell/use-wallet-init";
 
@@ -30,7 +31,9 @@ function RootLayout() {
   useRealmTabsPersistence();
   useZoomPersistence();
   useBrowserHomePersistence();
-  useCustomNetworksPersistence();
+  // Owns the custom-network list hydration too — the active network can
+  // only be resolved once that list is known.
+  const { unresolvedNetworkId } = useNetworkPersistence();
   useGlobalShortcuts();
   useWalletInit();
   return (
@@ -49,6 +52,9 @@ function RootLayout() {
       </ErrorBoundary>
       <ErrorBoundary>
         <UpdateBanner />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <NetworkRecoveryBanner unresolvedNetworkId={unresolvedNetworkId} />
       </ErrorBoundary>
       <main>
         {/* The page had no <h1> at all, so screen-reader heading navigation

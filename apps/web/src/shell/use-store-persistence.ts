@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { StoreApi, UseBoundStore } from "zustand";
 import { useSdk } from "../sdk-context";
 
@@ -73,7 +73,12 @@ function defaultDeserialize<T>(raw: string): Partial<T> | null {
  * serialize/deserialize/onRestore are expected to be stable (module-level)
  * functions, not fresh closures each render — they're deliberately left out
  * of the effect dependency arrays below so passing a fresh arrow doesn't
- * force a re-fetch from sdk.uiState on every render. */
+ * force a re-fetch from sdk.uiState on every render.
+ *
+ * Returns whether the initial read has completed. Callers that need to
+ * distinguish "not stored" from "not read yet" depend on this — see
+ * use-network-persistence, where a custom network id that hasn't hydrated
+ * looks exactly like one that no longer exists. */
 export function useStorePersistence<T extends object>(
   storageKey: string,
   store: UseBoundStore<StoreApi<T>>,
@@ -84,7 +89,11 @@ export function useStorePersistence<T extends object>(
   }
 ) {
   const sdk = useSdk();
+  // Both a ref and state: the ref is read inside the subscribe callback
+  // below, which would otherwise close over a stale value, while the state
+  // is what lets a caller re-render once hydration finishes.
   const hydrated = useRef(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const serialize = options?.serialize ?? ((state: T) => JSON.stringify(state));
   const deserialize = options?.deserialize ?? defaultDeserialize<T>;
   const onRestore = options?.onRestore;
@@ -117,6 +126,7 @@ export function useStorePersistence<T extends object>(
         }
       }
       hydrated.current = true;
+      if (!cancelled) setIsHydrated(true);
     })();
     return () => {
       cancelled = true;
@@ -134,4 +144,6 @@ export function useStorePersistence<T extends object>(
     });
     // serialize/deserialize/onRestore deliberately omitted — see doc comment above.
   }, [sdk, storageKey, store]);
+
+  return isHydrated;
 }
