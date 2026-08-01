@@ -3,6 +3,7 @@ import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
 import { useCustomNetworksStore, buildCustomNetworkConfig } from "./custom-networks-store";
+import { probeNetwork, isLocalEndpoint } from "./probe-network";
 import { NetworkMonitor } from "../routes/network-monitor";
 
 const STATE_LABEL: Record<string, string> = {
@@ -21,6 +22,7 @@ export function SettingsNetworkTab() {
   const [nameDraft, setNameDraft] = useState("");
   const [rpcUrlDraft, setRpcUrlDraft] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
+  const [probing, setProbing] = useState(false);
 
   const allNetworks = [...sdk.networks.list(), ...customNetworks];
 
@@ -39,7 +41,7 @@ export function SettingsNetworkTab() {
     setActiveNetwork(id);
   }
 
-  function addNetwork(e: React.FormEvent) {
+  async function addNetwork(e: React.FormEvent) {
     e.preventDefault();
     setAddError(null);
     let url: URL;
@@ -57,11 +59,23 @@ export function SettingsNetworkTab() {
       setAddError("Give it a name.");
       return;
     }
-    const config = buildCustomNetworkConfig(nameDraft, rpcUrlDraft.trim());
-    if (allNetworks.some((n) => n.id === config.id)) {
+    if (allNetworks.some((n) => n.id === buildCustomNetworkConfig(nameDraft, "http://x").id)) {
       setAddError("A network with that name already exists.");
       return;
     }
+
+    // Probe BEFORE saving. Saving an endpoint that turns out to be
+    // unreachable, CORS-blocked, or not an RPC at all leaves the app on a
+    // network it cannot use, with no explanation of which of those it was.
+    setProbing(true);
+    const probe = await probeNetwork(rpcUrlDraft.trim());
+    setProbing(false);
+    if (!probe.ok) {
+      setAddError(probe.message);
+      return;
+    }
+
+    const config = buildCustomNetworkConfig(nameDraft, rpcUrlDraft.trim(), probe.chainId);
     addCustomNetwork(config);
     // Not activate(config.id) — allNetworks is a snapshot from this render,
     // taken before addCustomNetwork's state update is visible, so a lookup
@@ -113,8 +127,20 @@ export function SettingsNetworkTab() {
           <ul className="settings-network-links">
             {customNetworks.map((n) => (
               <li key={n.id}>
-                <span className="settings-network-links__label">{n.name}</span>
-                <span className="custom-network__rpc-url">{n.rpcUrl}</span>
+                <span className="settings-network-links__label">
+                  {n.name}
+                  {isLocalEndpoint(n.rpcUrl) && (
+                    <span className="custom-network__tag" title="This endpoint is on your own machine">
+                      local
+                    </span>
+                  )}
+                </span>
+                <span className="custom-network__rpc-url">
+                  {n.rpcUrl}
+                  <span className="custom-network__chain-id">
+                    {n.chainId === "unknown" ? "chain ID unknown" : `chain ${n.chainId}`}
+                  </span>
+                </span>
                 <button type="button" onClick={() => removeNetwork(n.id)}>
                   Remove
                 </button>
@@ -123,7 +149,7 @@ export function SettingsNetworkTab() {
           </ul>
         </div>
       )}
-      <form className="custom-network-form" onSubmit={addNetwork}>
+      <form className="custom-network-form" onSubmit={(e) => void addNetwork(e)}>
         <p className="settings-section-label">Add a custom network</p>
         <label>
           Name
@@ -145,10 +171,19 @@ export function SettingsNetworkTab() {
             placeholder="http://127.0.0.1:26657"
           />
         </label>
-        <button type="submit" disabled={!nameDraft.trim() || !rpcUrlDraft.trim()}>
-          Add and switch to it
+        <button type="submit" disabled={probing || !nameDraft.trim() || !rpcUrlDraft.trim()}>
+          {probing ? "Checking the endpoint…" : "Check and add"}
         </button>
-        {addError && <p className="state-line">{addError}</p>}
+        <p className="custom-network-form__note">
+          The endpoint is checked before it is saved, and its chain ID is read from it rather
+          than assumed. A remote endpoint must be <code>https://</code> and must allow requests
+          from this page; <code>http://</code> works only for localhost.
+        </p>
+        {addError && (
+          <p className="state-line" role="alert" data-error="true">
+            {addError}
+          </p>
+        )}
       </form>
     </div>
   );

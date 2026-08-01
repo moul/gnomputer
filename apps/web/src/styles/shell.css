@@ -4018,3 +4018,32 @@ main {
   white-space: nowrap;
   border: 0;
 }
+
+.custom-network-form__note {
+  font-size: 11px;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+
+.custom-network-form__note code {
+  font-family: var(--font-mono);
+}
+
+/* A custom endpoint on your own machine behaves differently from a remote
+   one (plain http is allowed, nobody else can reach it), so it says which
+   it is rather than leaving the URL to be read carefully. */
+.custom-network__tag {
+  margin-left: var(--space-1);
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.custom-network__chain-id {
+  margin-left: var(--space-2);
+  font-size: 11px;
+  color: var(--text-faint);
+}
