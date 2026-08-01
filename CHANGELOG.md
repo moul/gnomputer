@@ -6,6 +6,13 @@ banner links here.
 
 ## 2026-08-01
 
+- Mistyped addresses are caught instead of being looked up. Address
+  validation checked only the shape — "g1" plus the right number of
+  characters — so a single wrong character passed and the app went off
+  to query an account that cannot exist, reporting it as simply not
+  found. It now verifies the bech32 checksum, which is what the checksum
+  is for. This also means a typo'd address in realm output no longer
+  becomes a clickable link.
 - Username and address lookups no longer build their chain query by
   pasting your input into it. Text containing a quote used to escape the
   query and be interpreted as code by the node; it is now encoded as

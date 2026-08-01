@@ -9,5 +9,9 @@
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
-  "references": [{ "path": "../../packages/app-sdk" }, { "path": "../../packages/lenses" }]
+  "references": [
+    { "path": "../../packages/app-sdk" },
+    { "path": "../../packages/entities" },
+    { "path": "../../packages/lenses" }
+  ]
 }

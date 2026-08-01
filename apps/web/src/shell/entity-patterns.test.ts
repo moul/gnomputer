@@ -1,7 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { matchEntityAt, matchWholeEntity } from "./entity-patterns";
 
-const ADDRESS = `g1${"a".repeat(30)}`;
+// A real Topaz address. It has to be real now: the address branch verifies
+// the bech32 checksum, so `g1` + 30 arbitrary characters — what this used to
+// be — is correctly no longer recognised as an address.
+const ADDRESS = "g1manfred47kzduec920z88wfr64ylksmdcedlf5";
 
 describe("matchEntityAt", () => {
   it("finds an address anywhere within surrounding prose", () => {
@@ -76,5 +79,23 @@ describe("matchWholeEntity", () => {
 
   it("returns null for a string matching none of the known shapes", () => {
     expect(matchWholeEntity("not-an-entity")).toBeNull();
+  });
+});
+
+describe("bech32 verification", () => {
+  it("ignores a shape-valid address whose checksum is wrong", () => {
+    // The regex still matches this — it is "g1" followed by lowercase
+    // alphanumerics of a plausible length. Only the checksum tells them
+    // apart, and without it a typo becomes a link to an account that
+    // cannot exist (AUD-031).
+    const flipped = `${ADDRESS.slice(0, -1)}4`;
+    expect(flipped).toMatch(/^g1[a-z0-9]{25,50}$/);
+    expect(matchWholeEntity(flipped)).toBeNull();
+    expect(matchEntityAt(`see ${flipped} for details`)).toBeNull();
+  });
+
+  it("still finds a later valid entity when an earlier candidate fails the checksum", () => {
+    const flipped = `${ADDRESS.slice(0, -1)}4`;
+    expect(matchEntityAt(`${flipped} and @moul`)).toEqual({ kind: "username", text: "@moul" });
   });
 });

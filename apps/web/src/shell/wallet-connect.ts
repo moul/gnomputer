@@ -1,19 +1,17 @@
 import type { GnomputerSDK } from "@gnomputer/app-sdk";
 import { useWalletStore } from "./wallet-store";
+import { isValidGnoAddress } from "@gnomputer/entities";
 
 export const ADENA_INSTALL_URL = "https://www.adena.app/";
-
-// Same convention as entity-patterns.ts's inline address-detection regex
-// (bech32 gno addresses: "g1" prefix, 25-50 further lowercase/digit chars).
-const GNO_ADDRESS_PATTERN = /^g1[a-z0-9]{25,50}$/;
 
 export function isAdenaInstalled(): boolean {
   return typeof window !== "undefined" && !!window.adena;
 }
 
-export function isValidGnoAddress(address: string): boolean {
-  return GNO_ADDRESS_PATTERN.test(address.trim());
-}
+// Re-exported so the many callers that import it from here keep working;
+// the implementation is a real bech32 decode in @gnomputer/entities. It was
+// a shape-only regex, which accepts a checksum-invalid address (AUD-031).
+export { isValidGnoAddress };
 
 async function refreshAccount(): Promise<boolean> {
   if (!window.adena) return false;
