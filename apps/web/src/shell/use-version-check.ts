@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { REMOTE_TIMEOUT_MS } from "./remote-content";
 
 // Frequent enough to notice a new deploy within a session, not so frequent
 // it's a meaningful load on whatever's serving version.json.
@@ -26,7 +27,15 @@ export function useVersionCheck(): VersionFile | null {
     async function check() {
       try {
         const url = `${import.meta.env.BASE_URL}version.json?t=${Date.now()}`;
-        const res = await fetch(url, { cache: "no-store" });
+        // Deliberately not going through remote-content: this is
+        // same-origin, purely informational, and swallows every failure, so
+        // the adapter's typed errors would have nowhere to go. It does need
+        // the deadline, though — on a polling interval, a request that never
+        // settles leaks one pending fetch per tick, forever.
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: AbortSignal.timeout(REMOTE_TIMEOUT_MS),
+        });
         if (!res.ok) return;
         const data = (await res.json()) as VersionFile;
         if (!cancelled && data.hash && data.hash !== __GIT_HASH__) {

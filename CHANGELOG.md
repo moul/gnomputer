@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Resources now explains a GitHub rate limit instead of showing "403
+  Forbidden", which read as a permissions problem and gave no hint that
+  waiting would fix it. The docs and awesome-gno fetches also gained the
+  same 15-second deadline the chain requests already had, so a hung
+  third party can no longer leave the panel spinning.
 - Mistyped addresses are caught instead of being looked up. Address
   validation checked only the shape — "g1" plus the right number of
   characters — so a single wrong character passed and the app went off
