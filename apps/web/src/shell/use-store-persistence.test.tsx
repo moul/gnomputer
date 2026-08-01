@@ -47,15 +47,20 @@ describe("useStorePersistence", () => {
     renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
 
     // Nothing is written until hydration completes AND a change happens
-    // afterward — give the hydration microtask a tick before changing state,
-    // so this doesn't race the "if (!hydrated.current) return" guard.
-    await new Promise((r) => setTimeout(r, 20));
-    store.getState().setCount(7);
+    // afterward, so this has to wait out the "if (!hydrated.current) return"
+    // guard. A fixed 20ms sleep used to do that and flaked repeatedly under
+    // load (it was the single most frequent red build this session). Instead,
+    // poll for an observable consequence of hydration: once a write lands,
+    // hydration must have finished.
+    await waitFor(
+      async () => {
+        store.getState().setCount(7);
+        const raw = await sdk.uiState.get("counter");
+        expect(raw && JSON.parse(raw)).toMatchObject({ count: 7 });
+      },
+      { timeout: 3000 }
+    );
 
-    await waitFor(async () => {
-      const raw = await sdk.uiState.get("counter");
-      expect(raw && JSON.parse(raw)).toMatchObject({ count: 7 });
-    });
   });
 
   it("falls back to defaults instead of throwing when the stored value is corrupt JSON", async () => {
