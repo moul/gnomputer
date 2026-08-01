@@ -7,7 +7,7 @@ import { useResolveUser } from "../use-resolve-user";
 import { ErrorState } from "../shell/error-state";
 import { useWalletStore } from "../shell/wallet-store";
 import {
-  registerUsername,
+  registerUsernameIntent,
   isValidUsername,
   USERNAME_FORMAT_HINT,
   USERS_REGISTRY_PACKAGE,
@@ -15,6 +15,8 @@ import {
 import { gnowebTxLink } from "../shell/gnoweb-links";
 import { QrCode } from "../shell/qr-code";
 import { useAddressSuggestions } from "../shell/use-address-suggestions";
+import { submitIntent, type IntentPhase } from "../shell/transaction-intent";
+import { TransactionReview } from "../shell/transaction-review";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 // How many recently-looked-up addresses show — mirrors island-clock.tsx's
@@ -69,13 +71,33 @@ function useRecentlyLookedUpAddresses(): string[] {
  * connected address already has a username via the same ResolveAny lookup
  * the search form uses, and offers to register one if not, via the real
  * Register() call on gno.land/r/gnoland/users/v1 (see register-username.ts). */
+// Polls the registry until the username actually resolves, so "confirmed"
+// means the chain agrees — not merely that the wallet accepted the tx.
+// Bounded, because a tx can legitimately never land.
+const CONFIRM_TIMEOUT_MS = 45_000;
+const CONFIRM_POLL_MS = 3000;
+
+async function waitForUsername(refetch: () => Promise<{ data?: unknown }>): Promise<boolean> {
+  const deadline = Date.now() + CONFIRM_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, CONFIRM_POLL_MS));
+    const { data } = await refetch();
+    const found = (data as { found?: boolean } | undefined)?.found;
+    if (found) return true;
+  }
+  return false;
+}
+
 function RegisterUsernameSection({ address }: { address: string }) {
   const sdk = useSdk();
   const account = useWalletStore((s) => s.account);
   const { data: result, isPending, refetch } = useResolveUser(address);
+  const networkChainId = useSdk().networks.getActive().chainId;
   const [draft, setDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Signature requests go through a review step; `tx` drives it.
+  const [tx, setTx] = useState<IntentPhase>({ phase: "idle" });
 
   if (isPending || !account) return null;
   if (result?.found && result.username) {
@@ -127,15 +149,14 @@ function RegisterUsernameSection({ address }: { address: string }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (!valid || submitting) return;
-          setSubmitting(true);
           setError(null);
-          registerUsername(account, trimmed)
-            .then(() => {
-              setDraft("");
-              void refetch();
-            })
-            .catch((err: unknown) => setError(err instanceof Error ? err.message : "Registration failed."))
-            .finally(() => setSubmitting(false));
+          try {
+            // Opens the review — nothing is sent to the wallet until the
+            // user approves it there.
+            setTx({ phase: "review", intent: registerUsernameIntent(trimmed) });
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Registration failed.");
+          }
         }}
       >
         <label>
@@ -157,6 +178,49 @@ function RegisterUsernameSection({ address }: { address: string }) {
       </form>
       {draft && !valid && <p className="state-line">{USERNAME_FORMAT_HINT}</p>}
       {error && <p className="settings-user-identity__error">{error}</p>}
+      <TransactionReview
+        state={tx}
+        account={account}
+        networkChainId={networkChainId}
+        // No explorer tx-URL convention verified for this network yet, so
+        // the hash is shown without a link rather than linking somewhere
+        // that may 404.
+        onCancel={() => setTx({ phase: "idle" })}
+        onDismiss={() => setTx({ phase: "idle" })}
+        onConfirm={() => {
+          if (tx.phase !== "review") return;
+          const intent = tx.intent;
+          setSubmitting(true);
+          setTx({ phase: "signing", intent });
+          submitIntent(intent, account, networkChainId)
+            .then(async ({ hash }) => {
+              // The wallet returning success means accepted+broadcast, not
+              // confirmed — so this waits for the chain rather than
+              // declaring victory here.
+              setTx({ phase: "submitted", intent, hash });
+              const confirmed = await waitForUsername(refetch);
+              setTx(
+                confirmed
+                  ? { phase: "confirmed", intent, hash }
+                  : {
+                      phase: "failed",
+                      intent,
+                      error:
+                        "Submitted, but it hasn't shown up on chain yet. It may still land — check your wallet or an explorer.",
+                    }
+              );
+              if (confirmed) setDraft("");
+            })
+            .catch((err: unknown) =>
+              setTx({
+                phase: "failed",
+                intent,
+                error: err instanceof Error ? err.message : "Registration failed.",
+              })
+            )
+            .finally(() => setSubmitting(false));
+        }}
+      />
     </div>
   );
 }

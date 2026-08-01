@@ -1,4 +1,4 @@
-import type { WalletAccount } from "./wallet-store";
+import type { TransactionIntent } from "./transaction-intent";
 
 // gno.land/r/sys/users itself is read-only (ResolveName/ResolveAddress) —
 // registration actually goes through its whitelisted controller realm,
@@ -18,29 +18,22 @@ export function isValidUsername(username: string): boolean {
   return USERNAME_PATTERN.test(username);
 }
 
-/** Calls the real Register(username) function via Adena's DoContract — a
- * /vm.m_call message with the 1 GNOT registration fee attached as `send`,
- * exactly matching what users.gno's Register() checks for. */
-export async function registerUsername(account: WalletAccount, username: string): Promise<void> {
-  if (!window.adena) throw new Error("Adena is not available.");
+/** Describes the registration as a reviewable intent instead of submitting
+ * it. Building the intent and *submitting* it are deliberately separate:
+ * everything routes through submitIntent() (transaction-intent.ts), which
+ * is the one place that enforces the wallet/network chain-match and is
+ * reached only after the user has seen a review. This function used to call
+ * window.adena.DoContract directly with neither (AUD-001/002/003, #92). */
+export function registerUsernameIntent(username: string): TransactionIntent {
   if (!isValidUsername(username)) {
     throw new Error(`Invalid username. ${USERNAME_FORMAT_HINT}`);
   }
-  const res = await window.adena.DoContract({
-    messages: [
-      {
-        type: "/vm.m_call",
-        value: {
-          caller: account.address,
-          send: REGISTER_PRICE_UGNOT,
-          pkg_path: USERS_REGISTRY_PACKAGE,
-          func: "Register",
-          args: [username],
-        },
-      },
-    ],
-  });
-  if (res.status !== "success") {
-    throw new Error(res.message || "Registration failed.");
-  }
+  return {
+    summary: `Register the username "${username}"`,
+    packagePath: USERS_REGISTRY_PACKAGE,
+    func: "Register",
+    args: [username],
+    send: REGISTER_PRICE_UGNOT,
+    sendReason: "the registry's fixed registration price",
+  };
 }
