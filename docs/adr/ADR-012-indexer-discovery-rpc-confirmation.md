@@ -1,5 +1,9 @@
 # ADR-012: Indexer discovery deferred, RPC-only for Slice 1
 
+> **The CORS findings below are superseded by [ADR-018](./ADR-018-topaz-indexer-is-cors-enabled.md).**
+> Topaz's tx-indexer now sends `access-control-allow-origin: *`. Everything
+> else in this record still stands.
+
 ## Context
 
 Spec §34 Phase 2 adds a tx-indexer adapter; Slice 1 (Phase 0/1) does not require it.

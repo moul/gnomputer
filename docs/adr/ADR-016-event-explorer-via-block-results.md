@@ -1,5 +1,9 @@
 # ADR-016: Event Explorer, unlocked via RPC `block_results`
 
+> **The CORS findings below are superseded by [ADR-018](./ADR-018-topaz-indexer-is-cors-enabled.md).**
+> Topaz's tx-indexer now sends `access-control-allow-origin: *`. Everything
+> else in this record still stands.
+
 ## Context
 
 ADR-015 concluded no Event Explorer was feasible against Topaz-class networks

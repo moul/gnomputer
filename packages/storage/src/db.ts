@@ -59,7 +59,12 @@ export interface ScriptRecord {
 export class GnomputerDB extends Dexie {
   workspaces!: EntityTable<WorkspaceRecord, "id">;
   trails!: EntityTable<TrailRecord, "id">;
-  trailSteps!: EntityTable<TrailStepRecord, "refUri">;
+  /* No id-property type argument: this table's primary key is the compound
+     index [trailId+order], not a single field. Naming "refUri" here — which
+     is neither the primary key nor unique across trails — made add() treat
+     refUri as optional, and would have made get(refUri) type-check while
+     never matching anything. */
+  trailSteps!: EntityTable<TrailStepRecord>;
   favorites!: EntityTable<FavoriteRecord, "refUri">;
   meta!: EntityTable<MetaRecord, "key">;
   queryCache!: EntityTable<QueryCacheRecord, "key">;

@@ -48,3 +48,29 @@ describe("GnomputerDB", () => {
     expect(steps.map((s) => s.label)).toEqual(["Foo", "Foo source"]);
   });
 });
+
+describe("trailSteps primary key", () => {
+  it("is keyed by [trailId+order], so the same refUri can appear in two trails", async () => {
+    // The table was typed EntityTable<TrailStepRecord, "refUri"> — declaring
+    // a primary key that isn't the real one. It never broke a call site,
+    // because nothing does get() on this table, but it made add() treat
+    // refUri as optional and would have let get(refUri) type-check while
+    // matching nothing.
+    const db = openDatabase("gnomputer-test-trailsteps-pk");
+    await db.delete();
+    await db.open();
+
+    const step = { refUri: "gno://topaz/realm/gno.land/r/demo/x", label: "x", createdAt: "t" };
+    await db.trailSteps.put({ ...step, trailId: "a", order: 0 });
+    await db.trailSteps.put({ ...step, trailId: "b", order: 0 });
+    expect(await db.trailSteps.count()).toBe(2);
+
+    // Same trail and order overwrites — that is the actual primary key.
+    await db.trailSteps.put({ ...step, trailId: "a", order: 0, label: "renamed" });
+    expect(await db.trailSteps.count()).toBe(2);
+    const [inA] = await db.trailSteps.where("trailId").equals("a").toArray();
+    expect(inA?.label).toBe("renamed");
+
+    db.close();
+  });
+});
