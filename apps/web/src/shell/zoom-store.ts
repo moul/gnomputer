@@ -5,10 +5,13 @@ export const ZOOM_MIN = 0.5;
 export const ZOOM_MAX = 1.5;
 export const ZOOM_STEP = 0.1;
 
-// A phone-sized viewport shows one window's worth of the desktop at a time
-// at 100% zoom — starting zoomed out gives a first-time mobile visitor an
-// actual overview instead of a single cropped window.
-const DEFAULT_MOBILE_ZOOM = 0.75;
+// Mobile used to default to 0.75 to fit more of a desktop-sized canvas on
+// screen — a workaround for having no real narrow-screen layout. Now that
+// panes stack and controls are sized for touch (shell.css's width media
+// queries), that zoom actively hurts: it shrank every 44px touch target to
+// 33px and made text harder to read, to show more of a layout that no
+// longer needs showing. 1 means a tapped target is the size it claims.
+const DEFAULT_MOBILE_ZOOM = 1;
 
 function clampZoom(zoom: number): number {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(zoom * 100) / 100));
