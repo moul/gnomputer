@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- A crash inside one app no longer takes down the whole desktop — each
+  window now contains its own failure, so your other open windows keep
+  working while the broken one offers a recovery card.
 - Installing Gnomputer as an app now gets a proper icon. It only shipped an
   SVG, which iOS ignores entirely (you'd get a blurry screenshot of the page)
   and Android letterboxes — there are now real PNG, maskable, and Apple

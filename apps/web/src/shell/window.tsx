@@ -7,6 +7,7 @@ import { desktopBounds } from "./desktop-bounds";
 import { useZoomStore } from "./zoom-store";
 import { useOverviewGeometry } from "./use-overview-geometry";
 import { useShellStore } from "../store";
+import { ErrorBoundary } from "./error-boundary";
 
 export type WindowAccent = "cyan" | "amber" | "magenta" | "green" | "blue" | "red";
 
@@ -180,7 +181,14 @@ export function Window({
             {title}
           </span>
         </div>
-        <div className="window__body">{children}</div>
+        <div className="window__body">
+          {/* Each window body gets its own boundary so one app crashing
+              takes down only that window — previously a render error in any
+              app bubbled to the route-level boundary and replaced the whole
+              desktop, losing every other open window with it. The inline
+              fallback keeps the crash inside this window's frame. */}
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </div>
       </div>
       {overviewGeometry && (
         <button
