@@ -207,8 +207,14 @@ export function IslandBar() {
         // used to sit in the app registry before the split.
         if (icon.key === "realm") {
           const discoverOpen = DISCOVER_WINDOW_IDS.some((id) => windows[id] && !windows[id]!.closed);
+          // A real <button>, not a <div>: as a div it was not focusable at
+          // all, so the entire Discover menu (Users/Packages/Transactions/
+          // Tokens/Governance) was unreachable by keyboard, and on touch it
+          // had no tap target either. It still has no click *action* of its
+          // own — IslandPopover attaches tap-to-toggle.
           const discoverTrigger = (
-            <div
+            <button
+              type="button"
               className="island__icon"
               data-open={discoverOpen}
               title="Discover"
@@ -218,7 +224,7 @@ export function IslandBar() {
             >
               🔭
               {discoverOpen && <span className="island__icon-dot" aria-hidden="true" />}
-            </div>
+            </button>
           );
           return [
             rendered,

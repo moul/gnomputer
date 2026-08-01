@@ -163,6 +163,13 @@
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
+  /* Now a real <button> (it was a non-focusable <div>, which made the
+     connection panel keyboard-unreachable) — strip the default button
+     chrome so it still reads as plain island text. */
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 /* Wraps every hoverable island trigger + its popover (island-popover.tsx) —

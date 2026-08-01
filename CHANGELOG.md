@@ -25,6 +25,14 @@ banner links here.
   realm, function, arguments, and how much is being sent, and why), refuses
   outright on a wallet/network chain mismatch, and distinguishes submitted
   from confirmed by waiting for the chain.
+- **Accessibility & touch:** the island bar's menus (Chain, Discover,
+  Browser, Editor, Settings, clock) were hover-only, and the Discover and
+  clock triggers weren't even focusable — so keyboard users couldn't reach
+  most of the app's navigation, and on a phone Discover's five apps were
+  unreachable entirely. All triggers are now real buttons that open on
+  focus or tap, close on Escape (returning focus) or an outside tap, and
+  expose `aria-haspopup`/`aria-expanded`. Mouse hover behaves exactly as
+  before.
 - Live views (Event Explorer, Blocks, Transactions, activity feeds) now share
   a single chain-height poll instead of each running their own. With three
   live windows open that's ~3x fewer status requests, and a backgrounded tab
