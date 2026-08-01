@@ -19,12 +19,17 @@ export function openInRealmTab(
   if (windowId === "realm") {
     void router.navigate({
       to: "/",
+      // lens=render is omitted rather than written out: it is the default,
+      // so a link with no lens must keep meaning "the default lens" and
+      // every link shared before this stays valid.
       search:
         target.packagePath === ""
           ? {}
-          : renderPath
-            ? { pkg: target.packagePath, path: renderPath }
-            : { pkg: target.packagePath },
+          : {
+              pkg: target.packagePath,
+              ...(renderPath ? { path: renderPath } : {}),
+              ...(!target.lens || target.lens === "render" ? {} : { lens: target.lens }),
+            },
     });
   }
 }

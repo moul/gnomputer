@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ReactNode } from "react";
 import { useSearch } from "@tanstack/react-router";
+import type { RealmLens } from "../shell/realm-tabs-store";
 import { RealmBrowser } from "./realm-browser";
 import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
@@ -53,7 +54,11 @@ export function Home() {
   useWindowViewportReclamp();
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
-  const search = useSearch({ strict: false }) as { pkg?: string; path?: string };
+  const search = useSearch({ strict: false }) as {
+    pkg?: string;
+    path?: string;
+    lens?: RealmLens;
+  };
   const packagePath = search.pkg ?? "";
   const renderPath = search.path ?? "";
 
@@ -90,7 +95,12 @@ export function Home() {
             centeredPlacement
             defaultGeometry={{ x: 0, y: 0, width: 960, height: 700 }}
           >
-            <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />
+            <RealmBrowser
+              windowId="realm"
+              packagePath={packagePath}
+              renderPath={renderPath}
+              lens={search.lens}
+            />
           </Window>
           <Window
             id="users"

@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Links now carry which lens you were on and which network you were on.
+  Sharing a realm's source used to open on Render for whoever you sent
+  it to, and a link to a betanet realm opened on Topaz — the same URL
+  showing a different chain's data. Links shared before this keep
+  working unchanged.
 - A first visit now says what it is: "You are browsing the shared
   computer", with a line on what to do next and that no wallet is
   needed. It clears itself as soon as you start using the app and never

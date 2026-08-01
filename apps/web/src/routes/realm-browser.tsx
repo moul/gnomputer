@@ -44,10 +44,12 @@ export function RealmBrowser({
   windowId,
   packagePath: urlPackagePath,
   renderPath: urlRenderPath,
+  lens: urlLens,
 }: {
   windowId: string;
   packagePath?: string;
   renderPath?: string;
+  lens?: RealmLens;
 }) {
   const ensureWindow = useRealmTabsStore((s) => s.ensureWindow);
   const win = useRealmTabsStore((s) => s.windows[windowId]);
@@ -72,11 +74,19 @@ export function RealmBrowser({
     const current = state.windows[windowId];
     const activeTab = current?.tabs.find((t) => t.id === current.activeTabId);
     if (!activeTab) return;
-    if (activeTab.packagePath === urlPackagePath && activeTab.renderPath === (urlRenderPath ?? "")) {
+    if (
+      activeTab.packagePath === urlPackagePath &&
+      activeTab.renderPath === (urlRenderPath ?? "") &&
+      (urlLens === undefined || activeTab.lens === urlLens)
+    ) {
       return;
     }
-    openInRealmTab(windowId, { packagePath: urlPackagePath, renderPath: urlRenderPath });
-  }, [isPrimary, urlPackagePath, urlRenderPath, windowId]);
+    openInRealmTab(windowId, {
+      packagePath: urlPackagePath,
+      renderPath: urlRenderPath,
+      lens: urlLens,
+    });
+  }, [isPrimary, urlPackagePath, urlRenderPath, urlLens, windowId]);
 
   if (!win) return null;
 
@@ -107,6 +117,18 @@ export function RealmBrowser({
     });
   }
 
+  /** The URL a tab should produce. Render is omitted rather than written as
+   * lens=render: it is the default, and a link with no lens must keep
+   * meaning "the default lens" so old links stay valid. */
+  function searchForTab(tab: { packagePath: string; renderPath: string; lens: RealmLens }) {
+    if (tab.packagePath === "") return {};
+    return {
+      pkg: tab.packagePath,
+      ...(tab.renderPath ? { path: tab.renderPath } : {}),
+      ...(tab.lens === "render" ? {} : { lens: tab.lens }),
+    };
+  }
+
   function selectTab(tabId: string) {
     setActiveTab(windowId, tabId);
     if (!isPrimary) return;
@@ -114,12 +136,7 @@ export function RealmBrowser({
     if (!tab) return;
     void router.navigate({
       to: "/",
-      search:
-        tab.packagePath === ""
-          ? {}
-          : tab.renderPath
-            ? { pkg: tab.packagePath, path: tab.renderPath }
-            : { pkg: tab.packagePath },
+      search: searchForTab(tab),
     });
   }
 
@@ -347,6 +364,22 @@ function RealmStatusBar({
   const updateActiveTab = useRealmTabsStore((s) => s.updateActiveTab);
   const gnowebUrl = sdk.networks.getActive().gnowebUrl;
 
+  /** Switching lens also updates the URL for the primary window, so the
+   * address bar is a link to what is actually on screen. Popped-out windows
+   * do not own the URL, so they only update their own state. */
+  function selectLens(lens: RealmLens) {
+    updateActiveTab(windowId, { lens });
+    if (windowId !== "realm" || tab.packagePath === "") return;
+    void router.navigate({
+      to: "/",
+      search: {
+        pkg: tab.packagePath,
+        ...(tab.renderPath ? { path: tab.renderPath } : {}),
+        ...(lens === "render" ? {} : { lens }),
+      },
+    });
+  }
+
   // A manual refresh often re-fetches identical content (e.g. a realm whose
   // Render() output hasn't changed since the last load) — with only the
   // spinner and a "Updated just now" label that read the same before and
@@ -376,7 +409,7 @@ function RealmStatusBar({
       label: lensTab.label,
       active: tab.lens === lensTab.id,
       disabled: lensTab.id === "render" && packageHasNoRender,
-      onClick: () => updateActiveTab(windowId, { lens: lensTab.id }),
+      onClick: () => selectLens(lensTab.id),
     })),
     ...(gnowebUrl
       ? [

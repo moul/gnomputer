@@ -11,6 +11,23 @@ export type RealmLens =
   | "graph"
   | "raw";
 
+const REALM_LENSES: readonly RealmLens[] = [
+  "render",
+  "source",
+  "docs",
+  "state",
+  "state-explorer",
+  "history",
+  "actions",
+  "graph",
+  "raw",
+];
+
+/** Narrows an unknown (a URL query value) to a lens we can actually render. */
+export function isRealmLens(value: unknown): value is RealmLens {
+  return typeof value === "string" && (REALM_LENSES as readonly string[]).includes(value);
+}
+
 export interface RealmTab {
   id: string;
   packagePath: string;
