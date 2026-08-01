@@ -12,6 +12,15 @@ banner links here.
   flushed on all of those paths, `Cmd/Ctrl+S` saves immediately, and the
   toolbar shows unsaved / saving / saved / **not saved** so you always know
   where your work stands.
+- **Signing safety:** username registration used to call the wallet
+  directly and submit a 1 GNOT transaction the moment you pressed the
+  button — no review, no check that your wallet was even on the same chain,
+  and it reported success as soon as the wallet accepted it (which is not
+  the same as landing on chain). Every signature request now goes through
+  one boundary that shows exactly what you're approving (chain, account,
+  realm, function, arguments, and how much is being sent, and why), refuses
+  outright on a wallet/network chain mismatch, and distinguishes submitted
+  from confirmed by waiting for the chain.
 - Live views (Event Explorer, Blocks, Transactions, activity feeds) now share
   a single chain-height poll instead of each running their own. With three
   live windows open that's ~3x fewer status requests, and a backgrounded tab

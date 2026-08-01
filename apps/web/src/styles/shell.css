@@ -3757,10 +3757,86 @@ main {
 }
 
 .editor-window__save-state[data-state="error"] {
+/* Transaction review — shown before any signature request. Deliberately a
+   modal: approving a fund-moving call is not something to do by reflex. */
+.tx-review {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.tx-review__panel {
+  width: min(440px, calc(100vw - 2 * var(--space-4)));
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+}
+
+.tx-review__summary {
+  margin: 0 0 var(--space-3);
+  font-weight: 700;
+}
+
+.tx-review__facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+}
+
+.tx-review__facts dt {
+  color: var(--text-dim);
+}
+
+.tx-review__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.tx-review__facts dd[data-emphasis="true"] {
+  font-weight: 700;
+  color: var(--warning);
+}
+
+.tx-review__mono {
+  font-family: var(--font-mono);
+}
+
+.tx-review__note,
+.tx-review__status {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.tx-review__status[data-ok="true"] {
+  color: var(--accent-green);
+}
+
+.tx-review__status[data-error="true"] {
   color: var(--danger);
   font-weight: 700;
 }
 
 .editor-window__save-state[data-state="saved"] {
   color: var(--accent-green);
+.tx-review__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.tx-review__confirm {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  font-weight: 700;
 }
