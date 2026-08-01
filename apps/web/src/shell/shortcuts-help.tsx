@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useShellStore } from "../store";
+import { useFocusTrap } from "./use-focus-trap";
 
 export interface Shortcut {
   keys: string;
@@ -33,10 +34,13 @@ export function ShortcutsHelp() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [shortcutsHelpOpen, setShortcutsHelpOpen]);
 
+  const trapRef = useFocusTrap<HTMLDivElement>(shortcutsHelpOpen);
+
   if (!shortcutsHelpOpen) return null;
 
   return (
     <div
+      ref={trapRef}
       role="dialog"
       aria-modal="true"
       aria-label="Keyboard shortcuts"

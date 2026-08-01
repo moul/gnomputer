@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Dialogs (command palette, keyboard-shortcuts help, transaction review)
+  now keep Tab inside them while open and return focus to whatever opened
+  them on close — previously focus wandered into the windows behind and was
+  dropped entirely on close.
 - The Browser's realm tabs are now real tabs: arrow keys (and Home/End)
   move between them, screen readers announce which is selected, and the
   "new tab"/"pop out" buttons are no longer mixed in among the tabs.

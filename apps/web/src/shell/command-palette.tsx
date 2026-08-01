@@ -4,6 +4,7 @@ import { useSdk } from "../sdk-context";
 import { matchWholeEntity } from "./entity-patterns";
 import { openEntityMatch, openRef } from "./open-ref";
 import { useRealmSuggestions } from "./use-realm-suggestions";
+import { useFocusTrap } from "./use-focus-trap";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 
@@ -14,6 +15,7 @@ export function CommandPalette() {
   const [notFound, setNotFound] = useState(false);
   const [resolving, setResolving] = useState(false);
   const suggestions = useRealmSuggestions(commandPaletteOpen, query);
+  const trapRef = useFocusTrap<HTMLDivElement>(commandPaletteOpen);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -84,6 +86,7 @@ export function CommandPalette() {
 
   return (
     <div
+      ref={trapRef}
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
