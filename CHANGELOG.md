@@ -6,6 +6,13 @@ banner links here.
 
 ## 2026-08-01
 
+- The island now shows which network you're on, the current block
+  height, and whether you're a guest — without opening a menu. It also
+  says "gnomputer", which mattered once the app is installed and there's
+  no browser tab carrying the name.
+- Changing a setting and reloading straight away no longer loses the
+  change. A fix last month covered the first write to a setting; this
+  covers every later one.
 - Links now carry which lens you were on and which network you were on.
   Sharing a realm's source used to open on Render for whoever you sent
   it to, and a link to a betanet realm opened on Topaz — the same URL

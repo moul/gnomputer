@@ -3,6 +3,7 @@ import { useRealmTabsStore } from "./realm-tabs-store";
 import { APP_REGISTRY, ISLAND_GROUPS } from "./app-registry";
 import { focusFamilyOrOpenDefault, realmFamilyIds } from "./focus-family";
 import { IslandPopover } from "./island-popover";
+import { IslandStatus } from "./island-status";
 import { IslandSettingsMenu } from "./island-settings-menu";
 import { IslandChainMenu } from "./island-chain-menu";
 import { IslandBrowserMenu } from "./island-browser-menu";
@@ -136,6 +137,13 @@ export function IslandBar() {
 
   return (
     <div className="island" role="toolbar" aria-label="Apps">
+      {/* The app never said its own name anywhere on screen. In a browser
+          tab the title carries it; installed as a PWA there is no tab
+          (AUD-011). Dim and small — identification, not branding. */}
+      <span className="island__wordmark" aria-hidden="true">
+        gnomputer
+      </span>
+      <span className="island__divider" aria-hidden="true" />
       <button
         type="button"
         className="island__icon"
@@ -235,6 +243,8 @@ export function IslandBar() {
         }
         return [rendered];
       })}
+      <span className="island__divider" aria-hidden="true" />
+      <IslandStatus />
       <IslandClock disabled={overviewOpen} />
     </div>
   );

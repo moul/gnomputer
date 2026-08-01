@@ -20,6 +20,13 @@ function mirrorKey(storageKey: string): string {
   return `${MIRROR_PREFIX}${storageKey}`;
 }
 
+/** Companion key holding when the IndexedDB value was written, so hydrate
+ * can tell which of the two copies is newer. Kept beside the value rather
+ * than wrapped around it so every value already stored stays readable. */
+function writtenAtKey(storageKey: string): string {
+  return `${storageKey}:writtenAt`;
+}
+
 interface Mirrored {
   value: string;
   at: number;
@@ -37,9 +44,9 @@ function readMirror(storageKey: string): Mirrored | null {
   }
 }
 
-function writeMirror(storageKey: string, value: string): void {
+function writeMirror(storageKey: string, value: string, at: number): void {
   try {
-    localStorage.setItem(mirrorKey(storageKey), JSON.stringify({ value, at: Date.now() }));
+    localStorage.setItem(mirrorKey(storageKey), JSON.stringify({ value, at }));
   } catch {
     // Private mode / quota — the IndexedDB write is still the real one.
   }
@@ -101,23 +108,41 @@ export function useStorePersistence<T extends object>(
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const stored = await sdk.uiState.get(storageKey);
-      // The mirror is a FALLBACK, never an override: it is used only when
-      // IndexedDB has nothing at all, which is exactly the aborted-write
-      // case this exists for.
+      const [stored, storedAt] = await Promise.all([
+        sdk.uiState.get(storageKey),
+        sdk.uiState.get(writtenAtKey(storageKey)),
+      ]);
+      const mirror = readMirror(storageKey);
+
+      // Whichever was written last wins, decided by comparing timestamps
+      // rather than by a fixed preference.
       //
-      // An earlier version preferred the mirror whenever the two disagreed.
-      // That was wrong — they disagree routinely (the mirror is written a
-      // moment before IndexedDB commits, and another tab can update
-      // IndexedDB), so a stale mirror could resurrect data the app had
-      // deliberately moved past. A test that stores corrupt JSON and
-      // expects defaults caught it doing exactly that.
+      // Preferring the mirror unconditionally is wrong: the two disagree
+      // routinely (the mirror is written a moment before IndexedDB commits,
+      // and another tab can update IndexedDB), so a stale mirror could
+      // resurrect data the app had deliberately moved past. A test that
+      // stores corrupt JSON and expects defaults caught that happening.
       //
-      // Honest limitation: this fixes an aborted FIRST write. If IndexedDB
-      // already holds an older value and the newer write is aborted, the
-      // older value still wins on reload — closing that would need a
-      // timestamp stored alongside the value in IndexedDB too.
-      const raw = stored ?? readMirror(storageKey)?.value ?? null;
+      // But preferring IndexedDB unconditionally — the previous rule — only
+      // fixed an aborted FIRST write. When IndexedDB already held an older
+      // value and the newer write was aborted by the navigation, the older
+      // value won. That was user-visible: change network, reload
+      // immediately, land back on the previous one. An e2e caught it under
+      // load, exactly as the comment here predicted it would behave.
+      //
+      // A missing IndexedDB timestamp means the value predates this and
+      // keeps its old precedence, so nothing already stored is overridden
+      // by a mirror of unknown age.
+      // Parsed only from a real string. Number(null) is 0, which is finite
+      // — reading a missing timestamp as the epoch would make the mirror
+      // win every time, which is precisely the bug this rule replaced.
+      const storedTime = typeof storedAt === "string" && storedAt !== "" ? Number(storedAt) : NaN;
+      const useMirror =
+        mirror !== null &&
+        (stored === null ||
+          stored === undefined ||
+          (Number.isFinite(storedTime) && mirror.at > storedTime));
+      const raw = (useMirror ? mirror.value : stored) ?? mirror?.value ?? null;
       if (!cancelled && raw) {
         const restored = deserialize(raw);
         if (restored) {
@@ -139,8 +164,10 @@ export function useStorePersistence<T extends object>(
       if (!hydrated.current) return;
       const value = serialize(state);
       // Synchronous first, so a reload immediately after this cannot lose it.
-      writeMirror(storageKey, value);
+      const at = Date.now();
+      writeMirror(storageKey, value, at);
       void sdk.uiState.set(storageKey, value);
+      void sdk.uiState.set(writtenAtKey(storageKey), String(at));
     });
     // serialize/deserialize/onRestore deliberately omitted — see doc comment above.
   }, [sdk, storageKey, store]);
