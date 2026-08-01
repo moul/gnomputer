@@ -1,19 +1,6 @@
+import { Suspense, lazy, type ReactNode } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { RealmBrowser } from "./realm-browser";
-import { Users } from "./users";
-import { DiscoverPackages } from "./discover-packages";
-import { TransactionExplorer } from "./transaction-explorer";
-import { DiscoverTokens } from "./discover-tokens";
-import { DiscoverGovernance } from "./discover-governance";
-import { NetworkMonitor } from "./network-monitor";
-import { ValidatorMonitor } from "./validator-monitor";
-import { BlockExplorer } from "./block-explorer";
-import { EventExplorer } from "./event-explorer";
-import { ChainStats } from "./chain-stats";
-import { Gnockpit } from "./gnockpit";
-import { Resources } from "./resources";
-import { Editor } from "./editor";
-import { ShellApp } from "./shell-app";
 import { Window } from "../shell/window";
 import { SettingsWindow } from "../shell/settings-window";
 import { HistoryWindow } from "../shell/history-window";
@@ -24,6 +11,36 @@ import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowViewportReclamp } from "../shell/use-window-viewport-reclamp";
 import { useWindowStore } from "../shell/window-store";
+
+// Every one of these apps starts closed, and <Window> returns null before
+// rendering its children — so with static imports their code still shipped
+// in the eager entry chunk and was parsed on boot for windows the user may
+// never open. Lazy means an app's code is fetched the first time its window
+// is actually opened (AUD-037). RealmBrowser is deliberately NOT lazy: it is
+// the one window open by default, so lazying it would only add a flash of
+// the fallback on every boot.
+const Users = lazy(() => import("./users").then((x) => ({ default: x.Users })));
+const DiscoverPackages = lazy(() => import("./discover-packages").then((x) => ({ default: x.DiscoverPackages })));
+const TransactionExplorer = lazy(() => import("./transaction-explorer").then((x) => ({ default: x.TransactionExplorer })));
+const DiscoverTokens = lazy(() => import("./discover-tokens").then((x) => ({ default: x.DiscoverTokens })));
+const DiscoverGovernance = lazy(() => import("./discover-governance").then((x) => ({ default: x.DiscoverGovernance })));
+const NetworkMonitor = lazy(() => import("./network-monitor").then((x) => ({ default: x.NetworkMonitor })));
+const ValidatorMonitor = lazy(() => import("./validator-monitor").then((x) => ({ default: x.ValidatorMonitor })));
+const BlockExplorer = lazy(() => import("./block-explorer").then((x) => ({ default: x.BlockExplorer })));
+const EventExplorer = lazy(() => import("./event-explorer").then((x) => ({ default: x.EventExplorer })));
+const ChainStats = lazy(() => import("./chain-stats").then((x) => ({ default: x.ChainStats })));
+const Gnockpit = lazy(() => import("./gnockpit").then((x) => ({ default: x.Gnockpit })));
+const Resources = lazy(() => import("./resources").then((x) => ({ default: x.Resources })));
+const Editor = lazy(() => import("./editor").then((x) => ({ default: x.Editor })));
+const ShellApp = lazy(() => import("./shell-app").then((x) => ({ default: x.ShellApp })));
+
+/** Windows are already framed chrome, so a lazy app only needs a quiet
+ * placeholder inside that frame while its chunk loads. */
+function LazyApp({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<p className="state-line" aria-busy="true">Loading…</p>}>{children}</Suspense>
+  );
+}
 
 export function Home() {
   // Bumped to v9 when Discover's shared-tab window was split into five
@@ -81,7 +98,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 180, y: 140, width: 520, height: 480 }}
           >
-            <Users />
+            <LazyApp>
+              <Users />
+            </LazyApp>
           </Window>
           <Window
             id="packages"
@@ -90,7 +109,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 200, y: 150, width: 560, height: 480 }}
           >
-            <DiscoverPackages />
+            <LazyApp>
+              <DiscoverPackages />
+            </LazyApp>
           </Window>
           <Window
             id="transactions"
@@ -99,7 +120,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 220, y: 160, width: 720, height: 500 }}
           >
-            <TransactionExplorer />
+            <LazyApp>
+              <TransactionExplorer />
+            </LazyApp>
           </Window>
           <Window
             id="tokens"
@@ -108,7 +131,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 240, y: 170, width: 560, height: 480 }}
           >
-            <DiscoverTokens />
+            <LazyApp>
+              <DiscoverTokens />
+            </LazyApp>
           </Window>
           <Window
             id="governance"
@@ -117,7 +142,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 260, y: 180, width: 600, height: 500 }}
           >
-            <DiscoverGovernance />
+            <LazyApp>
+              <DiscoverGovernance />
+            </LazyApp>
           </Window>
           <Window
             id="resources"
@@ -126,7 +153,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 220, y: 160, width: 640, height: 500 }}
           >
-            <Resources />
+            <LazyApp>
+              <Resources />
+            </LazyApp>
           </Window>
           <Window
             id="editor"
@@ -135,7 +164,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 260, y: 190, width: 720, height: 540 }}
           >
-            <Editor />
+            <LazyApp>
+              <Editor />
+            </LazyApp>
           </Window>
           <Window
             id="shell"
@@ -144,7 +175,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 300, y: 220, width: 640, height: 420 }}
           >
-            <ShellApp />
+            <LazyApp>
+              <ShellApp />
+            </LazyApp>
           </Window>
           <Window
             id="network-monitor"
@@ -153,7 +186,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 476, y: 0, width: 460, height: 400 }}
           >
-            <NetworkMonitor />
+            <LazyApp>
+              <NetworkMonitor />
+            </LazyApp>
           </Window>
           <Window
             id="validator-monitor"
@@ -162,7 +197,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 0, y: 356, width: 460, height: 360 }}
           >
-            <ValidatorMonitor />
+            <LazyApp>
+              <ValidatorMonitor />
+            </LazyApp>
           </Window>
           <Window
             id="block-explorer"
@@ -171,7 +208,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 396, y: 356, width: 720, height: 460 }}
           >
-            <BlockExplorer />
+            <LazyApp>
+              <BlockExplorer />
+            </LazyApp>
           </Window>
           <Window
             id="event-explorer"
@@ -180,7 +219,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 120, y: 100, width: 600, height: 460 }}
           >
-            <EventExplorer />
+            <LazyApp>
+              <EventExplorer />
+            </LazyApp>
           </Window>
           <Window
             id="chain-stats"
@@ -189,7 +230,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 140, y: 110, width: 480, height: 520 }}
           >
-            <ChainStats />
+            <LazyApp>
+              <ChainStats />
+            </LazyApp>
           </Window>
           <Window
             id="gnockpit"
@@ -198,7 +241,9 @@ export function Home() {
             startClosed
             defaultGeometry={{ x: 160, y: 130, width: 480, height: 380 }}
           >
-            <Gnockpit />
+            <LazyApp>
+              <Gnockpit />
+            </LazyApp>
           </Window>
           <SettingsWindow />
           <HistoryWindow />
