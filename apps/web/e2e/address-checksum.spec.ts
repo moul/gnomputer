@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openApp } from "./open-app";
 
 // A real Topaz address, and the same address with its last character
 // flipped. The second one still satisfies the old shape-only regex
@@ -9,7 +10,7 @@ const FLIPPED = `${REAL.slice(0, -1)}4`;
 test("a checksum-invalid address is not accepted as a manual identity", async ({ page }) => {
   await page.goto("/");
   await page.waitForSelector(".island__clock");
-  await page.locator('.island button[aria-label="Settings"]').click();
+  await openApp(page, "Settings");
   await page.waitForSelector("#window-settings .window__body");
   await page.locator('#window-settings button:has-text("USER")').first().click();
 

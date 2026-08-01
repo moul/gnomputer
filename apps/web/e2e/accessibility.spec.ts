@@ -48,6 +48,9 @@ for (const app of APPS) {
     // entry so the app itself is what gets scanned.
     const firstMenuItem = page.locator(".island-menu button").first();
     if (await firstMenuItem.isVisible().catch(() => false)) await firstMenuItem.click();
+    // The popover is hover-driven and stays up while the pointer is on the
+    // icon, which would put it in the scan.
+    await page.mouse.move(0, 0);
     await page.waitForSelector(".window__body", { state: "visible" });
     // Content arrives from the mock chain; scanning an empty shell would
     // pass without having looked at anything.

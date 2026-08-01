@@ -1,7 +1,8 @@
 import { test, expect } from "@playwright/test";
+import { openApp } from "./open-app";
 
 async function openNetworkSettings(page: import("@playwright/test").Page) {
-  await page.locator('.island button[aria-label="Settings"]').click();
+  await openApp(page, "Settings");
   await page.locator('#window-settings button:has-text("NETWORK")').first().click();
   return page.locator("#window-settings select").first();
 }

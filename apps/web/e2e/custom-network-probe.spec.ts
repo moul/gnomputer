@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openApp } from "./open-app";
 
 // Adding a custom network used to accept any http(s) URL, save it with
 // chainId "unknown", and switch to it — with nothing confirming the endpoint
@@ -10,7 +11,7 @@ test("a custom network is checked before it is saved, and its chain ID is read f
 }) => {
   await page.goto("/");
   await page.waitForSelector(".island__clock");
-  await page.locator('.island button[aria-label="Settings"]').click();
+  await openApp(page, "Settings");
   await page.locator('#window-settings button:has-text("NETWORK")').first().click();
 
   const name = page.locator("#window-settings input").nth(0);

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { openApp } from "./open-app";
 
 // Unauthenticated api.github.com allows 60 requests an hour per IP, and
 // exhausting it returns 403. That used to surface as a bare "403 Forbidden",
@@ -22,7 +23,7 @@ test("a GitHub rate limit is explained, not shown as 403 Forbidden", async ({ pa
 
   await page.goto("/");
   await page.waitForSelector(".island__clock");
-  await page.locator('.island button[aria-label="Resources"]').click();
+  await openApp(page, "Resources");
 
   await expect(page.locator("#window-resources")).toContainText(/rate limit/i, {
     timeout: 15000,
