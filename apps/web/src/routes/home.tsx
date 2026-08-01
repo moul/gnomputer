@@ -87,6 +87,7 @@ export function Home() {
             id="realm"
             title={realmTitle}
             accent="cyan"
+            centeredPlacement
             defaultGeometry={{ x: 0, y: 0, width: 960, height: 700 }}
           >
             <RealmBrowser windowId="realm" packagePath={packagePath} renderPath={renderPath} />

@@ -21,6 +21,7 @@ import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 import { useNetworkPersistence } from "../shell/use-network-persistence";
 import { NetworkRecoveryBanner } from "../shell/network-recovery-banner";
+import { FirstRunNote } from "../shell/first-run-note";
 import { useGlobalShortcuts } from "../shell/use-global-shortcuts";
 import { useWalletInit } from "../shell/use-wallet-init";
 
@@ -55,6 +56,9 @@ function RootLayout() {
       </ErrorBoundary>
       <ErrorBoundary>
         <NetworkRecoveryBanner unresolvedNetworkId={unresolvedNetworkId} />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <FirstRunNote />
       </ErrorBoundary>
       <main>
         {/* The page had no <h1> at all, so screen-reader heading navigation
