@@ -28,10 +28,10 @@ jobs:
           # is not necessarily the commit CI just verified. Pin to the exact
           # SHA that passed so we never deploy something CI didn't check.
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
-      - uses: actions/setup-node@v4
-        with: { node-version: "20" }
-      - run: npm i -g pnpm@9.15.0
-      - run: pnpm install --frozen-lockfile
+      # The same toolchain CI uses. This job had its own drifted copy —
+      # no turbo cache, and pnpm installed by hand at a version that had to
+      # be kept in step with package.json's packageManager field.
+      - uses: ./.github/actions/setup
       - run: pnpm --filter @gnomputer/web build
         env:
           VITE_BASE_PATH: /gnomputer/
