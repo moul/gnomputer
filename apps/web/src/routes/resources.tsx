@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Markdown } from "../shell/markdown-lazy";
 import { ErrorState } from "../shell/error-state";
 import { buildDocTree } from "../shell/doc-tree";
+import { fetchRemoteJson, fetchRemoteText } from "../shell/remote-content";
 import { DocTreeView } from "../shell/doc-tree-view";
 import { useResourcesStore, type ResourcesTab } from "../shell/resources-store";
 import { useStorePersistence } from "../shell/use-store-persistence";
@@ -22,11 +23,9 @@ const TABS: { id: ResourcesTab; label: string }[] = [
 function useRemoteText(url: string) {
   return useQuery({
     queryKey: ["remote-text", url],
-    queryFn: async () => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      return res.text();
-    },
+    // signal is react-query's — passing it through is what makes an
+    // unmounted window's fetch actually stop.
+    queryFn: ({ signal }) => fetchRemoteText(url, signal),
   });
 }
 
@@ -64,11 +63,13 @@ export function Resources() {
 
 // The whole docs/ folder, enumerated live via GitHub's git tree API
 // (confirmed CORS-enabled) rather than a hand-picked subset — a real
-// directory listing, not a guess at which files matter. Two requests, not
-// one: the root tree (non-recursive, ~9,600 entries across the WHOLE
-// monorepo, 2.9MB) only to find docs/'s own tree sha, then that subtree
-// recursively (73 entries, ~21KB) — fetching the whole repo recursively
-// just to keep 73 of its 9,600 entries was the real reason this was slow.
+// directory listing, not a guess at which files matter.
+//
+// Two requests rather than one, deliberately. The root tree is fetched
+// NON-recursively purely to find docs/'s own tree sha (measured 2026-08-01:
+// 32 entries, 8.6KB), then that subtree recursively (21KB). Fetching the
+// root recursively instead would pull the whole ~9,600-entry monorepo tree
+// to keep 73 of its entries.
 function DocsTab() {
   const selected = useResourcesStore((s) => s.selectedDoc);
   const setSelected = useResourcesStore((s) => s.setSelectedDoc);
@@ -79,18 +80,17 @@ function DocsTab() {
     refetch: refetchTree,
   } = useQuery({
     queryKey: ["repo-tree", REPO_ROOT_TREE_API],
-    queryFn: async () => {
-      const rootRes = await fetch(REPO_ROOT_TREE_API);
-      if (!rootRes.ok) throw new Error(`${rootRes.status} ${rootRes.statusText}`);
-      const rootBody = (await rootRes.json()) as { tree: { path: string; type: string; sha: string }[] };
+    queryFn: async ({ signal }) => {
+      const rootBody = await fetchRemoteJson<{
+        tree: { path: string; type: string; sha: string }[];
+      }>(REPO_ROOT_TREE_API, signal);
       const docsEntry = rootBody.tree.find((t) => t.path === "docs" && t.type === "tree");
       if (!docsEntry) throw new Error("docs/ not found in gnolang/gno's root tree");
 
-      const docsRes = await fetch(
-        `https://api.github.com/repos/gnolang/gno/git/trees/${docsEntry.sha}?recursive=1`
+      const docsBody = await fetchRemoteJson<{ tree: { path: string; type: string }[] }>(
+        `https://api.github.com/repos/gnolang/gno/git/trees/${docsEntry.sha}?recursive=1`,
+        signal
       );
-      if (!docsRes.ok) throw new Error(`${docsRes.status} ${docsRes.statusText}`);
-      const docsBody = (await docsRes.json()) as { tree: { path: string; type: string }[] };
       const paths = docsBody.tree.filter((t) => t.type === "blob").map((t) => `docs/${t.path}`);
       return buildDocTree(paths, "docs/");
     },
