@@ -115,11 +115,37 @@ async function queryIndexer<T>(
   if (!res.ok) {
     throw new Error(`Indexer request failed: ${res.status} ${res.statusText}`);
   }
-  const json = await res.json();
-  if (json.errors?.length) {
-    throw new Error(json.errors[0].message ?? "Indexer query failed");
+  // Everything below treats the response as untrusted until proven
+  // otherwise. Previously this did `return json.data as T` — a bare cast,
+  // so a malformed or unexpected payload became a "valid" typed value and
+  // failed later, somewhere unrelated, as a confusing TypeError (AUD-022).
+  //
+  // This validates the GraphQL ENVELOPE, not every field: that the body is
+  // JSON, that `errors` (when present) is really an array of messages, and
+  // that `data` is an object. Per-query field schemas would be stronger and
+  // are worth adding, but envelope validation is what turns "silently wrong
+  // data" into "a clear error naming the endpoint".
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(`Indexer at ${new URL(graphqlUrl).host} returned a non-JSON response.`);
   }
-  return json.data as T;
+  if (typeof json !== "object" || json === null) {
+    throw new Error(`Indexer at ${new URL(graphqlUrl).host} returned an unexpected response.`);
+  }
+
+  const body = json as { errors?: unknown; data?: unknown };
+  if (Array.isArray(body.errors) && body.errors.length > 0) {
+    const first = body.errors[0] as { message?: unknown };
+    throw new Error(typeof first?.message === "string" ? first.message : "Indexer query failed");
+  }
+  if (typeof body.data !== "object" || body.data === null) {
+    throw new Error(
+      `Indexer at ${new URL(graphqlUrl).host} returned no data for this query.`
+    );
+  }
+  return body.data as T;
 }
 
 // `creator` is a real filter field on MsgAddPackage (confirmed via

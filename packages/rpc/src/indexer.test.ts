@@ -517,3 +517,59 @@ describe("listTransactions", () => {
     await expect(listTransactions({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
   });
 });
+
+describe("indexer response validation", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("rejects a non-JSON response instead of casting it into a typed value", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new SyntaxError("Unexpected token < in JSON");
+      },
+    }) as unknown as typeof fetch;
+
+    // A proxy or error page returning HTML used to become `undefined` data
+    // and fail later somewhere unrelated.
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(/non-JSON response/);
+  });
+
+  it("rejects a response whose data isn't an object", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: null }),
+    }) as unknown as typeof fetch;
+
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(/no data/);
+  });
+
+  it("names the endpoint host so the error is actionable", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => "not an object",
+    }) as unknown as typeof fetch;
+
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow(/indexer\.example/);
+  });
+
+  it("still surfaces a real GraphQL error message", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ errors: [{ message: "field is not filterable" }] }),
+    }) as unknown as typeof fetch;
+
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow("field is not filterable");
+  });
+
+  it("tolerates a malformed errors entry rather than throwing on undefined.message", async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ errors: [null] }),
+    }) as unknown as typeof fetch;
+
+    await expect(listRealms(NETWORK, NOW)).rejects.toThrow("Indexer query failed");
+  });
+});
