@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- Opening Gnomputer on a phone after using it on a desktop no longer
+  restores windows wider than the screen — saved layouts are now fitted to
+  the viewport on load, not just repositioned.
 - Dialogs (command palette, keyboard-shortcuts help, transaction review)
   now keep Tab inside them while open and return focus to whatever opened
   them on close — previously focus wandered into the windows behind and was
