@@ -198,6 +198,40 @@ describe("durability against a reload that aborts the IndexedDB write", () => {
     expect(store.getState().count).not.toBe(7);
   });
 
+  it("prefers the mirror when it is newer than what IndexedDB holds", async () => {
+    // The case the previous rule could not handle, and it was user-visible:
+    // change the network, reload immediately, and land back on the previous
+    // one. IndexedDB already held a value, so "mirror only when IndexedDB
+    // has nothing" left the older value winning. An e2e caught it under
+    // load. Now the newer of the two wins, decided by timestamp.
+    const sdk = createGnomputerSDK({ dbName: DB_NAME });
+    await sdk.uiState.set("counter", JSON.stringify({ count: 3 }));
+    await sdk.uiState.set("counter:writtenAt", String(Date.now() - 5_000));
+
+    localStorage.setItem(
+      "gnomputer:mirror:counter",
+      JSON.stringify({ value: JSON.stringify({ count: 7 }), at: Date.now() })
+    );
+
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
+    await waitFor(() => expect(store.getState().count).toBe(7));
+  });
+
+  it("still prefers IndexedDB when it is the newer of the two", async () => {
+    const sdk = createGnomputerSDK({ dbName: DB_NAME });
+    localStorage.setItem(
+      "gnomputer:mirror:counter",
+      JSON.stringify({ value: JSON.stringify({ count: 7 }), at: Date.now() - 5_000 })
+    );
+    await sdk.uiState.set("counter", JSON.stringify({ count: 3 }));
+    await sdk.uiState.set("counter:writtenAt", String(Date.now()));
+
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
+    await waitFor(() => expect(store.getState().count).toBe(3));
+  });
+
   it("writes the mirror synchronously, before any await", async () => {
     const sdk = createGnomputerSDK({ dbName: DB_NAME });
     // Seed a value so hydration is observable — the store's default is 0,
