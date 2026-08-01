@@ -157,6 +157,29 @@ export function Window({
       >
         <div
           className="window__titlebar"
+          // Focusable so a keyboard user can reach the window chrome at
+          // all; arrow keys then move it and Shift+arrows resize it. Drag
+          // and resize were otherwise pointer-only gestures.
+          tabIndex={0}
+          role="group"
+          aria-label={`${title} window — arrow keys move, Shift+arrow keys resize`}
+          onKeyDown={(e) => {
+            const STEP = e.altKey ? 1 : 20;
+            const deltas: Record<string, [number, number]> = {
+              ArrowLeft: [-STEP, 0],
+              ArrowRight: [STEP, 0],
+              ArrowUp: [0, -STEP],
+              ArrowDown: [0, STEP],
+            };
+            const delta = deltas[e.key];
+            if (!delta) return;
+            // A maximized window has no position or size of its own to
+            // change; ignore rather than silently doing nothing surprising.
+            if (win.maximized) return;
+            e.preventDefault();
+            if (e.shiftKey) resize(id, win.width + delta[0], win.height + delta[1]);
+            else move(id, win.x + delta[0], win.y + delta[1]);
+          }}
           onDoubleClick={() => toggleMaximize(id, desktopBounds())}
           onPointerDown={(e) => {
             if (win.maximized) return;
@@ -175,6 +198,18 @@ export function Window({
                   visible "[x]" that isn't part of that name is a
                   label-mismatch (flagged by Lighthouse). */}
               <span aria-hidden="true">{isModern ? "🔴" : "[x]"}</span>
+            </button>
+            {/* Maximize existed only as a titlebar double-click — a gesture
+                with no keyboard equivalent at all (AUD-016). */}
+            <button
+              type="button"
+              className="window__control window__control--maximize"
+              aria-label={win.maximized ? `Restore ${title}` : `Maximize ${title}`}
+              aria-pressed={win.maximized}
+              onClick={() => toggleMaximize(id, desktopBounds())}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <span aria-hidden="true">{isModern ? "🟢" : "[□]"}</span>
             </button>
           </span>
           <span className="window__title">
