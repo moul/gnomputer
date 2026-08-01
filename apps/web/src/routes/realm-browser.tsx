@@ -8,6 +8,7 @@ import { rankByActivity } from "../rank-by-activity";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
+import { useRealmRender } from "../shell/use-realm-render";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
@@ -225,24 +226,18 @@ export function RealmBrowser({
 }
 
 function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
-  const sdk = useSdk();
-  const networkId = sdk.networks.getActive().id;
   const [draftPackagePath, setDraftPackagePath] = useState(tab.packagePath);
   const [focused, setFocused] = useState(false);
   const hasPackage = tab.packagePath !== "";
   const suggestions = useRealmSuggestions(focused, draftPackagePath);
   const suggestionsListId = `realm-suggestions-${windowId}`;
 
-  // Independent from RealmRenderView's own render query below — this only
-  // needs to know whether the committed path resolves at all, and must
-  // reflect that regardless of which lens tab (Source, State, ...) is
-  // actually showing, not only while the Render lens happens to be mounted.
-  const { isFetching, isError } = useQuery({
-    queryKey: ["realm-exists", networkId, tab.packagePath, tab.renderPath],
-    queryFn: () => sdk.rpc.queryRender(tab.packagePath, tab.renderPath, new Date().toISOString()),
-    enabled: hasPackage,
-    retry: false,
-  });
+  // The SAME query the Render lens uses, not a parallel one. This only
+  // needs to know whether the committed path resolves, and must know it
+  // regardless of which lens tab is showing — but it was a second query key
+  // for an identical request, so opening a realm on Render fetched it twice
+  // (AUD-026). Sharing the key means react-query serves both from one call.
+  const { isFetching, isError } = useRealmRender(tab.packagePath, tab.renderPath, hasPackage);
   const status = !hasPackage ? undefined : isFetching ? "loading" : isError ? "error" : "ok";
 
   useEffect(() => {
@@ -475,22 +470,10 @@ function RealmRenderView({
     label: trailLabel,
   });
 
-  const {
-    data,
-    error,
-    isPending,
-    isFetching,
-    dataUpdatedAt,
-    refetch,
-  } = useQuery({
-    queryKey: ["realm-render", networkId, packagePath, renderPath],
-    queryFn: async () => {
-      const start = performance.now();
-      const env = await sdk.rpc.queryRender(packagePath, renderPath, new Date().toISOString());
-      const nodes = sdk.lenses.parseRender(env.data, packagePath);
-      return { nodes, loadMs: Math.round(performance.now() - start) };
-    },
-  });
+  const { data, error, isPending, isFetching, dataUpdatedAt, refetch } = useRealmRender(
+    packagePath,
+    renderPath
+  );
 
   useEffect(() => {
     if (!data) return;
