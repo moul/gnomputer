@@ -1,5 +1,6 @@
 import "fake-indexeddb/auto";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { openDatabase } from "@gnomputer/storage";
 import { createGnomputerSDK } from "./create-sdk";
 
 describe("createGnomputerSDK", () => {
@@ -110,5 +111,46 @@ describe("createGnomputerSDK", () => {
 
     await sdk.scripts.remove(b.id);
     expect((await sdk.scripts.list()).map((s) => s.id)).toEqual([a.id]);
+  });
+});
+
+describe("query cache corruption", () => {
+  it("skips one unparseable row instead of failing the whole read", async () => {
+    // getAll used to JSON.parse inside a map(), so a single bad row rejected
+    // the entire call. The caller sets its "hydrated" flag at the end of the
+    // same block, so that failure also stopped the cache SAVING anything for
+    // the rest of the session — one bad row disabled the feature until
+    // storage was cleared (AUD-006).
+    const sdk = createGnomputerSDK({ dbName: "cache-corruption-test" });
+    await sdk.queryCache.set('["a"]', { ok: 1 }, 1);
+    await sdk.queryCache.set('["b"]', { ok: 2 }, 2);
+
+    const db = openDatabase("cache-corruption-test");
+    const row = await db.queryCache.get('["a"]');
+    await db.queryCache.put({ ...row!, dataJson: "{not json" });
+
+    const entries = await sdk.queryCache.getAll();
+    expect(entries.map((e) => e.queryKeyJson)).toEqual(['["b"]']);
+  });
+
+  it("deletes the bad row so it does not cost anything on the next boot", async () => {
+    const sdk = createGnomputerSDK({ dbName: "cache-corruption-delete-test" });
+    await sdk.queryCache.set('["a"]', { ok: 1 }, 1);
+
+    const db = openDatabase("cache-corruption-delete-test");
+    await db.queryCache.put({ ...(await db.queryCache.get('["a"]'))!, dataJson: "{nope" });
+
+    await sdk.queryCache.getAll();
+    await vi.waitFor(async () => expect(await db.queryCache.count()).toBe(0));
+  });
+
+  it("drops rows written under a different cache format", async () => {
+    const sdk = createGnomputerSDK({ dbName: "cache-version-test" });
+    await sdk.queryCache.set('["a"]', { ok: 1 }, 1);
+
+    const db = openDatabase("cache-version-test");
+    await db.queryCache.put({ ...(await db.queryCache.get('["a"]'))!, schemaVersion: 999 });
+
+    expect(await sdk.queryCache.getAll()).toEqual([]);
   });
 });

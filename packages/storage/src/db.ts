@@ -41,6 +41,11 @@ export interface QueryCacheRecord {
   dataJson: string;
   updatedAt: number;
   insertSeq: number;
+  /** Which cache format this row was written in. Rows from a different
+   * version are dropped on read rather than fed to code that expects a
+   * shape they may not have. Not indexed, so adding it needed no Dexie
+   * version bump — only indexes have to be declared. */
+  schemaVersion?: number;
 }
 
 export interface ScriptRecord {
