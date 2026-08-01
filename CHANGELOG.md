@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- Embedded pages (Gnockpit, gnoweb) can no longer navigate the whole
+  Gnomputer tab somewhere else, and a content security policy now blocks
+  injected script.
 - Adding a custom network now checks the endpoint before saving it, and
   reads the chain ID from the node instead of recording "unknown". You
   find out immediately whether the endpoint is reachable, whether the
