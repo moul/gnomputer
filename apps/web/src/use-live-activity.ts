@@ -13,9 +13,9 @@ const MAX_BACKFILL_PER_TICK = 5;
  * That means several live views open at once share one status poll, and a
  * hidden tab stops polling altogether. This hook only fetches the block
  * summaries it doesn't already have. */
-export function useLiveActivity(paused = false): { blocks: BlockSummary[] } {
+export function useLiveActivity(paused = false): { blocks: BlockSummary[]; isError: boolean } {
   const sdk = useSdk();
-  const { height } = useChainHeight(!paused);
+  const { height, isError } = useChainHeight(!paused);
   const [blocks, setBlocks] = useState<BlockSummary[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
   // Guards against a slow fetch overlapping the next height tick, which
@@ -58,5 +58,5 @@ export function useLiveActivity(paused = false): { blocks: BlockSummary[] } {
     };
   }, [sdk, paused, height]);
 
-  return { blocks };
+  return { blocks, isError };
 }

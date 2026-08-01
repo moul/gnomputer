@@ -6,6 +6,7 @@ import { openRef } from "../shell/open-ref";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { formatNumber } from "../format-number";
+import { LiveFeedStatus } from "../shell/live-feed-status";
 
 type SortKey = "height" | "gasUsed";
 type SortDir = "asc" | "desc";
@@ -48,14 +49,22 @@ function useSortedFilteredRows(rows: Row[], filter: string) {
   return { sorted, toggleSort, sortIndicator };
 }
 
-function TransactionTable({ rows, filter }: { rows: Row[]; filter: string }) {
+function TransactionTable({
+  rows,
+  filter,
+  // Only the live variant can be "unreachable" mid-stream; the indexer
+  // variant surfaces its own errors through react-query.
+  isError = false,
+}: {
+  rows: Row[];
+  filter: string;
+  isError?: boolean;
+}) {
   const { sorted, toggleSort, sortIndicator } = useSortedFilteredRows(rows, filter);
 
   if (sorted.length === 0) {
     return (
-      <p className="state-line" aria-busy="true">
-        Watching the chain for transactions…
-      </p>
+      <LiveFeedStatus isError={isError} watching="Watching the chain for transactions…" />
     );
   }
 
@@ -177,7 +186,7 @@ function IndexerTransactionExplorer() {
 function LiveTransactionExplorer() {
   const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState("");
-  const { transactions } = useLiveTransactions(paused);
+  const { transactions, isError } = useLiveTransactions(paused);
 
   return (
     <div className="transaction-explorer">
@@ -194,7 +203,7 @@ function LiveTransactionExplorer() {
         />
         <span className="state-line">{transactions.length} seen this session</span>
       </div>
-      <TransactionTable rows={transactions} filter={filter} />
+      <TransactionTable rows={transactions} filter={filter} isError={isError} />
       <p className="state-line">
         No indexer configured for this network — showing only transactions seen live since this
         window opened, not a complete history.

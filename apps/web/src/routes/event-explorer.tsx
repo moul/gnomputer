@@ -5,6 +5,7 @@ import { useLiveEvents } from "../use-live-events";
 import { openRef } from "../shell/open-ref";
 import { formatNumber } from "../format-number";
 import { ErrorState } from "../shell/error-state";
+import { LiveFeedStatus } from "../shell/live-feed-status";
 
 interface RenderableEvent {
   height: number;
@@ -88,7 +89,7 @@ export function EventExplorer() {
   const sdk = useSdk();
   const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
   const [paused, setPaused] = useState(false);
-  const { events } = useLiveEvents(paused);
+  const { events, isError } = useLiveEvents(paused);
 
   return (
     <div className="event-explorer">
@@ -105,9 +106,7 @@ export function EventExplorer() {
         </>
       )}
       {events.length === 0 ? (
-        <p className="state-line" aria-busy="true">
-          Watching the chain for events…
-        </p>
+        <LiveFeedStatus isError={isError} watching="Watching the chain for events…" />
       ) : (
         <EventList events={events} />
       )}

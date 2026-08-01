@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- Live feeds (events, blocks, transactions) now say when they can't reach
+  the chain, instead of sitting on "Watching the chain…" forever — which
+  looked identical to a quiet chain.
 - A hung RPC or indexer endpoint no longer leaves a window stuck on
   "Loading…" forever — requests now time out after 15s with an error that
   names the host, and can be retried. A malformed indexer response (an HTML

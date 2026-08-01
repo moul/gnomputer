@@ -19,12 +19,15 @@ export interface LiveEvent extends ChainEvent {
  * Browser's History lens) — applied before the MAX_EVENTS_SHOWN cap, so an
  * unrelated realm's events can't push a filtered-for realm's own events out
  * of the window. */
-export function useLiveEvents(paused = false, pkgPath?: string): { events: LiveEvent[] } {
+export function useLiveEvents(
+  paused = false,
+  pkgPath?: string
+): { events: LiveEvent[]; isError: boolean } {
   const sdk = useSdk();
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
 
-  const { height } = useChainHeight(!paused);
+  const { height, isError } = useChainHeight(!paused);
   const inFlight = useRef(false);
 
   useEffect(() => {
@@ -73,5 +76,5 @@ export function useLiveEvents(paused = false, pkgPath?: string): { events: LiveE
     };
   }, [sdk, paused, pkgPath, height]);
 
-  return { events };
+  return { events, isError };
 }
