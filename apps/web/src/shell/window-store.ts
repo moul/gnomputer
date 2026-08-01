@@ -204,11 +204,24 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
   },
 
   reclampAll: () => {
+    const bounds = desktopBounds();
     set((state) => ({
       windows: Object.fromEntries(
         Object.entries(state.windows).map(([id, w]) => {
           if (w.closed || w.maximized) return [id, w];
-          return [id, { ...w, ...clampWindowOrigin(w.x, w.y, w) }];
+          // Clamp SIZE as well as position. Previously only the origin was
+          // reclamped, so a layout saved on a desktop and restored on a
+          // phone kept windows far wider than the screen — the window was
+          // dragged "in bounds" but most of it still hung off the edge
+          // (AUD-008). Never grows a window, only shrinks one that no
+          // longer fits.
+          const width = Math.max(MIN_WIDTH, Math.min(w.width, bounds.width));
+          const height = Math.max(
+            MIN_HEIGHT,
+            Math.min(w.height, bounds.height - ISLAND_CLEARANCE_PX)
+          );
+          const sized = { ...w, width, height };
+          return [id, { ...sized, ...clampWindowOrigin(sized.x, sized.y, sized) }];
         })
       ),
     }));
