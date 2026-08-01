@@ -1,3 +1,5 @@
+import { isValidGnoAddress } from "@gnomputer/entities";
+
 export type EntityKind = "address" | "username" | "block" | "realm";
 
 // Recognizes the entity references the spec calls out as universally
@@ -6,6 +8,11 @@ export type EntityKind = "address" | "username" | "block" | "realm";
 // single left-to-right scan know which kind matched without re-testing.
 // Shared between inline Linkify (matches within free text) and the search
 // bar (matches a whole trimmed query).
+//
+// The address branch is a candidate finder only — it cannot express a bech32
+// checksum. Every match is verified with isValidGnoAddress before it counts,
+// so a typo'd or truncated address in prose doesn't become a link to an
+// account that cannot exist (AUD-031).
 export const ENTITY_PATTERN_SOURCE = [
   "(?<address>\\bg1[a-z0-9]{25,50}\\b)",
   "(?<username>@[a-zA-Z0-9_]+\\b)",
@@ -19,7 +26,9 @@ export function createEntityPattern(): RegExp {
 
 function matchedKind(match: RegExpMatchArray): EntityKind | null {
   const entry = Object.entries(match.groups ?? {}).find(([, v]) => v !== undefined);
-  return (entry?.[0] as EntityKind | undefined) ?? null;
+  const kind = (entry?.[0] as EntityKind | undefined) ?? null;
+  if (kind === "address" && !isValidGnoAddress(match[0])) return null;
+  return kind;
 }
 
 export function matchEntityAt(text: string): { kind: EntityKind; text: string } | null {

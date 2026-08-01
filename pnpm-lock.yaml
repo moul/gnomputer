@@ -66,6 +66,9 @@ importers:
       '@gnomputer/app-sdk':
         specifier: workspace:*
         version: link:../../packages/app-sdk
+      '@gnomputer/entities':
+        specifier: workspace:*
+        version: link:../../packages/entities
       '@gnomputer/lenses':
         specifier: workspace:*
         version: link:../../packages/lenses
