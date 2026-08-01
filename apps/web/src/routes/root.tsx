@@ -4,6 +4,7 @@ import {
   createRouter,
   Outlet,
   RouterProvider,
+  useSearch,
 } from "@tanstack/react-router";
 import { Home } from "./home";
 import { IslandBar } from "../shell/island-bar";
@@ -22,6 +23,7 @@ import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence
 import { useNetworkPersistence } from "../shell/use-network-persistence";
 import { NetworkRecoveryBanner } from "../shell/network-recovery-banner";
 import { FirstRunNote } from "../shell/first-run-note";
+import { isRealmLens, type RealmLens } from "../shell/realm-tabs-store";
 import { useGlobalShortcuts } from "../shell/use-global-shortcuts";
 import { useWalletInit } from "../shell/use-wallet-init";
 
@@ -34,7 +36,7 @@ function RootLayout() {
   useBrowserHomePersistence();
   // Owns the custom-network list hydration too — the active network can
   // only be resolved once that list is known.
-  const { unresolvedNetworkId } = useNetworkPersistence();
+  const { unresolvedNetworkId } = useNetworkPersistence(useSearch({ strict: false }).net);
   useGlobalShortcuts();
   useWalletInit();
   return (
@@ -77,9 +79,19 @@ const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
   component: Home,
-  validateSearch: (search: Record<string, unknown>): { pkg?: string; path?: string } => ({
+  // Everything here has to survive being pasted into a chat window and
+  // opened by someone else. Only pkg and path did, so a link to a realm's
+  // SOURCE opened on Render, and a link to a betanet realm opened on Topaz
+  // showing the wrong chain's data under the right-looking URL (AUD-012).
+  validateSearch: (
+    search: Record<string, unknown>
+  ): { pkg?: string; path?: string; lens?: RealmLens; net?: string } => ({
     pkg: typeof search.pkg === "string" ? search.pkg : undefined,
     path: typeof search.path === "string" ? search.path : undefined,
+    // Validated against the known set rather than passed through: an
+    // unknown lens would leave the browser rendering nothing at all.
+    lens: isRealmLens(search.lens) ? search.lens : undefined,
+    net: typeof search.net === "string" ? search.net : undefined,
   }),
 });
 

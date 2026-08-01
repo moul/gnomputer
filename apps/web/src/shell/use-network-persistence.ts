@@ -30,7 +30,9 @@ const STORAGE_KEY = "active-network";
  *
  * Returns the id that could not be restored, if any, so the shell can say so
  * rather than quietly putting you on a different chain. */
-export function useNetworkPersistence(): { unresolvedNetworkId: string | null } {
+export function useNetworkPersistence(urlNetworkId?: string): {
+  unresolvedNetworkId: string | null;
+} {
   const sdk = useSdk();
   const customHydrated = useCustomNetworksPersistence();
   const restored = useRef(false);
@@ -56,6 +58,27 @@ export function useNetworkPersistence(): { unresolvedNetworkId: string | null } 
     if (!selectionHydrated) return;
 
     const active = sdk.networks.getActive();
+
+    // A network named in the URL wins over both the stored preference and
+    // the default. Someone opening a shared link is asking for that chain
+    // specifically; showing them a different one under the same URL is the
+    // failure this whole hook exists to avoid.
+    if (urlNetworkId && urlNetworkId !== activeNetworkId) {
+      const fromUrl =
+        sdk.networks.list().find((n) => n.id === urlNetworkId) ??
+        customNetworks.find((n) => n.id === urlNetworkId);
+      if (fromUrl) {
+        sdk.networks.setActiveConfig(fromUrl);
+        setActiveNetwork(urlNetworkId);
+        return;
+      }
+      if (customHydrated) {
+        setUnresolvedNetworkId(urlNetworkId);
+        return;
+      }
+      return;
+    }
+
     if (!restored.current) {
       if (active.id !== activeNetworkId) setActiveNetwork(active.id);
       return;
@@ -81,6 +104,7 @@ export function useNetworkPersistence(): { unresolvedNetworkId: string | null } 
     setActiveNetwork(sdk.networks.getDefault().id);
   }, [
     sdk,
+    urlNetworkId,
     activeNetworkId,
     customNetworks,
     customHydrated,
