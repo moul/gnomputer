@@ -133,3 +133,81 @@ describe("useStorePersistence", () => {
     expect(restoredWith).toEqual({ count: 5 });
   });
 });
+
+describe("durability against a reload that aborts the IndexedDB write", () => {
+  // This project's jsdom exposes `localStorage` as a bare object with no
+  // methods, so the production code's try/catch just silently skips the
+  // mirror here. Install a real one so the behaviour can actually be
+  // asserted.
+  beforeEach(() => {
+    const store = new Map<string, string>();
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => void store.set(k, v),
+        removeItem: (k: string) => void store.delete(k),
+        clear: () => store.clear(),
+        key: (i: number) => [...store.keys()][i] ?? null,
+        get length() {
+          return store.size;
+        },
+      },
+    });
+  });
+
+  it("restores from the synchronous mirror when IndexedDB lost the write", async () => {
+    // Exactly the real failure: the user changed a setting and reloaded
+    // before the async IndexedDB write committed (navigation aborts an
+    // in-flight transaction), so uiState has nothing — but the synchronous
+    // localStorage mirror does.
+    localStorage.setItem(
+      "gnomputer:mirror:counter",
+      JSON.stringify({ value: JSON.stringify({ count: 99 }), at: Date.now() })
+    );
+
+    const sdk = createGnomputerSDK({ dbName: DB_NAME });
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
+
+    await waitFor(() => expect(store.getState().count).toBe(99));
+  });
+
+  it("never lets a stale mirror override what IndexedDB actually holds", async () => {
+    // Regression: an earlier version preferred the mirror whenever the two
+    // disagreed, so a leftover mirror could resurrect old state over a
+    // real stored value — including over deliberately-rejected corrupt
+    // JSON. CI caught it; the mirror is a fallback, not an override.
+    localStorage.setItem(
+      "gnomputer:mirror:counter",
+      JSON.stringify({ value: JSON.stringify({ count: 7 }), at: Date.now() })
+    );
+
+    const sdk = createGnomputerSDK({ dbName: DB_NAME });
+    await sdk.uiState.set("counter", JSON.stringify({ count: 3 }));
+
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
+
+    await waitFor(() => expect(store.getState().count).toBe(3));
+    expect(store.getState().count).not.toBe(7);
+  });
+
+  it("writes the mirror synchronously, before any await", async () => {
+    const sdk = createGnomputerSDK({ dbName: DB_NAME });
+    // Seed a value so hydration is observable — the store's default is 0,
+    // so waiting for 0 would prove nothing about whether hydration ran.
+    await sdk.uiState.set("counter", JSON.stringify({ count: 5 }));
+
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), { wrapper: wrapperFor(sdk) });
+    await waitFor(() => expect(store.getState().count).toBe(5));
+
+    store.getState().setCount(7);
+    // Read immediately — no await. That is the entire point: this value
+    // survives a navigation that would abort the IndexedDB write.
+    const raw = localStorage.getItem("gnomputer:mirror:counter");
+    expect(raw).toBeTruthy();
+    expect(JSON.parse(raw!).value).toContain("7");
+  });
+});

@@ -2,6 +2,49 @@ import { useEffect, useRef } from "react";
 import type { StoreApi, UseBoundStore } from "zustand";
 import { useSdk } from "../sdk-context";
 
+// IndexedDB writes are asynchronous, and navigating away ABORTS an
+// in-flight transaction. So changing a theme (or layout, zoom, settings)
+// and reloading a moment later silently lost the change — reproduced
+// reliably in the e2e suite, where inserting a 1s pause before the reload
+// was the difference between pass and fail.
+//
+// Every value here is a small UI preference, so each write is mirrored
+// synchronously into localStorage, which cannot be interrupted by a
+// navigation. IndexedDB stays the store of record (it holds everything
+// else and survives more); localStorage is consulted on hydrate only when
+// IndexedDB has nothing, or when the mirror is newer than what IndexedDB
+// returned — i.e. exactly the aborted-write case.
+const MIRROR_PREFIX = "gnomputer:mirror:";
+
+function mirrorKey(storageKey: string): string {
+  return `${MIRROR_PREFIX}${storageKey}`;
+}
+
+interface Mirrored {
+  value: string;
+  at: number;
+}
+
+function readMirror(storageKey: string): Mirrored | null {
+  try {
+    const raw = localStorage.getItem(mirrorKey(storageKey));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Mirrored;
+    return typeof parsed?.value === "string" ? parsed : null;
+  } catch {
+    // A corrupt or unavailable mirror must never block hydration.
+    return null;
+  }
+}
+
+function writeMirror(storageKey: string, value: string): void {
+  try {
+    localStorage.setItem(mirrorKey(storageKey), JSON.stringify({ value, at: Date.now() }));
+  } catch {
+    // Private mode / quota — the IndexedDB write is still the real one.
+  }
+}
+
 function defaultDeserialize<T>(raw: string): Partial<T> | null {
   try {
     return JSON.parse(raw) as Partial<T>;
@@ -49,7 +92,23 @@ export function useStorePersistence<T extends object>(
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const raw = await sdk.uiState.get(storageKey);
+      const stored = await sdk.uiState.get(storageKey);
+      // The mirror is a FALLBACK, never an override: it is used only when
+      // IndexedDB has nothing at all, which is exactly the aborted-write
+      // case this exists for.
+      //
+      // An earlier version preferred the mirror whenever the two disagreed.
+      // That was wrong — they disagree routinely (the mirror is written a
+      // moment before IndexedDB commits, and another tab can update
+      // IndexedDB), so a stale mirror could resurrect data the app had
+      // deliberately moved past. A test that stores corrupt JSON and
+      // expects defaults caught it doing exactly that.
+      //
+      // Honest limitation: this fixes an aborted FIRST write. If IndexedDB
+      // already holds an older value and the newer write is aborted, the
+      // older value still wins on reload — closing that would need a
+      // timestamp stored alongside the value in IndexedDB too.
+      const raw = stored ?? readMirror(storageKey)?.value ?? null;
       if (!cancelled && raw) {
         const restored = deserialize(raw);
         if (restored) {
@@ -68,7 +127,10 @@ export function useStorePersistence<T extends object>(
   useEffect(() => {
     return store.subscribe((state) => {
       if (!hydrated.current) return;
-      void sdk.uiState.set(storageKey, serialize(state));
+      const value = serialize(state);
+      // Synchronous first, so a reload immediately after this cannot lose it.
+      writeMirror(storageKey, value);
+      void sdk.uiState.set(storageKey, value);
     });
     // serialize/deserialize/onRestore deliberately omitted — see doc comment above.
   }, [sdk, storageKey, store]);
