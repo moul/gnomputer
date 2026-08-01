@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { menuKeyAction } from "./menu-keys";
 import { useIslandPopoverStore } from "./island-popover-store";
 
 // A gap always exists between an island icon and the popover rendered below
@@ -61,6 +62,11 @@ export function IslandPopover({
   // Whether the pointer is currently over the trigger. Used to keep
   // click-to-toggle from fighting hover: see the click handler below.
   const hoveringRef = useRef(false);
+  // Set while focus is being returned to the trigger after Escape. The
+  // trigger's onFocus opens the menu, so without this, Escape closed it and
+  // the focus restore reopened it a moment later — the menu appeared not to
+  // respond to Escape at all.
+  const restoringFocusRef = useRef(false);
   const [position, setPosition] = useState<PopoverPosition | null>(null);
 
   function cancelClose() {
@@ -71,7 +77,7 @@ export function IslandPopover({
   }
 
   const show = useCallback(() => {
-    if (disabled) return;
+    if (disabled || restoringFocusRef.current) return;
     cancelClose();
     setOpenId(id);
   }, [disabled, id, setOpenId]);
@@ -142,15 +148,62 @@ export function IslandPopover({
   }, [isOpen, align]);
 
   function focusTrigger() {
+    restoringFocusRef.current = true;
     hostRef.current?.querySelector<HTMLElement>("button, [tabindex]")?.focus();
+    // Released on the next task, once the focus event this call synchronously
+    // dispatched has been handled. Anything the user does afterwards — click,
+    // hover, Down — opens the menu again normally.
+    window.setTimeout(() => {
+      restoringFocusRef.current = false;
+    }, 0);
+  }
+
+  function menuItems(): HTMLElement[] {
+    const panel = panelRef.current;
+    if (!panel) return [];
+    return [...panel.querySelectorAll<HTMLElement>('button:not([disabled]), a[href]')];
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape" && isOpen) {
-      e.stopPropagation();
+    if (!isOpen) return;
+
+    // Opens the menu and enters it, which is how a keyboard user expects to
+    // get in — before this, Down did nothing and the only way in was Tab.
+    if (e.key === "ArrowDown" && hostRef.current?.contains(e.target as Node)) {
+      const items = menuItems();
+      if (items.length > 0) {
+        e.preventDefault();
+        items[0]!.focus();
+        return;
+      }
+    }
+
+    const items = menuItems();
+    if (items.length === 0) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        hideNow();
+        focusTrigger();
+      }
+      return;
+    }
+
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    const action = menuKeyAction(
+      e.key,
+      items.map((item) => item.textContent ?? ""),
+      current
+    );
+    if (!action) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (action.close) {
       hideNow();
       focusTrigger();
+      return;
     }
+    if (action.focus !== undefined) items[action.focus]?.focus();
   }
 
   // Keyboard users open the menu by focusing the trigger, and it must stay
@@ -207,10 +260,13 @@ export function IslandPopover({
             id={panelId}
             ref={panelRef}
             className="island__popover"
-            // Deliberately NOT role="menu": that promises the APG menu
-            // pattern (arrow keys, typeahead, roving tabindex) which isn't
-            // implemented here. A labelled group of real buttons is honest
-            // and Tab-navigable.
+            // Still NOT role="menu", now for a different reason. Arrow
+            // keys, Home/End and typeahead ARE implemented (menu-keys.ts).
+            // But these panels hold titles, hints and labelled rows, and a
+            // role="menu" may only contain menuitem/group/separator — so
+            // claiming it would either be invalid or force hiding content
+            // that is genuinely useful to read. A group of real buttons
+            // with arrow-key navigation describes what this actually is.
             role="group"
             style={{ position: "fixed", top: position.top, left: position.left, right: position.right }}
             onMouseEnter={show}
