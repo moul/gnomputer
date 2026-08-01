@@ -102,6 +102,39 @@ export default defineConfig({
         // query param) — precaching it here would let the service worker
         // serve a stale copy from the very build being checked against.
         globIgnores: ["version.json"],
+        // Precache the SHELL only. The default pattern swept in all 27 built
+        // files (~1.86MB), including the 449KB code editor, the markdown
+        // renderer, and every per-app chunk — so a first visit downloaded
+        // every app up front, exactly undoing the lazy-loading those chunks
+        // exist for. This is an explicit allow-list rather than a list of
+        // exclusions so a newly-added lazy chunk is runtime-cached by
+        // default instead of silently rejoining the precache (AUD-038).
+        // The manifest, favicon and icons are injected by vite-plugin-pwa
+        // itself — listing them here too produced duplicate precache
+        // entries (16 entries for 11 unique URLs).
+        globPatterns: [
+          "index.html",
+          "assets/index-*.js",
+          "assets/vendor-*.js",
+          "assets/chain-client-*.js",
+          "assets/*.css",
+        ],
+        runtimeCaching: [
+          {
+            // Everything not precached — the lazy app chunks — is cached the
+            // first time it's actually needed. Content-hashed filenames mean
+            // a cached entry can never be stale: a new build produces a new
+            // URL. CacheFirst is therefore safe and avoids a revalidation
+            // round trip on every window open.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.includes("/assets/"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "app-chunks",
+              expiration: { maxEntries: 60, maxAgeSeconds: 30 * 24 * 60 * 60 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
       manifest: {
         name: "Gnomputer",
