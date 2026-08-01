@@ -251,6 +251,10 @@ export function ShellApp() {
             data-lpignore="true"
             data-bwignore="true"
             className="shell-app__input"
+            // The visible prompt is a "$" glyph, which is not a name — axe
+            // flagged this as an unlabelled control, and a screen reader
+            // reached it with nothing to announce at all.
+            aria-label="Shell command"
             list="shell-app-suggestions"
             value={draft}
             disabled={pending}

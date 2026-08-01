@@ -86,13 +86,16 @@
   --border-strong: #c4cad2;
   --text: #1a2027;
   --text-dim: #5b6572;
-  --text-faint: #7c8693;
-  --accent: #0f7c92;
+  /* 3.5:1 against --bg-elevated at 13px — under WCAG AA for small
+     text. Measured by the axe gate in e2e/accessibility.spec.ts. */
+  --text-faint: #636d79;
+  /* 4.25:1 against --bg-inset at 12px bold. */
+  --accent: #0e768b;
   --accent-dim: #d3f0ec;
-  --accent-cyan: #0f7c92;
-  --accent-amber: #92650f;
+  --accent-cyan: #0e768b;
+  --accent-amber: #8f630f;
   --accent-magenta: #9c2fa8;
-  --accent-green: #1a8f4e;
+  --accent-green: #167c43;
   --accent-blue: #2f5fb3;
   --accent-red: #c23a52;
   --danger: #b3261e;
@@ -112,16 +115,18 @@
   --border: #d7dbe2;
   --border-strong: #cdd3dd;
   --text: #1f2530;
-  --text-dim: #6b7280;
-  --text-faint: #7f8690;
-  --accent: #4f7cff;
+  --text-dim: #656c79;
+  /* 3.48:1 against --bg-elevated at 12px — under WCAG AA. */
+  --text-faint: #676d76;
+  /* 3.45:1 against --bg-inset at 12px. */
+  --accent: #235bff;
   --accent-dim: #dbe6ff;
-  --accent-cyan: #4f7cff;
-  --accent-amber: #d9822b;
-  --accent-magenta: #b355d6;
-  --accent-green: #2fa968;
-  --accent-blue: #4f7cff;
-  --accent-red: #e0556f;
+  --accent-cyan: #235bff;
+  --accent-amber: #9d5c1c;
+  --accent-magenta: #a536cf;
+  --accent-green: #227b4c;
+  --accent-blue: #225bff;
+  --accent-red: #cf2646;
   --danger: #e0556f;
   --danger-bg: #fdeef1;
   --warning: #d9822b;
@@ -138,7 +143,11 @@
   --border-strong: #3a3f4c;
   --text: #e7e9ee;
   --text-dim: #9aa0ac;
-  --text-faint: #666c78;
+  /* Was #666c78: 3.12:1 against --bg-elevated at 12px, under WCAG AA.
+     Lightened past the bar rather than exactly to it — a value sitting on
+     4.55:1 fails the axe gate mid theme cross-fade, when the interpolated
+     colour is a shade off the token. */
+  --text-faint: #868d99;
   --accent: #7c9bff;
   --accent-dim: #23324f;
   --accent-cyan: #7c9bff;
@@ -169,7 +178,7 @@
   --border-strong: #1f5c2e;
   --text: #33ff33;
   --text-dim: #23b82c;
-  --text-faint: #145c1e;
+  --text-faint: #1f902f;
   --accent: #33ff33;
   --accent-dim: #0f4d1a;
   --accent-cyan: #33ffff;
@@ -200,15 +209,16 @@
   --border-strong: #d4d4d4;
   --text: #1a1a1a;
   --text-dim: #6b6b6b;
-  --text-faint: #858585;
+  /* 3.5:1 against --bg-elevated at 12px — under WCAG AA. */
+  --text-faint: #6f6f6f;
   --accent: #5b6b7a;
   --accent-dim: #eef1f4;
-  --accent-cyan: #5b8a99;
-  --accent-amber: #a88a5b;
-  --accent-magenta: #9a7a9a;
-  --accent-green: #6b8f75;
+  --accent-cyan: #4d7582;
+  --accent-amber: #836b46;
+  --accent-magenta: #846484;
+  --accent-green: #587660;
   --accent-blue: #5b6b7a;
-  --accent-red: #a97070;
+  --accent-red: #9c5e5e;
   --danger: #b3564f;
   --danger-bg: #faf0ef;
   --warning: #a8823f;
