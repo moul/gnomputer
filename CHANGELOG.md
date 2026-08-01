@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Small text now meets the WCAG AA contrast bar in every theme. Window
+  titles, secondary paths and other muted text were between 2.7:1 and
+  4.4:1 against their backgrounds — legible on a good monitor, not
+  legible in sunlight or with reduced vision. The shell's command input
+  also had no accessible name at all.
 - The documentation sidebar is now a real tree. It is a single tab stop
   instead of one per folder and per file, arrow keys walk and expand it,
   Enter opens a page, and typing a letter jumps to the next entry starting
