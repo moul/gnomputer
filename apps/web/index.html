@@ -2,6 +2,30 @@
 <html lang="en" data-theme="ascii-light">
   <head>
     <meta charset="UTF-8" />
+    <!-- GitHub Pages cannot set response headers, so this is a meta CSP.
+         Two consequences worth knowing: frame-ancestors is ignored in meta
+         form (clickjacking protection would need a real header), and the
+         policy applies only once the document starts parsing.
+
+         What this genuinely buys, given those limits:
+           script-src 'self'  blocks injected inline and remote script,
+                              which is the main XSS payload path. The app
+                              has no inline script at all, so this costs
+                              nothing.
+           object-src 'none'  no plugins, no <embed>.
+           base-uri 'self'    a base tag cannot be injected to repoint every
+                              relative URL on the page.
+
+         connect-src and frame-src are deliberately wide. Custom networks let
+         you point the app at any RPC endpoint you run, including a local one
+         over http, so an allowlist here would either break that feature or
+         be a list of every host anyone might use — which is not a control.
+         Saying so is more useful than a directive that looks strict and
+         isn't. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src *; frame-src https: http:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Theme-aware: the manifest declares a single dark theme_color, which
          looked wrong against the light default. These let the browser chrome

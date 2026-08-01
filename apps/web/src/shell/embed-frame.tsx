@@ -70,11 +70,20 @@ export function EmbedFrame({
         </span>
       </p>
       <div className="embed-window__viewport">
-        {/* No sandbox restriction — url is always a curated, trusted value
-            from network-config.ts, not arbitrary input, and a restrictive
-            sandbox would break the embedded tool's own JS/storage. */}
+        {/* The url is always a curated value from network-config.ts, so the
+            sandbox is defence in depth rather than distrust — but note what
+            is NOT granted: allow-top-navigation. Without it an embedded page
+            cannot navigate the whole Gnomputer tab somewhere else, which it
+            otherwise could, and which a visitor would experience as
+            Gnomputer itself redirecting them.
+
+            allow-same-origin is required for the embedded tool's own
+            storage. Pairing it with allow-scripts only defeats a sandbox
+            when the framed document is same-origin with this page; these
+            embeds are cross-origin, so it does not. */}
         <iframe
           key={reloadKey}
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
           className="embed-window__frame"
           src={url}
           title={title}
