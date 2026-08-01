@@ -6,7 +6,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp -r src/__fixtures__ dist/__fixtures__",
+    "build": "rm -rf dist tsconfig.tsbuildinfo && tsc -p tsconfig.json && mkdir -p dist/__fixtures__ && cp src/__fixtures__/*.json dist/__fixtures__/",
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",

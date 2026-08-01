@@ -77,10 +77,14 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
     <IslandPopover
       disabled={disabled}
       trigger={
-        <div className="island__clock">
+        // A real <button>, not a <div>: as a div this was not focusable, so
+        // the connection/height/history panel behind it was unreachable by
+        // keyboard entirely, and the status dot is aria-hidden so the state
+        // needs saying in the accessible name.
+        <button type="button" className="island__clock" aria-label={`Clock and connection status: ${effectiveState}`}>
           <span className="status-dot" data-state={effectiveState} aria-hidden="true" />
           {formatClock(now)}
-        </div>
+        </button>
       }
     >
       <div className="island-menu island-menu--clock">
