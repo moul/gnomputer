@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-01
 
+- Adding a custom network now checks the endpoint before saving it, and
+  reads the chain ID from the node instead of recording "unknown". You
+  find out immediately whether the endpoint is reachable, whether the
+  browser is blocking it, and which chain it actually is — and because
+  the chain ID is now real, a custom network can be used for signing at
+  all. Endpoints on your own machine are labelled as local.
 - The network you pick now survives a reload. Custom network definitions
   were saved but the selection wasn't, so switching to betanet and
   reloading quietly put you back on Topaz — same interface, different

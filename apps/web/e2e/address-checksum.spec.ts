@@ -14,10 +14,14 @@ test("a checksum-invalid address is not accepted as a manual identity", async ({
   await page.locator('#window-settings button:has-text("USER")').first().click();
 
   const input = page.locator('#window-settings input[type="text"]').first();
+  // Target this one button rather than counting disabled buttons in the
+  // window: the Network tab has its own disabled submit, so a count races
+  // with the tab switch.
+  const useAddress = page.getByRole("button", { name: "Use this address" });
 
   await input.fill(FLIPPED);
-  await expect(page.locator("#window-settings button:disabled")).toHaveCount(1);
+  await expect(useAddress).toBeDisabled();
 
   await input.fill(REAL);
-  await expect(page.locator("#window-settings button:disabled")).toHaveCount(0);
+  await expect(useAddress).toBeEnabled();
 });

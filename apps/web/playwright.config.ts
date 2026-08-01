@@ -30,6 +30,13 @@ export default defineConfig({
       env: { VITE_RPC_URL: MOCK_RPC_URL },
     },
   ],
-  use: { baseURL: "http://localhost:5183" },
+  use: {
+    baseURL: "http://localhost:5183",
+    // The app honours prefers-reduced-motion by disabling every transition
+    // and animation. Turning it on here removes a whole class of "element
+    // is not stable" flakes, where Playwright refuses to click a control
+    // that is still sliding into place as its window opens.
+    reducedMotion: "reduce",
+  },
   timeout: 30_000,
 });

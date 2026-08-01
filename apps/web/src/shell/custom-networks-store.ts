@@ -13,13 +13,23 @@ export const useCustomNetworksStore = create<CustomNetworksState>((set) => ({
   removeNetwork: (id) => set((s) => ({ networks: s.networks.filter((n) => n.id !== id) })),
 }));
 
-/** Builds a full NetworkConfig for a user-supplied custom network from just
- * a name + RPC URL — everything else defaults to values that mean "unknown,
- * this is user-supplied" rather than claiming a guarantee this app can't
- * actually back (persistence/trust in particular: a custom node could be
- * anything). A stable id is derived from the name so re-adding the same
- * name updates rather than duplicating. */
-export function buildCustomNetworkConfig(name: string, rpcUrl: string): NetworkConfig {
+/** Builds a full NetworkConfig for a user-supplied custom network.
+ *
+ * persistence and trust stay "unknown"/"custom" — a custom node could be
+ * anything, and claiming otherwise would be a guarantee this app cannot
+ * back. The chain ID is different: it is *discovered* by probing the
+ * endpoint (probe-network.ts) rather than guessed, and passing it in is
+ * what makes a custom network signable at all — transaction-intent refuses
+ * to sign against a chain ID of "unknown", so before this every custom
+ * network was permanently read-only whether or not it was legitimate.
+ *
+ * A stable id is derived from the name so re-adding the same name updates
+ * rather than duplicating. */
+export function buildCustomNetworkConfig(
+  name: string,
+  rpcUrl: string,
+  chainId = "unknown"
+): NetworkConfig {
   const slug = name
     .trim()
     .toLowerCase()
@@ -28,7 +38,7 @@ export function buildCustomNetworkConfig(name: string, rpcUrl: string): NetworkC
   return {
     id: `custom-${slug || Date.now()}`,
     name: name.trim(),
-    chainId: "unknown",
+    chainId,
     rpcUrl,
     environment: "custom",
     persistence: "unknown",
