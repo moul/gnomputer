@@ -100,3 +100,20 @@ describe("parseRenderMarkup", () => {
     expect(nodes[0]).toMatchObject({ type: "paragraph", content: "Line one Line two" });
   });
 });
+
+describe("heading levels", () => {
+  it("records the real heading level instead of flattening every heading", () => {
+    // Previously the level was discarded at parse time, so the renderer had
+    // no way to distinguish an h1 from an h6 and emitted <h2> for all of
+    // them — destroying the outline screen readers navigate by (AUD-018).
+    const nodes = parseRenderMarkup("# One\n\n## Two\n\n#### Four", "gno.land/r/demo/a");
+    const headings = nodes.filter((n) => n.type === "heading");
+    expect(headings.map((h) => h.level)).toEqual([1, 2, 4]);
+  });
+
+  it("keeps the level on a heading that is entirely a link", () => {
+    const nodes = parseRenderMarkup("### [Docs](https://docs.gno.land)", "gno.land/r/demo/a");
+    const heading = nodes.find((n) => n.type === "heading");
+    expect(heading?.level).toBe(3);
+  });
+});

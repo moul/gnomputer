@@ -10,16 +10,22 @@ import { safeExternalUrl, type RenderNode } from "@gnomputer/lenses";
  * window/tab an internal /r/... link opens into. */
 export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId: string }) {
   switch (node.type) {
-    case "heading":
+    case "heading": {
+      // Realm content lives inside a window, and the page's own <h1> names
+      // the app — so a realm's "#" becomes an <h2> and everything nests
+      // below that. Previously every level collapsed to <h2>, so a realm
+      // with real structure read as a flat list of same-level headings.
+      const Tag = `h${Math.min(6, (node.level ?? 1) + 1)}` as "h2";
       return (
-        <h2>
+        <Tag>
           {node.content !== undefined ? (
             <Linkified text={node.content} />
           ) : (
             node.children?.map((c, i) => <RenderNodeView key={i} node={c} windowId={windowId} />)
           )}
-        </h2>
+        </Tag>
       );
+    }
     case "code":
       return (
         <div className="render-code-block">

@@ -11,6 +11,11 @@ export interface RenderNode {
   /** The fenced code block's language hint (```go, ```bash, ...), when
    * present — undefined for a bare ``` fence or any other node type. */
   lang?: string;
+  /** 1-6, from the number of leading "#" — only set on heading nodes.
+   * Without this the renderer had no way to tell an h1 from an h6 and
+   * flattened every realm heading to the same level, destroying the
+   * document outline screen readers navigate by (AUD-018). */
+  level?: number;
 }
 
 interface ResolvedLink {
@@ -126,12 +131,17 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
     }
     flushParagraph();
     const headingText = headingMatch[2]!;
+    const level = headingMatch[1]!.length;
     LINK_RE.lastIndex = 0;
     if (LINK_RE.test(headingText)) {
       LINK_RE.lastIndex = 0;
-      nodes.push({ type: "heading", children: parseInlineLinks(headingText, currentPackagePath) });
+      nodes.push({
+        type: "heading",
+        level,
+        children: parseInlineLinks(headingText, currentPackagePath),
+      });
     } else {
-      nodes.push({ type: "heading", content: unescapeMarkdown(headingText) });
+      nodes.push({ type: "heading", level, content: unescapeMarkdown(headingText) });
     }
   }
   flushParagraph();
