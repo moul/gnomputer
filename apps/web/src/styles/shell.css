@@ -3748,3 +3748,19 @@ main {
   white-space: nowrap;
   min-width: 0;
 }
+
+/* Editor autosave state — silent data loss is worse than a little chrome,
+   so the user always knows whether their script is actually saved. */
+.editor-window__save-state {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.editor-window__save-state[data-state="error"] {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.editor-window__save-state[data-state="saved"] {
+  color: var(--accent-green);
+}

@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-01
 
+- **Data-loss fix:** the Editor discarded recent typing if you switched
+  scripts, closed the window, or reloaded within ~0.6s of your last
+  keystroke, and silently swallowed failed writes. Pending edits are now
+  flushed on all of those paths, `Cmd/Ctrl+S` saves immediately, and the
+  toolbar shows unsaved / saving / saved / **not saved** so you always know
+  where your work stands.
 - Live views (Event Explorer, Blocks, Transactions, activity feeds) now share
   a single chain-height poll instead of each running their own. With three
   live windows open that's ~3x fewer status requests, and a backgrounded tab
