@@ -6,8 +6,8 @@ import { fetchWithDeadline } from "./fetch-with-deadline";
 // browser — confirmed live via a real cross-origin browser fetch (not just
 // curl) and via a live vitest run against the real endpoint. Previously
 // (ADR-012/015) this was blocked entirely by a missing CORS header; that's
-// no longer true, though callers should still treat network failure as a
-// possible, if now much rarer, "not available" state. The schema itself is
+// no longer true — recorded as ADR-018 — though callers should still treat
+// network failure as a possible, if now much rarer, "not available" state. The schema itself is
 // narrower than a typical GraphQL API: only getBlocks/getTransactions/
 // latestBlockHeight (getAccount-style queries don't exist — "what has this
 // address done" only works by filtering getTransactions on a message's
@@ -148,10 +148,11 @@ async function queryIndexer<T>(
   return body.data as T;
 }
 
-// `creator` is a real filter field on MsgAddPackage (confirmed via
+// `creator` is a real filter field on MsgAddPackage, confirmed via
 // introspection and a live query returning a known address's actual
-// deployed packages) — blocked by the same missing-CORS-header issue as
-// every other indexer call, not by the query itself being wrong.
+// deployed packages. (An earlier version of this comment said the call was
+// CORS-blocked; that stopped being true in 2026-07 — see ADR-018 and the
+// note at the top of this file.)
 const COUNT_BY_CREATOR_QUERY = `
   query CountByCreator($address: String!) {
     getTransactions(where: { success: { eq: true }, messages: { typeUrl: { eq: "add_package" }, value: { MsgAddPackage: { creator: { eq: $address } } } } }) {

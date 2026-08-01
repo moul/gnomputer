@@ -4,6 +4,11 @@
 > The indexer and `subscribe` findings below still hold, but a third RPC
 > method, `block_results`, was later found to expose real per-tx events
 > without CORS issues. An Event Explorer was built on it.
+>
+> **The indexer CORS finding is further superseded by
+> [ADR-018](./ADR-018-topaz-indexer-is-cors-enabled.md)** — Topaz's indexer
+> now sends `access-control-allow-origin: *`. The `subscribe` finding still
+> holds.
 
 ## Context
 

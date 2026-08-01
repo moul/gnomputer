@@ -101,9 +101,10 @@ export interface RpcClient {
    * shape rather than gnopie's (draft, unmerged) source directly. */
   queryFuncs(packagePath: string, fetchedAt: string): Promise<DataEnvelope<string>>;
   /** Real, live package-path enumeration via vm/qpaths — a genuine prefix
-   * scan over deployed packages (store.FindPathsByPrefix on the node side),
-   * unlike the indexer (CORS-blocked from the browser on every network
-   * checked so far, see indexer.ts). Empty prefix matches everything. */
+   * scan over deployed packages (store.FindPathsByPrefix on the node side).
+   * Kept over the indexer even now that the indexer is reachable from the
+   * browser (ADR-018): the node-side scan has no 10,000-row cap. Empty
+   * prefix matches everything. */
   listPackagesByPrefix(prefix: string, limit: number, fetchedAt: string): Promise<DataEnvelope<string[]>>;
   getBlockSummary(height: number): Promise<DataEnvelope<BlockSummary>>;
   getBlockEvents(height: number, fetchedAt: string): Promise<DataEnvelope<BlockEvents>>;
