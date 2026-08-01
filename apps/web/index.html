@@ -3,8 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f6f7f9" />
+    <!-- Theme-aware: the manifest declares a single dark theme_color, which
+         looked wrong against the light default. These let the browser chrome
+         follow whichever scheme the visitor is actually in. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f7f9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f14" />
+    <meta
+      name="description"
+      content="A windowed desktop for gno.land — browse realms, read their source and on-chain state, and watch the chain live, entirely in your browser."
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- iOS ignores the manifest's icons; without this an installed app gets
+         a screenshot of the page as its home-screen icon. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Gnomputer" />
+    <meta property="og:title" content="Gnomputer — Boot the shared computer." />
+    <meta
+      property="og:description"
+      content="A windowed desktop for gno.land — browse realms, read their source and on-chain state, and watch the chain live, entirely in your browser."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
     <title>Gnomputer — Boot the shared computer.</title>
   </head>
   <body>

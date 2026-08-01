@@ -110,13 +110,17 @@ export default defineConfig({
         theme_color: "#0b0f14",
         background_color: "#0b0f14",
         display: "standalone",
+        // iOS ignores SVG icons entirely, and Android needs a dedicated
+        // "maskable" asset — with only the SVG here, an installed app got a
+        // blurry screenshot icon on iOS and a letterboxed one on Android.
+        // The maskable variant keeps the logo inside the ~80% safe zone
+        // with the background bled to the edges, so platform cropping to a
+        // circle/squircle can't clip it.
         icons: [
-          {
-            src: "favicon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
+          { src: "favicon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+          { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
     }),
