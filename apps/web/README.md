@@ -79,6 +79,8 @@ Unit tests sit next to what they test, under jsdom (configured in
 in `e2e/` and run against `apps/mock-server`; anything needing the real chain
 is tagged `@live` and excluded from the default run.
 
-Two gates are easy to trip without realising they exist:
+Three gates are easy to trip without realising they exist:
 `src/styles/contrast.test.ts` requires every theme token to clear WCAG AA,
-and `e2e/accessibility.spec.ts` runs axe over every theme and every app.
+`e2e/accessibility.spec.ts` runs axe over every theme and every app, and
+`scripts/check-bundle-budget.mjs` — part of `build`, so it fails the build,
+not a separate step — caps the gzipped size of the first-visit payload.
