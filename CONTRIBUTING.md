@@ -79,6 +79,13 @@ Three gates are worth knowing about because they fail PRs:
   every surface, in every theme. Adding a theme means clearing that bar.
 - **axe** (`apps/web/e2e/accessibility.spec.ts`) scans the desktop in all
   themes and every app for WCAG A/AA violations.
+- **Bundle budget** (`apps/web/scripts/check-bundle-budget.mjs`, run as part
+  of `build`) caps what a *first visit* downloads, gzipped. Also a ratchet.
+  It gates only the app shell — the per-app lazy chunks are reported but not
+  capped, because nobody who never opens the Editor pays for its 145KB. If a
+  change genuinely needs more, raise the number in the same PR and say why:
+  it is a decision about what someone on a phone pays before the app does
+  anything.
 
 ## Working habits that this codebase has learned the hard way
 
