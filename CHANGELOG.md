@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- The island menus take arrow keys, Home/End and type-to-jump, instead
+  of only Tab. Escape now really closes a menu — previously it shut and
+  reopened immediately, so it looked like Escape did nothing.
 - Embedded pages (Gnockpit, gnoweb) can no longer navigate the whole
   Gnomputer tab somewhere else, and a content security policy now blocks
   injected script.
