@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Windows can now be operated without a mouse: focus a titlebar and use
+  arrow keys to move it, Shift+arrows to resize (hold Alt for 1px steps),
+  and there's a real Maximize/Restore button — previously all three were
+  drag-or-double-click only.
 - The Packages list no longer builds 500 rows up front or re-sorts all
   ~2,000 packages on every keystroke — it renders a page at a time with a
   "Show more" button, so filtering stays responsive.
