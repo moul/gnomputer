@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Installing Gnomputer as an app now gets a proper icon. It only shipped an
+  SVG, which iOS ignores entirely (you'd get a blurry screenshot of the page)
+  and Android letterboxes — there are now real PNG, maskable, and Apple
+  touch icons, plus a page description and light/dark-aware browser chrome.
 - Live feeds (events, blocks, transactions) now say when they can't reach
   the chain, instead of sitting on "Watching the chain…" forever — which
   looked identical to a quiet chain.
