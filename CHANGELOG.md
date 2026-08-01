@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Fixed: changing a setting (theme, zoom, window layout, network choice)
+  and reloading straight away could silently lose it — navigating away
+  aborts the in-flight browser-storage write. Those small preferences are
+  now also written synchronously, so a quick reload keeps them.
 - **Data-loss fix:** the Editor discarded recent typing if you switched
   scripts, closed the window, or reloaded within ~0.6s of your last
   keystroke, and silently swallowed failed writes. Pending edits are now
