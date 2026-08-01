@@ -3946,3 +3946,22 @@ main {
 .state-line[data-error="true"] {
   color: var(--danger);
 }
+
+/* The tabstrip is now a row of [tablist][actions] — the tablist itself
+   holds only real tabs (see realm-browser.tsx). */
+.realm-browser__tabstrip-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.realm-browser__tabstrip-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.realm-browser__tabpanel {
+  display: contents;
+}

@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- The Browser's realm tabs are now real tabs: arrow keys (and Home/End)
+  move between them, screen readers announce which is selected, and the
+  "new tab"/"pop out" buttons are no longer mixed in among the tabs.
 - A crash inside one app no longer takes down the whole desktop — each
   window now contains its own failure, so your other open windows keep
   working while the broken one offers a recovery card.
