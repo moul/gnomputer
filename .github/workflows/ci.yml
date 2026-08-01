@@ -8,107 +8,50 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Each job stays separate rather than becoming steps of one job: they run in
+# parallel, and a failure names the thing that failed in the checks list
+# instead of burying it in a single "ci" log.
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm lint
 
   typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm typecheck
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm test
 
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm --filter @gnomputer/web test:coverage
 
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm build
 
   e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: "20", cache: "pnpm" }
-      - uses: actions/cache@v4
-        with:
-          path: "**/.turbo"
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
-            turbo-${{ runner.os }}-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: npx playwright install --with-deps chromium
         working-directory: apps/web
       - run: pnpm --filter @gnomputer/web e2e

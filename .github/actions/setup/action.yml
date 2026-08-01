@@ -1,0 +1,29 @@
+name: Setup toolchain
+description: >-
+  pnpm, Node, the turbo cache and an installed workspace. Every CI job needs
+  exactly this, and six copies of it drifted apart one edit at a time
+  (AUD-052).
+
+  Checkout stays in the caller: a local composite action can only be found
+  once the repository is already on disk.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "pnpm"
+    - uses: actions/cache@v4
+      with:
+        path: "**/.turbo"
+        # Keyed on the exact commit so a rerun of the same SHA is a hit, with
+        # progressively looser fallbacks: same lockfile first (dependencies
+        # unchanged), then anything for this OS.
+        key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+        restore-keys: |
+          turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+          turbo-${{ runner.os }}-
+    - run: pnpm install --frozen-lockfile
+      shell: bash
