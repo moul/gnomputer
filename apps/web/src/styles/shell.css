@@ -4047,3 +4047,51 @@ main {
   font-size: 11px;
   color: var(--text-faint);
 }
+
+/* The spec's opening text (§7.1). Anchored to the BOTTOM: the first window
+   fills most of the viewport, so there is no empty area to sit in, and the
+   top-centre position this first had covered the realm path input — the one
+   control a new visitor is most likely to reach for. */
+.first-run-note {
+  position: fixed;
+  bottom: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  max-width: min(560px, calc(100vw - var(--space-4) * 2));
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  font-family: var(--ui-font);
+  text-align: center;
+  /* Never swallows a click meant for the workspace underneath. Only the
+     dismiss button takes pointer events; everything else passes straight
+     through, and the note clears itself on the first outside press. */
+  pointer-events: none;
+}
+
+.first-run-note__lead {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.first-run-note__body {
+  margin-top: var(--space-1);
+  color: var(--text-dim);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.first-run-note__dismiss {
+  margin-top: var(--space-2);
+  pointer-events: auto;
+}
+
+@media (max-width: 640px) {
+  .first-run-note {
+    padding: var(--space-2) var(--space-3);
+  }
+}

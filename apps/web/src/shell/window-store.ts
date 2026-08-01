@@ -38,7 +38,7 @@ interface WindowManagerState {
     id: string,
     title: string,
     defaults: WindowGeometry,
-    options?: { startClosed?: boolean; startMaximized?: boolean }
+    options?: { startClosed?: boolean; startMaximized?: boolean; centeredPlacement?: boolean }
   ) => void;
   focus: (id: string) => void;
   move: (id: string, x: number, y: number) => void;
@@ -141,11 +141,20 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     }
     const nextZ = get().topZIndex + 1;
     const startMaximized = options?.startMaximized ?? false;
-    // Every window lands somewhere different by default instead of a fixed
-    // curated spot — random placement plus overview mode (click the desktop
-    // background) replaces needing to remember/tile a specific layout.
-    // Maximized windows ignore position entirely, so skip the randomization.
-    const position = startMaximized ? { x: defaults.x, y: defaults.y } : centeredRandomPosition(defaults);
+    // Every window a user OPENS lands somewhere different by default
+    // instead of a fixed curated spot — random placement plus overview mode
+    // (click the desktop background) replaces needing to remember/tile a
+    // specific layout. Maximized windows ignore position entirely, so skip
+    // the randomization.
+    //
+    // centeredPlacement opts out. The window that makes up the initial
+    // workspace uses it, so a first visit is the same every time rather
+    // than landing a few dozen pixels away on each load — a launch state
+    // that moves is not a launch state (AUD-009).
+    const position =
+      startMaximized || options?.centeredPlacement
+        ? { x: defaults.x, y: defaults.y }
+        : centeredRandomPosition(defaults);
     set((state) => ({
       topZIndex: nextZ,
       windows: {

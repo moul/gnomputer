@@ -17,6 +17,7 @@ export function Window({
   defaultGeometry,
   accent = "cyan",
   startClosed = false,
+  centeredPlacement = false,
   onClose,
   children,
 }: {
@@ -25,6 +26,10 @@ export function Window({
   defaultGeometry: WindowGeometry;
   accent?: WindowAccent;
   startClosed?: boolean;
+  /** Place at exactly defaultGeometry instead of the usual scatter. For the
+   * window that forms the initial workspace, so a first visit looks the
+   * same every time. */
+  centeredPlacement?: boolean;
   /** Called instead of the normal close() when set — for windows that are
    * dynamically created instances (e.g. a popped-out realm browser) rather
    * than a fixed app, closing the titlebar button means "destroy this
@@ -56,7 +61,11 @@ export function Window({
     // ensureWindow no-ops for an id that already exists (including one
     // restored from a saved layout), so this never overrides a real user's
     // preference on any device, mobile or not.
-    ensureWindow(id, title, defaultGeometry, { startClosed, startMaximized: isPhoneViewport() });
+    ensureWindow(id, title, defaultGeometry, {
+      startClosed,
+      startMaximized: isPhoneViewport(),
+      centeredPlacement,
+    });
     // Geometry is only ever applied once per window id — re-running this with
     // a fresh defaultGeometry object identity on every render must NOT reset a
     // window the user has already dragged or resized. Title updates (e.g. a

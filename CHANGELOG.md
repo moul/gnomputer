@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- A first visit now says what it is: "You are browsing the shared
+  computer", with a line on what to do next and that no wallet is
+  needed. It clears itself as soon as you start using the app and never
+  comes back. The Browser window also opens in the same place every
+  time, instead of a slightly different spot on each load.
 - The island menus take arrow keys, Home/End and type-to-jump, instead
   of only Tab. Escape now really closes a menu — previously it shut and
   reopened immediately, so it looked like Escape did nothing.
