@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- One corrupt row in the offline cache no longer disables caching. It
+  used to break both restoring on load and saving for the rest of the
+  session, so pages that should have appeared instantly kept showing a
+  spinner until browser storage was cleared. Bad rows are now dropped.
 - A window layout saved on a big screen no longer strands windows
   off-screen when you open the app somewhere smaller. Windows are pulled
   fully into view and shrunk to fit, and on a phone a restored layout

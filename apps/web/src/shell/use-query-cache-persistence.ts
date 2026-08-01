@@ -15,17 +15,28 @@ export function useQueryCachePersistence() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const entries = await sdk.queryCache.getAll();
-      if (cancelled) return;
-      for (const entry of entries) {
-        try {
-          const queryKey = JSON.parse(entry.queryKeyJson);
-          queryClient.setQueryData(queryKey, entry.data, { updatedAt: entry.updatedAt });
-        } catch {
-          // Corrupt or outdated persisted entry — skip it rather than crash boot.
+      try {
+        const entries = await sdk.queryCache.getAll();
+        if (cancelled) return;
+        for (const entry of entries) {
+          try {
+            const queryKey = JSON.parse(entry.queryKeyJson);
+            queryClient.setQueryData(queryKey, entry.data, { updatedAt: entry.updatedAt });
+          } catch {
+            // Corrupt or outdated persisted entry — skip it rather than crash boot.
+          }
         }
+      } catch {
+        // Reading the cache failed entirely (storage unavailable, a quota
+        // error, a browser that blocks IndexedDB). Starting cold is a fine
+        // outcome; the finally below is the important part.
+      } finally {
+        // Always, even when reading threw. This flag gates SAVING as well
+        // as restoring, so leaving it false on a read failure quietly
+        // disabled the cache for the rest of the session — a read problem
+        // turning into a permanent write problem (AUD-006).
+        hydrated.current = true;
       }
-      hydrated.current = true;
     })();
     return () => {
       cancelled = true;

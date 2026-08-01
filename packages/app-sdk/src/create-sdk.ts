@@ -133,6 +133,11 @@ export interface GnomputerSDK {
 // could hold, so a session that opens many different realms/blocks doesn't
 // grow this table forever.
 const QUERY_CACHE_MAX_ENTRIES = 50;
+/** Bump when the shape of a cached query result changes in a way older
+ * entries cannot satisfy. Rows written under a different version are
+ * dropped on read instead of being handed to code that expects the new
+ * shape. */
+const QUERY_CACHE_SCHEMA_VERSION = 1;
 
 export function createGnomputerSDK(
   options: { networkId?: string; dbName?: string } = {}
@@ -214,18 +219,48 @@ export function createGnomputerSDK(
     queryCache: {
       getAll: async () => {
         const records = await db.queryCache.orderBy("insertSeq").toArray();
-        return records.map((r) => ({
-          queryKeyJson: r.queryKeyJson,
-          data: JSON.parse(r.dataJson),
-          updatedAt: r.updatedAt,
-        }));
+
+        // Parsed per row, not in a map() that throws for the whole batch.
+        // One unparseable row used to reject getAll(), which took down the
+        // caller's whole hydration — and because that caller sets its
+        // "hydrated" flag at the end of the same block, the failure also
+        // stopped the cache SAVING anything for the rest of the session.
+        // A single bad row disabled the feature until storage was cleared
+        // (AUD-006).
+        const good: { queryKeyJson: string; data: unknown; updatedAt: number }[] = [];
+        const quarantine: string[] = [];
+        for (const record of records) {
+          if ((record.schemaVersion ?? 0) !== QUERY_CACHE_SCHEMA_VERSION) {
+            quarantine.push(record.key);
+            continue;
+          }
+          try {
+            good.push({
+              queryKeyJson: record.queryKeyJson,
+              data: JSON.parse(record.dataJson),
+              updatedAt: record.updatedAt,
+            });
+          } catch {
+            quarantine.push(record.key);
+          }
+        }
+        // Deleted rather than merely skipped: a row that cannot be parsed
+        // will never become parseable, so leaving it costs this scan on
+        // every boot forever and keeps occupying one of the 50 slots.
+        if (quarantine.length > 0) void db.queryCache.bulkDelete(quarantine);
+        return good;
       },
       set: async (queryKeyJson, data, updatedAt) => {
         const existing = await db.queryCache.get(queryKeyJson);
         if (existing) {
           // True FIFO: updating a key's data does not move it back to the
           // front of the eviction queue — only first-seen order matters.
-          await db.queryCache.put({ ...existing, dataJson: JSON.stringify(data), updatedAt });
+          await db.queryCache.put({
+            ...existing,
+            dataJson: JSON.stringify(data),
+            updatedAt,
+            schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
+          });
           return;
         }
         const count = await db.queryCache.count();
@@ -240,6 +275,7 @@ export function createGnomputerSDK(
           dataJson: JSON.stringify(data),
           updatedAt,
           insertSeq: (newest?.insertSeq ?? 0) + 1,
+          schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
         });
       },
     },
