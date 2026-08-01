@@ -1,6 +1,7 @@
 import { formatUgnotString } from "../format-number";
 import type { IntentPhase } from "./transaction-intent";
 import type { WalletAccount } from "./wallet-store";
+import { useFocusTrap } from "./use-focus-trap";
 
 /** The human-readable review that must appear before any signature request,
  * and the lifecycle afterwards.
@@ -26,13 +27,21 @@ export function TransactionReview({
   onCancel: () => void;
   onDismiss: () => void;
 }) {
+  const trapRef = useFocusTrap<HTMLDivElement>(state.phase !== "idle");
+
   if (state.phase === "idle") return null;
 
   const { intent } = state;
   const busy = state.phase === "signing" || state.phase === "submitted";
 
   return (
-    <div className="tx-review" role="dialog" aria-modal="true" aria-label="Review transaction">
+    <div
+      ref={trapRef}
+      className="tx-review"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Review transaction"
+    >
       <div className="tx-review__panel">
         <p className="tx-review__summary">{intent.summary}</p>
 
