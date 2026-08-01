@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- Apps now load their code the first time you open them, instead of all
+  fifteen being downloaded and parsed on every boot — about 12KB less
+  JavaScript (gzipped) before the app is interactive.
 - **Fixed: a stylesheet corruption that silently disabled part of the app's
   CSS.** Two rules had lost their closing braces during an earlier merge, so
   the browser parsed everything after them as nested rules and dropped it —
