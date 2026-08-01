@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useShellStore } from "../store";
 import { useSdk } from "../sdk-context";
+import { encodeGnoString } from "@gnomputer/lenses";
 import { matchWholeEntity } from "./entity-patterns";
 import { openEntityMatch, openRef } from "./open-ref";
 import { useRealmSuggestions } from "./use-realm-suggestions";
@@ -45,7 +46,7 @@ export function CommandPalette() {
     try {
       const env = await sdk.rpc.evalExpression(
         USERS_PACKAGE,
-        `ResolveAny("${normalized}")`,
+        `ResolveAny(${encodeGnoString(normalized)})`,
         new Date().toISOString()
       );
       const parsed = sdk.lenses.parseUserData(env.data);
