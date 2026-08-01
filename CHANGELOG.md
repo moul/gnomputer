@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Live views (Event Explorer, Blocks, Transactions, activity feeds) now share
+  a single chain-height poll instead of each running their own. With three
+  live windows open that's ~3x fewer status requests, and a backgrounded tab
+  now stops polling entirely instead of continuing forever.
+
 - **Fixed: the "New version available" Refresh button didn't update the app.**
   Clicking it reloaded the page straight back into the *old* build, and the
   banner reappeared — so it looked permanently broken. The version check
