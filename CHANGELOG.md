@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Losing the chain is now announced to screen readers. The connection
+  indicator is a coloured dot, which meant an outage was silent unless you
+  could see it. A drop, being offline, and recovering are each spoken once;
+  a normal healthy startup stays quiet.
 - Windows can now be operated without a mouse: focus a titlebar and use
   arrow keys to move it, Shift+arrows to resize (hold Alt for 1px steps),
   and there's a real Maximize/Restore button — previously all three were
