@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import { FIXTURES } from "./fixtures";
+import { FIXTURES } from "./fixtures.js";
 
 export interface MockServerHandle {
   url: string;
@@ -18,6 +18,21 @@ function fixtureFor(body: { method?: string; params?: { path?: string } }): unkn
 
 export function createMockServer(port = 0): Promise<MockServerHandle> {
   const server = createServer((req, res) => {
+    // A JSON-RPC POST carries `content-type: application/json`, which is not
+    // a CORS-safelisted content type — so the browser sends a preflight
+    // OPTIONS first. Without answering it the real request never happens and
+    // the app just sees "Failed to fetch".
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "POST, GET, OPTIONS",
+        "access-control-allow-headers": "content-type",
+        "access-control-max-age": "86400",
+      });
+      res.end();
+      return;
+    }
+
     let raw = "";
     req.on("data", (chunk) => (raw += chunk));
     req.on("end", () => {
