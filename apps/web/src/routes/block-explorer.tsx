@@ -12,6 +12,7 @@ import { ErrorState } from "../shell/error-state";
 import { openExplorer } from "../shell/open-explorer";
 import { formatNumber } from "../format-number";
 import { BlockStrip } from "./block-strip";
+import { LiveFeedStatus } from "../shell/live-feed-status";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
@@ -29,7 +30,7 @@ export function BlockExplorer() {
 
   const [paused, setPaused] = useState(false);
   const [txsOnly, setTxsOnly] = useState(false);
-  const { blocks } = useLiveActivity(paused);
+  const { blocks, isError } = useLiveActivity(paused);
   const [now, setNow] = useState(() => Date.now());
   const warnings = sdk.networks.getActive().warnings ?? [];
 
@@ -108,9 +109,7 @@ export function BlockExplorer() {
             <p className="panel__notice">{warnings.map((w) => w.message).join(" ")}</p>
           )}
           {blocks.length === 0 ? (
-            <p className="state-line" aria-busy="true">
-              Watching the chain for new blocks…
-            </p>
+            <LiveFeedStatus isError={isError} watching="Watching the chain for new blocks…" />
           ) : visibleBlocks.length === 0 ? (
             <p className="state-line">No blocks with transactions in the current window yet.</p>
           ) : (

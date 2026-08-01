@@ -35,12 +35,14 @@ export function blockToTransactions(block: BlockEvents): LiveTransaction[] {
  * transaction instead of flattening to one row per event — gnoscan-style
  * "recent transactions" needs the tx-level fields (success, gas) that
  * flattening throws away, not just the events a tx happened to emit. */
-export function useLiveTransactions(paused = false): { transactions: LiveTransaction[] } {
+export function useLiveTransactions(
+  paused = false
+): { transactions: LiveTransaction[]; isError: boolean } {
   const sdk = useSdk();
   const [transactions, setTransactions] = useState<LiveTransaction[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
 
-  const { height } = useChainHeight(!paused);
+  const { height, isError } = useChainHeight(!paused);
   const inFlight = useRef(false);
 
   useEffect(() => {
@@ -80,5 +82,5 @@ export function useLiveTransactions(paused = false): { transactions: LiveTransac
     };
   }, [sdk, paused, height]);
 
-  return { transactions };
+  return { transactions, isError };
 }
