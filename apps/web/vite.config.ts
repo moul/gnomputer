@@ -137,10 +137,17 @@ export default defineConfig({
       // numbers so the gate catches a regression immediately; raise them as
       // coverage improves rather than picking an aspirational figure that
       // has to be ignored.
-      // Measured today: statements/lines 25.4%, functions 31.8%,
-      // branches 89.7%. Set just under each so a regression fails the build
+      // Measured on main: statements/lines 23.5%, functions 34.6%,
+      // branches 87.5%. Set just under each so a regression fails the build
       // immediately; raise them as coverage improves.
-      thresholds: { lines: 25, statements: 25, functions: 30, branches: 85 },
+      //
+      // The first version of these numbers was taken on a branch that
+      // predated lazy-loading the route components (#105). Lazy imports mean
+      // those modules aren't pulled in during unit tests, so they count in
+      // the denominator without contributing covered lines — real coverage
+      // is ~2 points lower than it looked. Measure the baseline on main, not
+      // on a feature branch.
+      thresholds: { lines: 23, statements: 23, functions: 33, branches: 85 },
     },
   },
 });
