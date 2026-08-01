@@ -124,5 +124,23 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     exclude: ["**/node_modules/**", "e2e/**"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary", "lcov"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.{ts,tsx}"],
+      // Excluded from the DENOMINATOR, not from testing: type-only files
+      // and entry points have nothing meaningfully coverable, and counting
+      // them just makes the number dishonest.
+      exclude: ["src/**/*.d.ts", "src/main.tsx", "src/**/*.test.{ts,tsx}"],
+      // A ratchet, not a target. These are set just under today's real
+      // numbers so the gate catches a regression immediately; raise them as
+      // coverage improves rather than picking an aspirational figure that
+      // has to be ignored.
+      // Measured today: statements/lines 25.4%, functions 31.8%,
+      // branches 89.7%. Set just under each so a regression fails the build
+      // immediately; raise them as coverage improves.
+      thresholds: { lines: 25, statements: 25, functions: 30, branches: 85 },
+    },
   },
 });
