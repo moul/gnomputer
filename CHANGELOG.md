@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- The Packages list no longer builds 500 rows up front or re-sorts all
+  ~2,000 packages on every keystroke — it renders a page at a time with a
+  "Show more" button, so filtering stays responsive.
 - Screen-reader navigation improvements: the page now has a top-level
   heading, and a realm's own headings keep their real levels instead of all
   being flattened to the same one, so its structure is navigable again.

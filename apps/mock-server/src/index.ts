@@ -11,7 +11,12 @@ export interface MockServerHandle {
 function fixtureFor(body: { method?: string; params?: { path?: string } }): unknown {
   if (body.method === "status") return FIXTURES.status;
   if (body.method === "abci_query") {
-    return body.params?.path === "vm/qfile" ? FIXTURES.qfile : FIXTURES.qrender;
+    const path = body.params?.path ?? "";
+    // qpaths carries a limit query string (vm/qpaths?limit=2000), so match
+    // on the prefix rather than the whole path.
+    if (path.startsWith("vm/qpaths")) return FIXTURES.qpaths;
+    if (path === "vm/qfile") return FIXTURES.qfile;
+    return FIXTURES.qrender;
   }
   return { jsonrpc: "2.0", id: 1, result: {} };
 }

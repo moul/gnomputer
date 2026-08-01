@@ -12,4 +12,5 @@ export const FIXTURES = {
   status: readFixture("status.json"),
   qrender: readFixture("qrender.json"),
   qfile: readFixture("qfile.json"),
+  qpaths: readFixture("qpaths.json"),
 };
