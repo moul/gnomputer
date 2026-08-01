@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- A window layout saved on a big screen no longer strands windows
+  off-screen when you open the app somewhere smaller. Windows are pulled
+  fully into view and shrunk to fit, and on a phone a restored layout
+  opens maximized like a fresh window does. Opening the app back on the
+  screen you saved it from leaves your layout exactly as you left it.
 - The island now shows which network you're on, the current block
   height, and whether you're a guest — without opening a menu. It also
   says "gnomputer", which mattered once the app is installed and there's

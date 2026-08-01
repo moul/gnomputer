@@ -48,6 +48,14 @@ interface WindowManagerState {
    * window that was fully in-bounds before doesn't get left stranded off
    * the new, smaller edge (use-window-viewport-reclamp.ts). */
   reclampAll: () => void;
+  /** Pulls every open, non-maximized window FULLY into the current viewport,
+   * shrinking any that no longer fit. Distinct from reclampAll, which
+   * applies the drag rule: that one deliberately allows a window to hang
+   * off the edge as long as a sliver and its titlebar stay reachable,
+   * because a user who parks a window half off-screen meant to. A restore
+   * is not a user action, so a layout arriving from a bigger screen has to
+   * land somewhere usable rather than merely grabbable. */
+  fitAllIntoView: () => void;
   close: (id: string) => void;
   /** Closes every currently-open window at once (overview mode's "close all
    * windows" button) — leaves already-closed windows untouched. */
@@ -210,6 +218,37 @@ export const useWindowStore = create<WindowManagerState>((set, get) => ({
     const win = get().windows[id];
     if (!win) return;
     set((state) => ({ windows: { ...state.windows, [id]: { ...win, closed: true } } }));
+  },
+
+  fitAllIntoView: () => {
+    const bounds = desktopBounds();
+    set((state) => ({
+      windows: Object.fromEntries(
+        Object.entries(state.windows).map(([id, w]) => {
+          if (w.closed || w.maximized) return [id, w];
+          const width = Math.max(MIN_WIDTH, Math.min(w.width, bounds.width));
+          const height = Math.max(
+            MIN_HEIGHT,
+            Math.min(w.height, bounds.height - ISLAND_CLEARANCE_PX)
+          );
+          return [
+            id,
+            {
+              ...w,
+              width,
+              height,
+              x: Math.round(Math.min(Math.max(0, w.x), Math.max(0, bounds.width - width))),
+              y: Math.round(
+                Math.min(
+                  Math.max(ISLAND_CLEARANCE_PX, w.y),
+                  Math.max(ISLAND_CLEARANCE_PX, bounds.height - height)
+                )
+              ),
+            },
+          ];
+        })
+      ),
+    }));
   },
 
   reclampAll: () => {
