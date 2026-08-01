@@ -82,6 +82,31 @@ export function RealmBrowser({
 
   const activeTab = win.tabs.find((t) => t.id === win.activeTabId) ?? win.tabs[0]!;
 
+  // Arrow-key navigation is what role="tablist" promises; without it the
+  // role was claiming behaviour that didn't exist.
+  function onTabKeyDown(e: React.KeyboardEvent) {
+    const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    e.preventDefault();
+    const tabs = win!.tabs;
+    const current = tabs.findIndex((t) => t.id === win!.activeTabId);
+    const next =
+      e.key === "Home"
+        ? 0
+        : e.key === "End"
+          ? tabs.length - 1
+          : // Wraps, so the cycle has no dead ends.
+            (current + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    const target = tabs[next];
+    if (!target) return;
+    selectTab(target.id);
+    // Move real focus with the selection, or the roving tabindex leaves
+    // focus stranded on a tab that is no longer selected.
+    requestAnimationFrame(() => {
+      document.getElementById(`${windowId}-tab-${target.id}`)?.focus();
+    });
+  }
+
   function selectTab(tabId: string) {
     setActiveTab(windowId, tabId);
     if (!isPrimary) return;
@@ -101,28 +126,54 @@ export function RealmBrowser({
   return (
     <div className="realm-browser">
       <div className="realm-browser__chrome">
-        <div className="realm-browser__tabstrip" role="tablist" aria-label="Open realms">
-          {win.tabs.map((t) => (
-            <span
-              key={t.id}
-              className="realm-browser__tabstrip-item"
-              data-active={t.id === win.activeTabId}
-            >
-              <button type="button" onClick={() => selectTab(t.id)}>
-                {t.packagePath === "" ? "🏠 Home" : formatRealmLabel(t.packagePath, 18)}
-              </button>
-              {win.tabs.length > 1 && (
-                <button
-                  type="button"
-                  className="realm-browser__tab-close"
-                  aria-label="Close tab"
-                  onClick={() => closeTab(windowId, t.id)}
+        {/* Only real tabs live inside the tablist. "New tab" and "pop out"
+            are actions, not tabs — having them in here made the tablist
+            structurally invalid (flagged by Lighthouse) and put them in the
+            arrow-key cycle where they don't belong. */}
+        <div className="realm-browser__tabstrip">
+          <div
+            className="realm-browser__tabstrip-tabs"
+            role="tablist"
+            aria-label="Open realms"
+            onKeyDown={onTabKeyDown}
+          >
+            {win.tabs.map((t) => {
+              const selected = t.id === win.activeTabId;
+              return (
+                <span
+                  key={t.id}
+                  className="realm-browser__tabstrip-item"
+                  data-active={selected}
                 >
-                  ×
-                </button>
-              )}
-            </span>
-          ))}
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`${windowId}-tab-${t.id}`}
+                    aria-selected={selected}
+                    aria-controls={`${windowId}-tabpanel`}
+                    // Roving tabindex: Tab reaches the tabstrip once, then
+                    // arrow keys move between tabs — the standard pattern,
+                    // instead of Tab stopping on every open realm.
+                    tabIndex={selected ? 0 : -1}
+                    onClick={() => selectTab(t.id)}
+                  >
+                    {t.packagePath === "" ? "🏠 Home" : formatRealmLabel(t.packagePath, 18)}
+                  </button>
+                  {win.tabs.length > 1 && (
+                    <button
+                      type="button"
+                      className="realm-browser__tab-close"
+                      aria-label="Close tab"
+                      tabIndex={selected ? 0 : -1}
+                      onClick={() => closeTab(windowId, t.id)}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+          </div>
           <button
             type="button"
             className="realm-browser__tab-new"
@@ -144,7 +195,14 @@ export function RealmBrowser({
         </div>
         <RealmUrlBar windowId={windowId} tab={activeTab} />
       </div>
-      <RealmTabBody windowId={windowId} tab={activeTab} />
+      <div
+        id={`${windowId}-tabpanel`}
+        role="tabpanel"
+        aria-labelledby={`${windowId}-tab-${activeTab.id}`}
+        className="realm-browser__tabpanel"
+      >
+        <RealmTabBody windowId={windowId} tab={activeTab} />
+      </div>
     </div>
   );
 }
