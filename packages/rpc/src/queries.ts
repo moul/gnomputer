@@ -1,5 +1,6 @@
 import { Tm2Client } from "@gnolang/tm2-rpc";
 import { JSONRPCProvider } from "@gnolang/tm2-js-client";
+import { fetchWithDeadline } from "./fetch-with-deadline";
 
 export function connectTm2Client(rpcUrl: string): Promise<Tm2Client> {
   return Tm2Client.connect(rpcUrl);
@@ -54,7 +55,7 @@ export async function fetchValidatorsRaw(
   rpcUrl: string,
   height: number
 ): Promise<{ blockHeight: number; validators: RawValidator[] }> {
-  const res = await fetch(rpcUrl, {
+  const res = await fetchWithDeadline(rpcUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -97,7 +98,7 @@ export async function fetchBlockResultsRaw(
   rpcUrl: string,
   height: number
 ): Promise<{ height: number; deliverTx: RawDeliverTx[] }> {
-  const res = await fetch(rpcUrl, {
+  const res = await fetchWithDeadline(rpcUrl, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
