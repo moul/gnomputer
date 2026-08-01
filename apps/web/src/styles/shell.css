@@ -2147,13 +2147,42 @@ main {
   color: var(--text);
 }
 
-.doc-tree__folder-toggle {
-  font-weight: 700;
+/* The docs tree renders one flat list of role="treeitem" rows rather than
+   nested <ul>s, so depth comes from an inline padding-left keyed to
+   aria-level rather than from nesting. */
+.doc-tree__row {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
   color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.doc-tree__folder-body {
-  padding-left: var(--space-3);
+.doc-tree__row:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* The whole tree is a single tab stop, so the focused row is the only way to
+   see where the arrow keys are — it must be unmistakable. */
+.doc-tree__row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  color: var(--text);
+}
+
+.doc-tree__row--folder {
+  font-weight: 700;
+}
+
+.doc-tree__row[data-selected="true"] {
+  background: var(--bg-inset);
+  border-color: var(--accent-dim);
+  color: var(--text);
 }
 
 .markdown-body {

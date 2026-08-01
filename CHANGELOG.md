@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- The documentation sidebar is now a real tree. It is a single tab stop
+  instead of one per folder and per file, arrow keys walk and expand it,
+  Enter opens a page, and typing a letter jumps to the next entry starting
+  with it. Screen readers are told the nesting depth and which folders are
+  open, which they previously had no way to know.
 - Losing the chain is now announced to screen readers. The connection
   indicator is a coloured dot, which meant an outage was silent unless you
   could see it. A drop, being offline, and recovering are each spoken once;

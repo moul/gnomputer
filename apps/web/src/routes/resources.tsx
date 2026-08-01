@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Markdown } from "../shell/markdown-lazy";
 import { ErrorState } from "../shell/error-state";
-import { buildDocTree, type DocTreeNode } from "../shell/doc-tree";
+import { buildDocTree } from "../shell/doc-tree";
+import { DocTreeView } from "../shell/doc-tree-view";
 import { useResourcesStore, type ResourcesTab } from "../shell/resources-store";
 import { useStorePersistence } from "../shell/use-store-persistence";
 import { SHORTCUTS } from "../shell/shortcuts-help";
@@ -105,7 +105,7 @@ function DocsTab() {
 
   return (
     <div className="resources-docs">
-      <nav aria-label="Docs" className="file-tree doc-tree">
+      <nav className="file-tree doc-tree-wrap">
         {treeError ? (
           <ErrorState
             message={`Could not load the docs listing: ${treeError.message}`}
@@ -136,60 +136,6 @@ function DocsTab() {
         )}
       </div>
     </div>
-  );
-}
-
-function DocTreeView({
-  nodes,
-  selected,
-  onSelect,
-}: {
-  nodes: DocTreeNode[];
-  selected: string | null;
-  onSelect: (path: string) => void;
-}) {
-  return (
-    <ul>
-      {nodes.map((node) =>
-        node.type === "folder" ? (
-          <DocTreeFolder key={node.path} node={node} selected={selected} onSelect={onSelect} />
-        ) : (
-          <li key={node.path}>
-            <button
-              type="button"
-              aria-current={node.path === `docs/${selected}`}
-              onClick={() => onSelect(node.path.replace(/^docs\//, ""))}
-            >
-              {node.name}
-            </button>
-          </li>
-        )
-      )}
-    </ul>
-  );
-}
-
-function DocTreeFolder({
-  node,
-  selected,
-  onSelect,
-}: {
-  node: DocTreeNode;
-  selected: string | null;
-  onSelect: (path: string) => void;
-}) {
-  const [open, setOpen] = useState(true);
-  return (
-    <li className="doc-tree__folder">
-      <button type="button" className="doc-tree__folder-toggle" onClick={() => setOpen((o) => !o)}>
-        <span aria-hidden="true">{open ? "▾" : "▸"}</span> {node.name}/
-      </button>
-      {open && (
-        <div className="doc-tree__folder-body">
-          <DocTreeView nodes={node.children ?? []} selected={selected} onSelect={onSelect} />
-        </div>
-      )}
-    </li>
   );
 }
 
