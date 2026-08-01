@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- A first visit no longer downloads every app up front. The service worker
+  used to pre-download all ~1.86MB of the build — including the code editor
+  and every app you hadn't opened — which undid the on-demand loading. It
+  now caches just the shell (~1.21MB) and picks up each app the first time
+  you actually open it. Offline boot still works.
 - Opening Gnomputer on a phone after using it on a desktop no longer
   restores windows wider than the screen — saved layouts are now fitted to
   the viewport on load, not just repositioned.
