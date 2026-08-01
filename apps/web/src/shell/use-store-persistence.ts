@@ -93,11 +93,22 @@ export function useStorePersistence<T extends object>(
     let cancelled = false;
     void (async () => {
       const stored = await sdk.uiState.get(storageKey);
-      // Prefer the synchronous mirror when IndexedDB has nothing (its write
-      // was aborted by a navigation) or when the two disagree — the mirror
-      // is written last, so it reflects the most recent change.
-      const mirrored = readMirror(storageKey);
-      const raw = stored && (!mirrored || mirrored.value === stored) ? stored : (mirrored?.value ?? stored);
+      // The mirror is a FALLBACK, never an override: it is used only when
+      // IndexedDB has nothing at all, which is exactly the aborted-write
+      // case this exists for.
+      //
+      // An earlier version preferred the mirror whenever the two disagreed.
+      // That was wrong — they disagree routinely (the mirror is written a
+      // moment before IndexedDB commits, and another tab can update
+      // IndexedDB), so a stale mirror could resurrect data the app had
+      // deliberately moved past. A test that stores corrupt JSON and
+      // expects defaults caught it doing exactly that.
+      //
+      // Honest limitation: this fixes an aborted FIRST write. If IndexedDB
+      // already holds an older value and the newer write is aborted, the
+      // older value still wins on reload — closing that would need a
+      // timestamp stored alongside the value in IndexedDB too.
+      const raw = stored ?? readMirror(storageKey)?.value ?? null;
       if (!cancelled && raw) {
         const restored = deserialize(raw);
         if (restored) {
