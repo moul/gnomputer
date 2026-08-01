@@ -4,6 +4,16 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-01
+
+- **Fixed: the "New version available" Refresh button didn't update the app.**
+  Clicking it reloaded the page straight back into the *old* build, and the
+  banner reappeared — so it looked permanently broken. The version check
+  (which bypasses the service worker) spots a deploy before the worker
+  notices it, and in that window the reload was served from the old worker's
+  own cache. Refresh now forces a service-worker update check, waits for the
+  new worker to finish installing and take control, and only then reloads.
+
 ## 2026-07-31
 
 - **Data-loss fix:** the crash screen's one-click "Clear state & reload" deleted
