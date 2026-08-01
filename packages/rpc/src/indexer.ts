@@ -1,4 +1,5 @@
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
+import { fetchWithDeadline } from "./fetch-with-deadline";
 
 // As of 2026-07-25, Topaz's indexer (indexer.topaz.testnets.gno.land) sends
 // `access-control-allow-origin: *` and these queries work directly from the
@@ -106,7 +107,7 @@ async function queryIndexer<T>(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<T> {
-  const res = await fetch(graphqlUrl, {
+  const res = await fetchWithDeadline(graphqlUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),

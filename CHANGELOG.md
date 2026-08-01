@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-01
 
+- A hung RPC or indexer endpoint no longer leaves a window stuck on
+  "Loading…" forever — requests now time out after 15s with an error that
+  names the host, and can be retried.
 - Apps now load their code the first time you open them, instead of all
   fifteen being downloaded and parsed on every boot — about 12KB less
   JavaScript (gzipped) before the app is interactive.
