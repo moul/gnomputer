@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-02
 
+- An unresponsive endpoint now reports a problem instead of spinning
+  forever. A node that accepts the connection and never answers used to
+  leave panels loading indefinitely with no error at all — which reads
+  as the app being broken rather than the endpoint.
 - Fixed the app going permanently dead after a single connection failure.
   If the chain was unreachable at any point — a dropped wifi connection,
   a testnet restart — nothing recovered afterwards: the live height
