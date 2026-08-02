@@ -6,6 +6,9 @@ import { matchWholeEntity } from "./entity-patterns";
 import { openEntityMatch, openRef } from "./open-ref";
 import { useRealmSuggestions } from "./use-realm-suggestions";
 import { useFocusTrap } from "./use-focus-trap";
+import { matchApps } from "./palette-apps";
+import { useWindowStore } from "./window-store";
+import { focusFamilyOrOpenDefault } from "./focus-family";
 
 const USERS_PACKAGE = "gno.land/r/sys/users";
 
@@ -17,6 +20,12 @@ export function CommandPalette() {
   const [resolving, setResolving] = useState(false);
   const suggestions = useRealmSuggestions(commandPaletteOpen, query);
   const trapRef = useFocusTrap<HTMLDivElement>(commandPaletteOpen);
+  const windows = useWindowStore((s) => s.windows);
+  const focus = useWindowStore((s) => s.focus);
+  const reopen = useWindowStore((s) => s.reopen);
+  // Apps first: the README says they are reachable from here, and until now
+  // they were not (AUD-046).
+  const appMatches = matchApps(query);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -62,7 +71,24 @@ export function CommandPalette() {
     }
   }
 
+  function openApp(id: string) {
+    focusFamilyOrOpenDefault([id], id, windows, { focus, reopen });
+    setQuery("");
+    setNotFound(false);
+    setCommandPaletteOpen(false);
+  }
+
   async function submit() {
+    // An app name beats entity resolution: typing "editor" means the
+    // Editor, not a realm or a username that happens to be spelled that
+    // way. Only an exact or prefix match wins, so a realm path containing
+    // an app's name still resolves as a realm.
+    const topApp = appMatches[0];
+    if (topApp && topApp.label.toLowerCase().startsWith(query.trim().toLowerCase())) {
+      openApp(topApp.id);
+      return;
+    }
+
     const match = matchWholeEntity(query);
     if (match && match.kind !== "username") {
       openEntityMatch(match.kind, match.text);
@@ -128,6 +154,17 @@ export function CommandPalette() {
             ))}
           </datalist>
         </form>
+        {appMatches.length > 0 && (
+          <ul className="command-palette__apps">
+            {appMatches.map((app) => (
+              <li key={app.id}>
+                <button type="button" onClick={() => openApp(app.id)}>
+                  <span aria-hidden="true">{app.icon}</span> {app.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         {resolving && (
           <p className="command-palette__hint" aria-busy="true">
             Looking up &ldquo;{query}&rdquo;…

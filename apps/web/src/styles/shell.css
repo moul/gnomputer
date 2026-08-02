@@ -4158,3 +4158,31 @@ main {
   color: var(--text-faint);
   cursor: help;
 }
+
+/* App results in the command palette. Sits directly under the input so the
+   first match is where the eye already is after typing. */
+.command-palette__apps {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.command-palette__apps button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text);
+}
+
+.command-palette__apps button:hover,
+.command-palette__apps button:focus-visible {
+  background: var(--bg-inset);
+  border-color: var(--accent-dim);
+}
