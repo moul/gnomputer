@@ -23,6 +23,29 @@ export interface TrailAPI {
   /** Switches the active Trail to an existing one (e.g. from listTrails),
    * without creating a new Trail the way start() does. */
   setActiveTrail(trailId: string): Promise<void>;
+  /** Removes a Trail and every step on it, and returns the id that is
+   * active afterwards.
+   *
+   * Until this existed a Trail could be started and renamed but never
+   * removed: "Clear history" starts a fresh one and leaves the old rows
+   * behind, so the list only ever grew, and a Trail recording where you
+   * have been was permanent for the life of the browser profile. For data
+   * described as user-owned that is the wrong default (AUD-045).
+   *
+   * Deleting the active Trail promotes the next most recently updated one
+   * rather than leaving nothing active — a null active Trail would make
+   * the next page visit silently start an unnamed one. */
+  deleteTrail(trailId: string): Promise<string>;
+  /** A Trail and its steps as plain data, for export. Null if it is gone. */
+  exportTrail(trailId: string): Promise<TrailExport | null>;
+}
+
+export interface TrailExport {
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  exportedAt: string;
+  steps: { refUri: string; label: string; createdAt: string }[];
 }
 
 const ACTIVE_TRAIL_META_KEY = "activeTrailId";
@@ -124,6 +147,40 @@ export function createTrailApi(db: GnomputerDB): TrailAPI {
 
     setActiveTrail(trailId) {
       return serialize(() => setActiveTrailId(trailId));
+    },
+
+    deleteTrail(trailId) {
+      // Through the write queue like every other mutation: deleting the
+      // active Trail reassigns which one is active, and a step landing
+      // between the delete and the reassignment would attach itself to a
+      // Trail that no longer exists.
+      return serialize(async () => {
+        await db.trailSteps.where("trailId").equals(trailId).delete();
+        await db.trails.delete(trailId);
+
+        const active = await db.meta.get(ACTIVE_TRAIL_META_KEY);
+        if (active?.value !== trailId) return active?.value ?? (await startUnsafe("Untitled Trail"));
+
+        const remaining = await db.trails.toArray();
+        remaining.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        const next = remaining[0];
+        if (!next) return startUnsafe("Untitled Trail");
+        await setActiveTrailId(next.id);
+        return next.id;
+      });
+    },
+
+    async exportTrail(trailId) {
+      const trail = await db.trails.get(trailId);
+      if (!trail) return null;
+      const steps = await db.trailSteps.where("trailId").equals(trailId).sortBy("order");
+      return {
+        name: trail.name,
+        createdAt: trail.createdAt,
+        updatedAt: trail.updatedAt,
+        exportedAt: new Date().toISOString(),
+        steps: steps.map((s) => ({ refUri: s.refUri, label: s.label, createdAt: s.createdAt })),
+      };
     },
   };
 }

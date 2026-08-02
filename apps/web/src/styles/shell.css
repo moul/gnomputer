@@ -3334,6 +3334,43 @@ main {
   color: var(--text-faint);
 }
 
+.history-window__trail-list li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Two classes (0,2,0) to beat `.history-window__trail-list button` (0,1,1),
+   which sets width:100%. With flex-basis:auto that width takes the whole
+   row and squeezes the Trail name to nothing — the same trap the favorites
+   row fell into (#171). */
+.history-window__trail-list .history-window__trail-action {
+  flex: 0 0 auto;
+  width: auto;
+  padding: var(--space-1);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-faint);
+}
+
+.history-window__trail-list .history-window__trail-action:hover,
+.history-window__trail-list .history-window__trail-action:focus-visible {
+  color: var(--text);
+  background: var(--bg-inset);
+}
+
+.history-window__trail-list .history-window__trail-delete:hover,
+.history-window__trail-list .history-window__trail-delete:focus-visible {
+  color: var(--danger);
+}
+
+.history-window__scope {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+}
+
 .history-list {
   list-style: none;
   margin: 0;

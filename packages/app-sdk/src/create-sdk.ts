@@ -60,9 +60,9 @@ import {
 } from "@gnomputer/storage";
 
 export type { ScriptRecord, FavoriteRecord };
-import { createTrailApi, type TrailAPI, type TrailSummary } from "@gnomputer/trails";
+import { createTrailApi, type TrailAPI, type TrailSummary, type TrailExport } from "@gnomputer/trails";
 
-export type { TrailSummary };
+export type { TrailSummary, TrailExport };
 import {
   availableLenses,
   parseRenderMarkup,
