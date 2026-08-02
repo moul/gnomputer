@@ -6,6 +6,7 @@ banner links here.
 
 ## 2026-08-01
 
+- Opening a realm asks the chain for its output once instead of twice.
 - One corrupt row in the offline cache no longer disables caching. It
   used to break both restoring on load and saving for the rest of the
   session, so pages that should have appeared instantly kept showing a
