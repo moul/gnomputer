@@ -19,7 +19,7 @@ function wrapperFor(sdk: GnomputerSDK) {
 
 function sdkWithList(list: () => Promise<unknown>): GnomputerSDK {
   return {
-    favorites: { list, toggle: () => Promise.resolve() },
+    favorites: { list, set: () => Promise.resolve() },
     networks: { getActive: () => ({ id: "topaz" }) },
   } as unknown as GnomputerSDK;
 }
@@ -83,7 +83,7 @@ describe("useFavorites and network switches", () => {
     // same choice to get the invalidation.
     let active = "topaz";
     const sdk = {
-      favorites: { list: () => Promise.resolve([]), toggle: () => Promise.resolve() },
+      favorites: { list: () => Promise.resolve([]), set: () => Promise.resolve() },
       networks: { getActive: () => ({ id: active }) },
     } as unknown as GnomputerSDK;
 

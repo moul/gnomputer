@@ -43,12 +43,53 @@ describe("createGnomputerSDK", () => {
     expect(steps).toHaveLength(1);
   });
 
-  it("toggles a favorite", async () => {
+  const FOO = "gno://test13/realm/gno.land/r/demo/foo";
+
+  it("sets and clears a favorite", async () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
-    await sdk.favorites.toggle("gno://test13/realm/gno.land/r/demo/foo", "Foo");
+    await sdk.favorites.set(FOO, "Foo", true);
     expect(await sdk.favorites.list()).toHaveLength(1);
-    await sdk.favorites.toggle("gno://test13/realm/gno.land/r/demo/foo", "Foo");
+    await sdk.favorites.set(FOO, "Foo", false);
     expect(await sdk.favorites.list()).toHaveLength(0);
+  });
+
+  it("is idempotent, so a repeated star does not duplicate or reshuffle", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    await sdk.favorites.set(FOO, "Foo", true);
+    const first = (await sdk.favorites.list())[0]!.createdAt;
+    await sdk.favorites.set(FOO, "Foo", true);
+    const rows = await sdk.favorites.list();
+    expect(rows).toHaveLength(1);
+    // A no-op write must not move it to the top of a newest-first list.
+    expect(rows[0]!.createdAt).toBe(first);
+  });
+
+  it("clearing something already absent is not an error", async () => {
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+    await expect(sdk.favorites.set(FOO, "Foo", false)).resolves.toBeUndefined();
+  });
+
+  it("lands on the last requested state when writes overlap", async () => {
+    // The bug this replaced: `toggle` read the current state from the
+    // database before deciding. Two toggles in one tick — an impatient
+    // double-click — both read "not favorited", both wrote, and the UI and
+    // the database disagreed permanently. The star read unstarred, the row
+    // was there, and a reload brought it back.
+    const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
+
+    await Promise.all([
+      sdk.favorites.set(FOO, "Foo", true),
+      sdk.favorites.set(FOO, "Foo", false),
+    ]);
+
+    expect(await sdk.favorites.list()).toHaveLength(0);
+
+    await Promise.all([
+      sdk.favorites.set(FOO, "Foo", false),
+      sdk.favorites.set(FOO, "Foo", true),
+    ]);
+
+    expect(await sdk.favorites.list()).toHaveLength(1);
   });
 
   it("persists and restores arbitrary UI state by key", async () => {

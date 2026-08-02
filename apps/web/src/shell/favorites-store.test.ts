@@ -11,8 +11,8 @@ function reset() {
   useFavoritesStore.setState({ favorites: [], hydrated: false });
 }
 
-function sdkWith(toggle: (refUri: string, label: string) => Promise<void>): GnomputerSDK {
-  return { favorites: { toggle, list: () => Promise.resolve([]) } } as unknown as GnomputerSDK;
+function sdkWith(set: (refUri: string, label: string, favorite: boolean) => Promise<void>): GnomputerSDK {
+  return { favorites: { set, list: () => Promise.resolve([]) } } as unknown as GnomputerSDK;
 }
 
 describe("favoriteUri / favoritePackagePath", () => {
@@ -40,8 +40,8 @@ describe("toggleFavorite", () => {
   beforeEach(reset);
 
   it("adds, then removes on a second toggle", async () => {
-    const toggle = vi.fn(() => Promise.resolve());
-    const sdk = sdkWith(toggle);
+    const set = vi.fn(() => Promise.resolve());
+    const sdk = sdkWith(set);
 
     await toggleFavorite(sdk, "topaz", "gno.land/r/gov/dao", "GovDAO");
     expect(useFavoritesStore.getState().favorites).toHaveLength(1);
@@ -49,7 +49,7 @@ describe("toggleFavorite", () => {
 
     await toggleFavorite(sdk, "topaz", "gno.land/r/gov/dao", "GovDAO");
     expect(useFavoritesStore.getState().favorites).toEqual([]);
-    expect(toggle).toHaveBeenCalledTimes(2);
+    expect(set).toHaveBeenCalledTimes(2);
   });
 
   it("does not duplicate when the same path is added twice in a row", () => {
@@ -90,8 +90,8 @@ describe("toggleFavorite", () => {
   });
 
   it("writes the network-scoped uri, not the bare path", async () => {
-    const toggle = vi.fn(() => Promise.resolve());
-    await toggleFavorite(sdkWith(toggle), "betanet", "gno.land/r/gov/dao", "GovDAO");
-    expect(toggle).toHaveBeenCalledWith("gno://betanet/realm/gno.land/r/gov/dao", "GovDAO");
+    const set = vi.fn(() => Promise.resolve());
+    await toggleFavorite(sdkWith(set), "betanet", "gno.land/r/gov/dao", "GovDAO");
+    expect(set).toHaveBeenCalledWith("gno://betanet/realm/gno.land/r/gov/dao", "GovDAO", true);
   });
 });
