@@ -147,6 +147,37 @@ const QUERY_CACHE_MAX_ENTRIES = 50;
  * find neither. */
 const QUERY_CACHE_SCHEMA_VERSION = 2;
 
+/** Storage is best-effort. When it is unavailable — Firefox private
+ * browsing, a locked-down enterprise profile, a full quota — the app is
+ * designed to keep working without it, and it does: verified with
+ * IndexedDB throwing on access, the desktop boots, windows open and chain
+ * data loads.
+ *
+ * What it also did was throw 32 unhandled rejections in the first nine
+ * seconds, because every preference and cache write is fire-and-forget.
+ * They broke nothing, but that volume drowns the console and would make
+ * any error-reporting integration useless, hiding the failures that
+ * matter behind a condition the app has already handled.
+ *
+ * So: swallowed, and reported exactly once. Reads return null on failure,
+ * which callers already treat as "nothing stored". */
+let warnedAboutStorage = false;
+
+function bestEffort(operation: Promise<unknown>): Promise<void> {
+  return operation.then(
+    () => undefined,
+    (error: unknown) => {
+      if (!warnedAboutStorage) {
+        warnedAboutStorage = true;
+        console.warn(
+          "Local storage is unavailable, so preferences and the offline cache won't persist. Everything else works.",
+          error
+        );
+      }
+    }
+  );
+}
+
 export function createGnomputerSDK(
   options: { networkId?: string; dbName?: string } = {}
 ): GnomputerSDK {
@@ -181,7 +212,8 @@ export function createGnomputerSDK(
       listRealms: () => listRealms(activeNetwork, new Date().toISOString()),
       countPackagesByCreator: (address) =>
         countPackagesByCreator(activeNetwork, address, new Date().toISOString()),
-      realmHistory: (packagePath) => realmHistory(activeNetwork, packagePath, new Date().toISOString()),
+      realmHistory: (packagePath) =>
+        realmHistory(activeNetwork, packagePath, new Date().toISOString()),
       chainActivityStats: () => chainActivityStats(activeNetwork, new Date().toISOString()),
       dailyActivity: () => dailyActivity(activeNetwork, new Date().toISOString()),
       listTransactions: () => listTransactions(activeNetwork, new Date().toISOString()),
@@ -217,16 +249,28 @@ export function createGnomputerSDK(
       // activeTrailId) — namespaced so an app-chosen key can never collide
       // with one of those.
       get: async (key) => {
-        const record = await db.meta.get(`uiState:${key}`);
-        return record?.value ?? null;
+        try {
+          const record = await db.meta.get(`uiState:${key}`);
+          return record?.value ?? null;
+        } catch {
+          // Indistinguishable from "nothing stored", which is the right
+          // behaviour when storage cannot be read at all.
+          return null;
+        }
       },
       set: async (key, value) => {
-        await db.meta.put({ key: `uiState:${key}`, value });
+        await bestEffort(db.meta.put({ key: `uiState:${key}`, value }));
       },
     },
     queryCache: {
       getAll: async () => {
-        const records = await db.queryCache.orderBy("insertSeq").toArray();
+        let records;
+        try {
+          records = await db.queryCache.orderBy("insertSeq").toArray();
+        } catch {
+          // No readable cache is the same as an empty one.
+          return [];
+        }
 
         // Parsed per row, not in a map() that throws for the whole batch.
         // One unparseable row used to reject getAll(), which took down the
@@ -255,36 +299,40 @@ export function createGnomputerSDK(
         // Deleted rather than merely skipped: a row that cannot be parsed
         // will never become parseable, so leaving it costs this scan on
         // every boot forever and keeps occupying one of the 50 slots.
-        if (quarantine.length > 0) void db.queryCache.bulkDelete(quarantine);
+        if (quarantine.length > 0) void bestEffort(db.queryCache.bulkDelete(quarantine));
         return good;
       },
       set: async (queryKeyJson, data, updatedAt) => {
-        const existing = await db.queryCache.get(queryKeyJson);
-        if (existing) {
-          // True FIFO: updating a key's data does not move it back to the
-          // front of the eviction queue — only first-seen order matters.
-          await db.queryCache.put({
-            ...existing,
-            dataJson: JSON.stringify(data),
-            updatedAt,
-            schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
-          });
-          return;
-        }
-        const count = await db.queryCache.count();
-        if (count >= QUERY_CACHE_MAX_ENTRIES) {
-          const oldest = await db.queryCache.orderBy("insertSeq").first();
-          if (oldest) await db.queryCache.delete(oldest.key);
-        }
-        const newest = await db.queryCache.orderBy("insertSeq").last();
-        await db.queryCache.put({
-          key: queryKeyJson,
-          queryKeyJson,
-          dataJson: JSON.stringify(data),
-          updatedAt,
-          insertSeq: (newest?.insertSeq ?? 0) + 1,
-          schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
-        });
+        await bestEffort(
+          (async () => {
+            const existing = await db.queryCache.get(queryKeyJson);
+            if (existing) {
+              // True FIFO: updating a key's data does not move it back to the
+              // front of the eviction queue — only first-seen order matters.
+              await db.queryCache.put({
+                ...existing,
+                dataJson: JSON.stringify(data),
+                updatedAt,
+                schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
+              });
+              return;
+            }
+            const count = await db.queryCache.count();
+            if (count >= QUERY_CACHE_MAX_ENTRIES) {
+              const oldest = await db.queryCache.orderBy("insertSeq").first();
+              if (oldest) await db.queryCache.delete(oldest.key);
+            }
+            const newest = await db.queryCache.orderBy("insertSeq").last();
+            await db.queryCache.put({
+              key: queryKeyJson,
+              queryKeyJson,
+              dataJson: JSON.stringify(data),
+              updatedAt,
+              insertSeq: (newest?.insertSeq ?? 0) + 1,
+              schemaVersion: QUERY_CACHE_SCHEMA_VERSION,
+            });
+          })()
+        );
       },
     },
     scripts: {
