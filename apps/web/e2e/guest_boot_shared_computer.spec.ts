@@ -83,3 +83,29 @@ test("the launch state is in the same place every time", async ({ page }) => {
   await page.waitForSelector("#window-realm");
   expect(await placement()).toEqual(first);
 });
+
+/** The first-run note now offers three things to DO, not only three things
+ * to read (see first-run-note.tsx). Each has to actually open what it
+ * names: a starter that quietly stops working is invisible, because the
+ * note only ever appears on a visitor's very first load and never again on
+ * the machine that would notice. */
+test("each first-run starter opens what it says, and clears the note", async ({ page }) => {
+  await page.goto("/");
+  const starters = page.locator(".first-run-note__starters button");
+  await expect(starters).toHaveCount(3);
+
+  await starters.filter({ hasText: "On-chain source" }).click();
+
+  // The note steps aside rather than talking over the thing it just opened.
+  await expect(page.locator(".first-run-note")).toHaveCount(0);
+  // ...and the Source lens is the one showing, not merely the realm.
+  await expect(page.getByRole("tab", { name: /Source/i })).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator("#window-realm")).toContainText("r/sys/users", { timeout: 20_000 });
+});
+
+test("a first-run starter can open an app, not just a realm", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".first-run-note__starters button").filter({ hasText: "Live events" }).click();
+  await expect(page.locator("#window-event-explorer")).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator(".first-run-note")).toHaveCount(0);
+});

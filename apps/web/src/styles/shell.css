@@ -4152,6 +4152,51 @@ main {
   line-height: 1.6;
 }
 
+/* pointer-events:auto on every interactive child, because the note itself
+   is pointer-events:none so it can never swallow a click meant for the
+   workspace underneath. A starter that cannot be clicked is worse than no
+   starter at all. */
+.first-run-note__starters {
+  list-style: none;
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.first-run-note__starters button {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--ui-font);
+}
+
+.first-run-note__starters button:hover,
+.first-run-note__starters button:focus-visible {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+
+.first-run-note__starter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.first-run-note__starter-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 .first-run-note__dismiss {
   margin-top: var(--space-2);
   pointer-events: auto;

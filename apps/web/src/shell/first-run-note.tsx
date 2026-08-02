@@ -1,7 +1,36 @@
 import { useEffect, useState } from "react";
 import { useSdk } from "../sdk-context";
+import { focusOrReopen, openRef } from "./open-ref";
 
 const STORAGE_KEY = "first-run-note-dismissed";
+
+/** Three things worth doing, rather than three things worth reading.
+ *
+ * The note used to say what the app is and stop there, which left a first
+ * visitor looking at a windowed desktop with no obvious first move. Each of
+ * these opens something that is demonstrably alive on a real chain within a
+ * second or two — the point being made is "this is live", and a claim you
+ * can click is worth more than a paragraph.
+ *
+ * Deliberately not a tour: no overlay, no step counter, nothing to escape
+ * from. Picking one starts the app; ignoring them costs a click. */
+const STARTERS = [
+  {
+    label: "Live governance",
+    hint: "Real GovDAO proposals",
+    run: () => openRef("gno://_/realm/gno.land/r/gov/dao"),
+  },
+  {
+    label: "On-chain source",
+    hint: "Gno read from the chain",
+    run: () => openRef("gno://_/source-file/gno.land/r/sys/users"),
+  },
+  {
+    label: "Live events",
+    hint: "Watch blocks land",
+    run: () => focusOrReopen("event-explorer"),
+  },
+];
 
 /** The opening text from the spec (§7.1), which was missing entirely.
  *
@@ -61,6 +90,25 @@ export function FirstRunNote() {
         Open any program, user, function or transaction to follow it through the world. Everything
         here is live chain data, read-only, and no wallet is needed.
       </p>
+      <ul className="first-run-note__starters">
+        {STARTERS.map((starter) => (
+          <li key={starter.label}>
+            <button
+              type="button"
+              onClick={() => {
+                starter.run();
+                // Taking a starter IS starting — leaving the intro up over
+                // the thing it just opened would be the note talking over
+                // its own demonstration.
+                dismiss();
+              }}
+            >
+              <span className="first-run-note__starter-label">{starter.label}</span>
+              <span className="first-run-note__starter-hint">{starter.hint}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
       <button type="button" className="first-run-note__dismiss" onClick={dismiss}>
         Got it
       </button>
