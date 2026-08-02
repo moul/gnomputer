@@ -147,7 +147,7 @@ function LazyObject({ objectId, typeNode }: { objectId: string; typeNode: TypeNo
       </button>
       {expanded &&
         (error ? (
-          <ErrorState message={`Could not load object: ${error.message}`} onRetry={() => void refetch()} />
+          <ErrorState message="Could not load object" error={error} onRetry={() => void refetch()} />
         ) : isPending || !data ? (
           <span className="state-line" aria-busy="true">
             Loading…
@@ -201,7 +201,7 @@ export function RealmStateExplorer({ packagePath }: { packagePath: string }) {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load package state: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load package state" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending || !data) {

@@ -25,7 +25,7 @@ export function DiscoverGovernance() {
   if (error) {
     return (
       <ErrorState
-        message={`Could not load governance proposals: ${error.message}`}
+        message="Could not load governance proposals" error={error}
         onRetry={() => void refetch()}
       />
     );

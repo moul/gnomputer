@@ -166,7 +166,7 @@ function IndexerTransactionExplorer() {
         <span className="state-line">{formatNumber(rows.length)} total</span>
       </div>
       {error ? (
-        <ErrorState message={`Could not load transactions: ${error.message}`} onRetry={() => void refetch()} />
+        <ErrorState message="Could not load transactions" error={error} onRetry={() => void refetch()} />
       ) : isPending ? (
         <p className="state-line" aria-busy="true">
           Loading transaction history…

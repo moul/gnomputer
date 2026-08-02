@@ -9,7 +9,7 @@ export function NetworkMonitor() {
 
   if (error) {
     return (
-      <ErrorState message={`Could not reach ${network.name}: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message={`Could not reach ${network.name}`} error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {

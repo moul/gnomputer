@@ -12,7 +12,7 @@ export function RealmDocs({ packagePath }: { packagePath: string }) {
   if (error) {
     return (
       <ErrorState
-        message={`Could not load documentation: ${error.message}`}
+        message="Could not load documentation" error={error}
         onRetry={() => void refetch()}
       />
     );

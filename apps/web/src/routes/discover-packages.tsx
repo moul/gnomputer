@@ -75,7 +75,7 @@ export function DiscoverPackages() {
   const visible = sorted.slice(0, visibleCount);
 
   if (error) {
-    return <ErrorState message={`Could not list packages: ${error.message}`} onRetry={() => void refetch()} />;
+    return <ErrorState message="Could not list packages" error={error} onRetry={() => void refetch()} />;
   }
   if (isPending || !paths) {
     return (

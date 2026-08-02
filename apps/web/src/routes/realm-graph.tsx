@@ -28,7 +28,7 @@ function LocalImportsGraph({ packagePath, windowId }: { packagePath: string; win
   if (error) {
     return (
       <ErrorState
-        message={`Could not load dependencies: ${error.message}`}
+        message="Could not load dependencies" error={error}
         onRetry={() => void refetch()}
       />
     );

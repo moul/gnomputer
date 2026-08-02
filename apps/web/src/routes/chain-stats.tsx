@@ -129,7 +129,7 @@ function DailyActivitySection() {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load daily activity: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load daily activity" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {
@@ -190,7 +190,7 @@ export function ChainStats() {
   }
   if (error) {
     return (
-      <ErrorState message={`Could not load chain stats: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load chain stats" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {

@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-01
 
+- Error messages say something useful instead of repeating whatever the
+  browser or the chain node said. A dropped connection now reads "Could
+  not reach the network. Check your connection and try again." rather
+  than "Failed to fetch", and a Gno error no longer arrives with its Go
+  stack trace attached. The original text is kept for bug reports.
 - Views fed by the transaction indexer now say so next to their "updated"
   timestamp. The indexer is a separate service that reads the chain and
   can lag behind it, so a freshly-fetched but stale answer used to look

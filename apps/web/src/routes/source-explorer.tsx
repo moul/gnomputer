@@ -66,7 +66,7 @@ export function SourceExplorer({ packagePath, windowId }: { packagePath: string;
   if (error) {
     return (
       <ErrorState
-        message={`Could not load source: ${error.message}`}
+        message="Could not load source" error={error}
         onRetry={() => {
           void refetchFiles();
           void refetchSource();
