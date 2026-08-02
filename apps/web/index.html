@@ -27,6 +27,22 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src *; frame-src https: http:; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- One origin only: the default network's RPC, which is the app's own
+         backend rather than an optional third party. Not the indexer, not
+         gnoweb, not Gnockpit, not GitHub — a hint per configured service
+         would leak a visit to each of them for no measurable gain.
+
+         Measured against the deployed site, five loads each: time to the
+         first RPC response went from a 436ms median to 367ms. Roughly
+         70ms, ~16%. It does not show up locally (2ms) or against a
+         throttled local server — the win only exists against real CDN and
+         TLS latency, so anyone re-measuring this on localhost will
+         conclude, wrongly, that it does nothing.
+
+         The cost, stated: this fires before any JavaScript, so a visitor
+         who has switched to their own node still opens one idle
+         connection to Topaz. See #150. -->
+    <link rel="preconnect" href="https://rpc.topaz.testnets.gno.land" crossorigin />
     <!-- Theme-aware: the manifest declares a single dark theme_color, which
          looked wrong against the light default. These let the browser chrome
          follow whichever scheme the visitor is actually in. -->
