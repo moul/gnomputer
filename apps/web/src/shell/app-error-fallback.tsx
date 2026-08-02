@@ -70,16 +70,16 @@ export function AppErrorFallback({ error, inline = false }: { error: Error; inli
       <p className="app-error__hint">
         <strong>Reload</strong> changes nothing. <strong>Reset layout &amp; cached data</strong> clears
         your window layout, theme and cached chain data — the most likely fix if a recent update
-        changed the shape of that saved data. It <em>keeps</em> your saved scripts and Trails, and
-        never touches anything on chain.
+        changed the shape of that saved data. It <em>keeps</em> your saved scripts, Trails and
+        favorites, and never touches anything on chain.
       </p>
 
       <details className="app-error__danger">
         <summary>Still broken? Erase all local data</summary>
         <p className="app-error__hint">
           This deletes <strong>everything Gnomputer has stored in this browser</strong>, including
-          your <strong>saved Editor scripts</strong> and <strong>Trails</strong>. It cannot be
-          undone. Export a backup first.
+          your <strong>saved Editor scripts</strong>, <strong>Trails</strong> and{" "}
+          <strong>favorites</strong>. It cannot be undone. Export a backup first.
         </p>
         <div className="app-error__actions">
           <button

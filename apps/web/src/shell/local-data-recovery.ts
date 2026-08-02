@@ -7,21 +7,13 @@ const DB_NAME = "gnomputer";
 
 /** Stores holding content the user authored or curated. Losing these is real
  * data loss, so they are never touched by a scoped reset. */
-// favorites and workspaces are listed here but no UI can create either
-// today (AUD-044) — the SDK exposes the APIs and IndexedDB holds the
-// stores, and nothing calls them. They stay in the protect-and-export set
-// so that if either ships, existing data is already covered rather than
-// being silently erased by a recovery that predates it. The user-facing
-// copy deliberately does NOT mention them: promising to preserve data a
-// user cannot have is a false claim, and this screen is the worst place
-// to make one — someone reading it is deciding whether to erase.
-export const USER_CONTENT_STORES = [
-  "scripts",
-  "trails",
-  "trailSteps",
-  "favorites",
-  "workspaces",
-] as const;
+// Every store here now backs a feature a user can actually reach:
+// favorites shipped in #171, and `workspaces` — which never did — was
+// dropped in the v4 schema (AUD-044). The list and the user-facing copy on
+// the recovery screen name the same four things, which is the point: this
+// screen is read by someone deciding whether to erase, and it is the worst
+// possible place to promise more or less than is true.
+export const USER_CONTENT_STORES = ["scripts", "trails", "trailSteps", "favorites"] as const;
 
 /** Stores holding derived or preference data — regenerable, and the usual
  * culprit when a schema change makes already-persisted state un-loadable.
