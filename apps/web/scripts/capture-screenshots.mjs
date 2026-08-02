@@ -24,10 +24,11 @@ const SOURCE_REALM = "gno.land/r/sys/users";
 
 const browser = await chromium.launch();
 
-async function newPage(theme) {
+async function newPage(theme, contextOptions) {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2, // crisp on retina; GitHub scales it down anyway
+    ...contextOptions,
   });
   const page = await context.newPage();
   if (theme) {
@@ -114,8 +115,38 @@ async function cypherpunk() {
   await page.context().close();
 }
 
+/** A real phone, full-frame — no crop.
+ *
+ * The README used to call mobile "usable, but not yet a first-class
+ * layout", which measurement contradicted: no horizontal scroll at 320px,
+ * the island scrolls, the title truncates, the lens tabs collapse to an
+ * overflow menu. Understating is as inaccurate as overstating, so the claim
+ * is now a picture instead of a hedge. Cropping this one would defeat the
+ * point — the whole frame IS the evidence. */
+async function phone() {
+  const page = await newPage(undefined, {
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    deviceScaleFactor: 3,
+  });
+  await page.goto(`${BASE}?pkg=${HERO_REALM}`, { waitUntil: "networkidle" }).catch(() => {});
+  await page.waitForTimeout(9000);
+  const dismiss = page.locator(".first-run-note__dismiss");
+  if (await dismiss.count()) await dismiss.tap();
+  await page.waitForTimeout(1200);
+  const overflows = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth
+  );
+  if (overflows) throw new Error("the phone layout scrolls horizontally — fix that, don't ship it");
+  await page.screenshot({ path: `${OUT}phone.png` });
+  console.log("phone.png  390x844");
+  await page.context().close();
+}
+
 await hero();
 await source();
 await cypherpunk();
+await phone();
 await browser.close();
 console.log(`\nWritten to docs/screenshots/ from ${BASE}`);
