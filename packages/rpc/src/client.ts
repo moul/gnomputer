@@ -2,6 +2,7 @@ import type { Tm2Client } from "@gnolang/tm2-rpc";
 import type { JSONRPCProvider } from "@gnolang/tm2-js-client";
 import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
+import { withDeadline, withDeadlines } from "./with-deadlines";
 import {
   connectTm2Client,
   connectProvider,
@@ -136,10 +137,14 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
   let clientPromise: Promise<Tm2Client> | null = null;
   function getClient(): Promise<Tm2Client> {
     if (!clientPromise) {
-      clientPromise = connectTm2Client(network.rpcUrl).catch((error: unknown) => {
-        clientPromise = null;
-        throw error;
-      });
+      clientPromise = withDeadline(connectTm2Client(network.rpcUrl), network.rpcUrl)
+        // Deadlines on the connection itself and on every call made
+        // through it — the tm2 client honours no timeout of its own.
+        .then((client) => withDeadlines(client, network.rpcUrl))
+        .catch((error: unknown) => {
+          clientPromise = null;
+          throw error;
+        });
     }
     return clientPromise;
   }
@@ -147,10 +152,12 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
   let providerPromise: Promise<JSONRPCProvider> | null = null;
   function getProvider(): Promise<JSONRPCProvider> {
     if (!providerPromise) {
-      providerPromise = connectProvider(network.rpcUrl).catch((error: unknown) => {
-        providerPromise = null;
-        throw error;
-      });
+      providerPromise = withDeadline(connectProvider(network.rpcUrl), network.rpcUrl)
+        .then((provider) => withDeadlines(provider, network.rpcUrl))
+        .catch((error: unknown) => {
+          providerPromise = null;
+          throw error;
+        });
     }
     return providerPromise;
   }
