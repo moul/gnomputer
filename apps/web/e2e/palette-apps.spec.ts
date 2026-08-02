@@ -42,3 +42,71 @@ test("an address still resolves as an entity, not an app", async ({ page }) => {
   await input.fill("g1manfred47kzduec920z88wfr64ylksmdcedlf5");
   await expect(page.locator(".command-palette__apps button")).toHaveCount(0);
 });
+
+/** The last third of AUD-046: the palette runs commands, not only
+ * lookups. These assert the observable EFFECT rather than that a row was
+ * clicked — a command that renders and does nothing is the failure mode
+ * worth catching, and it looks identical from the palette's side. */
+test("a theme command actually repaints the app", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+  const before = await page.locator("html").getAttribute("data-theme");
+
+  const input = await openPalette(page);
+  await input.fill("cypherpunk");
+  await page.locator(".command-palette__commands button").first().click();
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "ascii-cypherpunk");
+  expect(before).not.toBe("ascii-cypherpunk");
+  await expect(page.locator(".command-palette")).toHaveCount(0);
+});
+
+test("a command is reachable by a keyword that is not in its label", async ({ page }) => {
+  // "appearance" appears nowhere in "Settings: Theme". Keywords exist so
+  // the palette answers to the word you actually reach for.
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  const input = await openPalette(page);
+  await input.fill("appearance");
+  await page.locator(".command-palette__commands button").filter({ hasText: "Theme" }).first().click();
+  await expect(page.locator("#window-settings")).toBeVisible();
+});
+
+test("zoom commands change the desktop scale and put it back", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+  const zoom = () => page.evaluate(() => (document.querySelector(".desktop") as HTMLElement | null)?.style.zoom || "1");
+
+  let input = await openPalette(page);
+  await input.fill("zoom in");
+  await page.locator(".command-palette__commands button").first().click();
+  expect(Number(await zoom())).toBeGreaterThan(1);
+
+  input = await openPalette(page);
+  await input.fill("reset zoom");
+  await page.locator(".command-palette__commands button").first().click();
+  expect(Number(await zoom())).toBe(1);
+});
+
+test("an empty palette lists nothing, and one keystroke does not list everything", async ({
+  page,
+}) => {
+  // There are ~15 commands. Dumping them on open would bury the entity
+  // lookup this palette is mostly used for, and every result list here is
+  // capped for the same reason.
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  const input = await openPalette(page);
+  await expect(page.locator(".command-palette__commands button")).toHaveCount(0);
+
+  await input.fill("e");
+  const rows = page.locator(".command-palette__commands button");
+  expect(await rows.count()).toBeLessThanOrEqual(5);
+});
+
+// Exclusion of the network you're already on is asserted in
+// palette-commands.test.ts, not here: the e2e suite runs against the mock
+// network, which is not in the switchable list at all, so any assertion
+// about it here would pass without exercising the rule.
