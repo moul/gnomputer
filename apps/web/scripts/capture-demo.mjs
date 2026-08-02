@@ -169,9 +169,16 @@ await page.mouse.move(700, 460, { steps: 20 });
 await page.waitForTimeout(2200);
 cut("deployed Gno source, read from the chain");
 
-await clickAt(lensTab("Render")); // 3. a second app beside it
+await clickAt(lensTab("Render")); // 3. keep it — you will want it again
 await page.waitForTimeout(1200);
 roll();
+await clickAt(page.locator(".realm-browser__favorite").first());
+await page.waitForTimeout(1600);
+await clickAt(page.locator(".open-package-form button", { hasText: "Home" }).first());
+await page.waitForTimeout(2600);
+cut("starring a realm, and finding it on the home");
+
+roll(); // 4. a second app beside it
 await clickAt(maximize); // restore
 await page.waitForTimeout(900);
 await pointAt(page.locator('.island button[aria-label="Chain"]'));
@@ -185,14 +192,21 @@ roll();
 await page.waitForTimeout(3600);
 cut("two apps side by side, both live");
 
-roll(); // 4. the command palette
+// 5. The palette running a command, and the whole app repainting — the
+// strongest single frame-to-frame change the app can make, so it closes.
+roll();
 await page.keyboard.press("Meta+k");
-await page.waitForTimeout(700);
-await page.keyboard.type("block", { delay: 110 });
-await page.waitForTimeout(2000);
-cut("the command palette");
-await page.keyboard.press("Escape");
-await page.waitForTimeout(500);
+await page.waitForTimeout(800);
+await page.keyboard.type("cypherpunk", { delay: 95 });
+await page.waitForTimeout(1400);
+const themeCommand = page.locator(".command-palette__commands button").first();
+if ((await themeCommand.count()) === 0) throw new Error("no theme command matched 'cypherpunk'");
+await clickAt(themeCommand);
+await page.waitForTimeout(3400);
+if ((await page.locator("html").getAttribute("data-theme")) !== "ascii-cypherpunk") {
+  throw new Error("the theme command did not repaint — the finale is the point");
+}
+cut("running a command: the whole app repaints");
 await context.close(); // finalises the .webm
 await browser.close();
 
