@@ -102,13 +102,24 @@ export function createTrailApi(db: GnomputerDB): TrailAPI {
 
     async listTrails() {
       const trails = await db.trails.toArray();
-      const withCounts = await Promise.all(
-        trails.map(async (trail) => ({
-          ...trail,
-          stepCount: await db.trailSteps.where("trailId").equals(trail.id).count(),
-        }))
-      );
-      return withCounts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+
+      // One pass over the trailId index instead of a count() per trail.
+      // "Clear history" starts a fresh Trail rather than deleting the old
+      // one, so trails accumulate for the lifetime of the browser profile —
+      // the N+1 got slower every time someone cleared their history, which
+      // is exactly backwards (AUD-045).
+      //
+      // eachKey walks the index without loading a single step record, so
+      // this stays cheap however many steps a trail has.
+      const counts = new Map<string, number>();
+      await db.trailSteps.orderBy("trailId").eachKey((trailId) => {
+        const id = String(trailId);
+        counts.set(id, (counts.get(id) ?? 0) + 1);
+      });
+
+      return trails
+        .map((trail) => ({ ...trail, stepCount: counts.get(trail.id) ?? 0 }))
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
 
     setActiveTrail(trailId) {
