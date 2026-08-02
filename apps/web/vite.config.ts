@@ -170,21 +170,20 @@ export default defineConfig({
       // and entry points have nothing meaningfully coverable, and counting
       // them just makes the number dishonest.
       exclude: ["src/**/*.d.ts", "src/main.tsx", "src/**/*.test.{ts,tsx}"],
-      // A ratchet, not a target. These are set just under today's real
-      // numbers so the gate catches a regression immediately; raise them as
-      // coverage improves rather than picking an aspirational figure that
-      // has to be ignored.
-      // Measured on main: statements/lines 23.5%, functions 34.6%,
-      // branches 87.5%. Set just under each so a regression fails the build
-      // immediately; raise them as coverage improves.
+      // A ratchet, not a target: set just under today's real numbers so the
+      // gate catches a regression immediately, rather than an aspirational
+      // figure that ends up ignored. Measured on main 2026-08-02: 25.86% statements/lines,
+      // 89.2% branches, 37.79% functions. Each threshold sits just under
+      // its measurement, so the gate catches a real drop without failing on
+      // rounding. Raise them as coverage improves; do not lower one to make
+      // a branch pass.
       //
-      // The first version of these numbers was taken on a branch that
-      // predated lazy-loading the route components (#105). Lazy imports mean
-      // those modules aren't pulled in during unit tests, so they count in
-      // the denominator without contributing covered lines — real coverage
-      // is ~2 points lower than it looked. Measure the baseline on main, not
-      // on a feature branch.
-      thresholds: { lines: 23, statements: 23, functions: 33, branches: 85 },
+      // MEASURE ON MAIN, not on a feature branch. The first version of
+      // these numbers was taken on a branch predating lazy-loaded routes
+      // (#105): lazy imports are not pulled in during unit tests, so those
+      // modules count in the denominator without contributing covered
+      // lines, and a branch that adds one reads about two points low.
+      thresholds: { lines: 25, statements: 25, functions: 37, branches: 88 },
     },
   },
 });
