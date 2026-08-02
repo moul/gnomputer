@@ -2,6 +2,7 @@ import { THEME_LABELS, THEME_ORDER, useThemeStore } from "./theme-store";
 import { useZoomStore } from "./zoom-store";
 import { useWindowStore } from "./window-store";
 import { openSettings } from "./open-settings";
+import { copyText } from "./copy-text";
 import type { NetworkConfig } from "@gnomputer/app-sdk";
 
 export interface PaletteCommand {
@@ -57,6 +58,15 @@ export function buildCommands(options: {
   }
 
   commands.push(
+    {
+      id: "share:link",
+      label: "Copy link to this view",
+      hint: "Carries realm, lens and network",
+      keywords: ["share", "url", "clipboard", "permalink"],
+      run: () => {
+        void copyText(window.location.href);
+      },
+    },
     {
       id: "zoom:in",
       label: "Zoom in",

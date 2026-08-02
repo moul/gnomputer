@@ -4336,3 +4336,29 @@ main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Copy-link, beside the star on the realm toolbar. Fixed width so the row
+   does not nudge when the glyph swaps to a tick or a warning on click. */
+.share-link-button {
+  flex: 0 0 auto;
+  width: 2.6em;
+  font-size: 14px;
+  line-height: 1;
+  padding: var(--space-2) 0;
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.share-link-button:hover {
+  color: var(--accent);
+}
+
+.share-link-button[data-state="copied"] {
+  color: var(--accent-green);
+  border-color: currentColor;
+}
+
+.share-link-button[data-state="failed"] {
+  color: var(--danger);
+  border-color: currentColor;
+}
