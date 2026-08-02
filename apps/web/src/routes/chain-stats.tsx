@@ -114,13 +114,13 @@ function DailyActivitySection() {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const {
-    data: days,
+    data: daysEnvelope,
     error,
     isPending,
     refetch,
   } = useQuery({
     queryKey: ["daily-activity", networkId],
-    queryFn: async () => (await sdk.indexer.dailyActivity()).data,
+    queryFn: () => sdk.indexer.dailyActivity(),
     // The indexer scans the whole block range server-side for this one
     // (confirmed live: ~10s round trip) — this doesn't change fast enough
     // to be worth refetching on every window focus.
@@ -139,6 +139,7 @@ function DailyActivitySection() {
       </p>
     );
   }
+  const days = daysEnvelope.data;
   if (days.length === 0) {
     return <p className="state-line">No historical block data found.</p>;
   }
@@ -165,14 +166,17 @@ export function ChainStats() {
   const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
 
   const {
-    data: stats,
+    data: statsEnvelope,
     error,
     isPending,
     dataUpdatedAt,
     refetch,
   } = useQuery({
     queryKey: ["chain-activity-stats", networkId],
-    queryFn: async () => (await sdk.indexer.chainActivityStats()).data,
+    // The whole envelope, not just .data: Freshness reports where the
+    // data came from, and that must come from the adapter rather than from
+    // this call site's assumption about it.
+    queryFn: () => sdk.indexer.chainActivityStats(),
     enabled: indexerConfigured,
   });
 
@@ -197,11 +201,12 @@ export function ChainStats() {
     );
   }
 
+  const stats = statsEnvelope.data;
   const avgGasPerTx = stats.totalTxs > 0 ? Math.round(stats.totalGasUsed / stats.totalTxs) : 0;
 
   return (
     <div className="chain-stats">
-      <Freshness dataUpdatedAt={dataUpdatedAt} />
+      <Freshness dataUpdatedAt={dataUpdatedAt} source={statsEnvelope.source} />
 
       <div className="chain-stats__tiles">
         <StatTile value={formatNumber(stats.totalTxs)} label="transactions" />

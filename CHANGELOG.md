@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-01
 
+- Views fed by the transaction indexer now say so next to their "updated"
+  timestamp. The indexer is a separate service that reads the chain and
+  can lag behind it, so a freshly-fetched but stale answer used to look
+  identical to a live one.
 - Opening a realm asks the chain for its output once instead of twice.
 - One corrupt row in the offline cache no longer disables caching. It
   used to break both restoring on load and saving for the rest of the

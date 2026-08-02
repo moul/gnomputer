@@ -128,7 +128,7 @@ function IndexerTransactionExplorer() {
   const [filter, setFilter] = useState("");
 
   const {
-    data: transactions,
+    data: transactionsEnvelope,
     error,
     isPending,
     dataUpdatedAt,
@@ -136,9 +136,10 @@ function IndexerTransactionExplorer() {
     isFetching,
   } = useQuery({
     queryKey: ["indexer-transactions", networkId],
-    queryFn: async () => (await sdk.indexer.listTransactions()).data,
+    queryFn: () => sdk.indexer.listTransactions(),
   });
 
+  const transactions = transactionsEnvelope?.data;
   const rows: Row[] = (transactions ?? []).map((tx) => ({
     height: tx.height,
     txIndex: tx.txIndex,
@@ -173,7 +174,7 @@ function IndexerTransactionExplorer() {
       ) : (
         <>
           <TransactionTable rows={rows} filter={filter} />
-          <Freshness dataUpdatedAt={dataUpdatedAt} />
+          <Freshness dataUpdatedAt={dataUpdatedAt} source={transactionsEnvelope?.source} />
         </>
       )}
     </div>
