@@ -69,8 +69,16 @@ If you change a decision, add an ADR rather than editing the old one.
   — upstream `main` + [#281](https://github.com/gnolang/tm2-js-client/pull/281)
   (installable on pnpm 9)
 
-Each fork's README lists exactly which PRs it carries. Neither contains any
-change of our own.
+Each fork's README lists exactly which PRs it carries. Both also carry **one
+commit that is not an upstream PR**: they commit `dist/` and no-op `prepare`,
+so nothing builds at install time.
+
+That is not tidiness. pnpm builds a git dependency by running its `prepare`
+script, and gno-js-client's build **fails on ubuntu runners** while
+succeeding on macOS under every pnpm and Node version tried
+([gnolang/gno-js-client#254](https://github.com/gnolang/gno-js-client/issues/254)).
+That combination installs locally and breaks CI — the worst shape of bug,
+since it passes for whoever adds the dependency.
 
 **tm2-js-client is also in `pnpm.overrides`**, and that is not optional.
 gno-js-client depends on it too, so without the override the graph resolves

@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@gnolang/tm2-js-client': github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
+  '@gnolang/tm2-js-client': github:moul/tm2-js-client#730adba471a9c7b48cce2d5c8dcef22ecf578556
 
 importers:
 
@@ -241,11 +241,11 @@ importers:
   packages/rpc:
     dependencies:
       '@gnolang/gno-js-client':
-        specifier: github:moul/gno-js-client#654a8cad611525f2df322a32624cb479c25720c6
-        version: https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6
+        specifier: github:moul/gno-js-client#41d72a30bfa713ca65d359d432fb382b54bfb238
+        version: https://codeload.github.com/moul/gno-js-client/tar.gz/41d72a30bfa713ca65d359d432fb382b54bfb238
       '@gnolang/tm2-js-client':
-        specifier: github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
-        version: https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
+        specifier: github:moul/tm2-js-client#730adba471a9c7b48cce2d5c8dcef22ecf578556
+        version: https://codeload.github.com/moul/tm2-js-client/tar.gz/730adba471a9c7b48cce2d5c8dcef22ecf578556
       '@gnolang/tm2-rpc':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1114,13 +1114,13 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6':
-    resolution: {tarball: https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6}
+  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/41d72a30bfa713ca65d359d432fb382b54bfb238':
+    resolution: {tarball: https://codeload.github.com/moul/gno-js-client/tar.gz/41d72a30bfa713ca65d359d432fb382b54bfb238}
     version: 2.0.3
     hasBin: true
 
-  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2':
-    resolution: {tarball: https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2}
+  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/730adba471a9c7b48cce2d5c8dcef22ecf578556':
+    resolution: {tarball: https://codeload.github.com/moul/tm2-js-client/tar.gz/730adba471a9c7b48cce2d5c8dcef22ecf578556}
     version: 2.0.4
 
   '@gnolang/tm2-rpc@1.0.0':
@@ -4878,11 +4878,11 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6':
+  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/41d72a30bfa713ca65d359d432fb382b54bfb238':
     dependencies:
       '@bufbuild/protobuf': 2.13.0
       '@cosmjs/ledger-amino': 0.38.1
-      '@gnolang/tm2-js-client': https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
+      '@gnolang/tm2-js-client': https://codeload.github.com/moul/tm2-js-client/tar.gz/730adba471a9c7b48cce2d5c8dcef22ecf578556
       '@gnolang/tm2-rpc': 1.0.0
       protobufjs: 8.7.1
       yargs: 18.1.0
@@ -4893,7 +4893,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2':
+  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/730adba471a9c7b48cce2d5c8dcef22ecf578556':
     dependencies:
       '@bufbuild/protobuf': 2.13.0
       '@cosmjs/amino': 0.38.1

@@ -12,8 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@gnolang/gno-js-client": "github:moul/gno-js-client#654a8cad611525f2df322a32624cb479c25720c6",
-    "@gnolang/tm2-js-client": "github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2",
+    "@gnolang/gno-js-client": "github:moul/gno-js-client#41d72a30bfa713ca65d359d432fb382b54bfb238",
+    "@gnolang/tm2-js-client": "github:moul/tm2-js-client#730adba471a9c7b48cce2d5c8dcef22ecf578556",
     "@gnolang/tm2-rpc": "^1.0.0",
     "@gnomputer/core": "workspace:*",
     "@gnomputer/networks": "workspace:*",

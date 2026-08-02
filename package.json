@@ -26,7 +26,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@gnolang/tm2-js-client": "github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2"
+      "@gnolang/tm2-js-client": "github:moul/tm2-js-client#730adba471a9c7b48cce2d5c8dcef22ecf578556"
     }
   }
 }
