@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-02
 
+- An endpoint that answers with something other than JSON — a captive
+  portal's login page, a proxy error page, a truncated response — now
+  says so, instead of showing the JSON parser's own wording like
+  "Unterminated string in JSON at position 21", which described the bytes
+  rather than the problem and read like a bug in the app.
 - An unresponsive endpoint now reports a problem instead of spinning
   forever. A node that accepts the connection and never answers used to
   leave panels loading indefinitely with no error at all — which reads
