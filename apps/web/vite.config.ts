@@ -47,6 +47,17 @@ export default defineConfig({
     __GIT_REPO__: JSON.stringify("https://github.com/moul/gnomputer"),
   },
   build: {
+    // Published, deliberately. This is an open-source app, so the source is
+    // already public and a map leaks nothing — while without one, a stack
+    // trace from a real user is minified nonsense and a bug report costs
+    // far more to act on (AUD-041).
+    //
+    // Maps do not reach anyone who is not looking for them: a browser
+    // fetches a .map only when devtools is open, they are not in the
+    // service worker's precache allow-list, and they are excluded from the
+    // first-visit bundle budget. Both of those are asserted below and in
+    // scripts/check-bundle-budget.mjs rather than assumed.
+    sourcemap: true,
     // The bundle sits around 1MB largely because of @gnolang/tm2-rpc and
     // @gnolang/tm2-js-client's own dependency chain (@cosmjs/*, protobufjs,
     // @bufbuild/protobuf) — the price of using the maintained Gno/Tendermint2
