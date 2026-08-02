@@ -15,7 +15,11 @@ test("a lazy app loads only when its window is opened", async ({ page }) => {
   console.log("chunks before opening:", chunks.length);
 
   await page.getByRole("button", { name: "Chain", exact: true }).hover();
-  await page.getByRole("button", { name: "Blocks" }).click();
+  // Scoped to the popover, not the page. Playwright matches accessible
+  // names by substring, so a bare name:"Blocks" also matched the first-run
+  // starter "Live events / Watch blocks land" the moment that shipped —
+  // a strict-mode violation in a test that has nothing to do with either.
+  await page.locator(".island__popover").getByRole("button", { name: "Blocks", exact: true }).click();
   await expect(page.locator(".window", { hasText: "Block" }).first()).toBeVisible({ timeout: 15_000 });
   await page.waitForTimeout(1500);
   console.log("chunks after opening:", chunks.length, chunks.slice(0, 3));
