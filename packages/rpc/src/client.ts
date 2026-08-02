@@ -125,10 +125,21 @@ function parseResolveAddressUsername(raw: string): string | null {
 }
 
 export function createRpcClient(network: NetworkConfig): RpcClient {
+  // Memoized so every call shares one connection — but the memo is cleared
+  // when connecting FAILS. Caching a rejected promise meant one unreachable
+  // moment poisoned the client for the lifetime of the page: every later
+  // call awaited the same settled rejection and failed instantly, without
+  // touching the network. Observed as an app that goes permanently dead
+  // after a single blip — no polling, no retry, and a "Try again" button
+  // that issues no request at all. Measured: exactly ONE request ever left
+  // the browser.
   let clientPromise: Promise<Tm2Client> | null = null;
   function getClient(): Promise<Tm2Client> {
     if (!clientPromise) {
-      clientPromise = connectTm2Client(network.rpcUrl);
+      clientPromise = connectTm2Client(network.rpcUrl).catch((error: unknown) => {
+        clientPromise = null;
+        throw error;
+      });
     }
     return clientPromise;
   }
@@ -136,7 +147,10 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
   let providerPromise: Promise<JSONRPCProvider> | null = null;
   function getProvider(): Promise<JSONRPCProvider> {
     if (!providerPromise) {
-      providerPromise = connectProvider(network.rpcUrl);
+      providerPromise = connectProvider(network.rpcUrl).catch((error: unknown) => {
+        providerPromise = null;
+        throw error;
+      });
     }
     return providerPromise;
   }

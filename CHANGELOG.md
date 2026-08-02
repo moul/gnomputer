@@ -4,6 +4,15 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-02
+
+- Fixed the app going permanently dead after a single connection failure.
+  If the chain was unreachable at any point — a dropped wifi connection,
+  a testnet restart — nothing recovered afterwards: the live height
+  stopped, every panel stayed on its error, and even "Try again" did
+  nothing, because no request was being sent at all. Only a full reload
+  brought it back. It now keeps trying and picks up on its own.
+
 ## 2026-08-01
 
 - Error messages say something useful instead of repeating whatever the

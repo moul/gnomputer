@@ -17,9 +17,16 @@ function createQueryClient(): QueryClient {
         // failure (bad package path, bad address, ...) that meant sitting
         // on a loading spinner for 7+ seconds before the real error ever
         // showed up. One quick retry still absorbs a genuine transient
-        // blip; refetchOnReconnect (react-query's own default, unchanged)
-        // still means a real dropped-connection failure recovers on its
-        // own once the network comes back, without needing all 3.
+        // blip.
+        //
+        // This used to add that refetchOnReconnect covers the rest. It
+        // does not: verified in a browser, a query that has already FAILED
+        // stays failed when the network returns — refetchOnReconnect only
+        // revisits queries that are merely stale. Interval-polled queries
+        // recover on their own tick; a one-shot query needs its Try again
+        // button, which does now work (see the client memoization note in
+        // packages/rpc/src/client.ts — before that fix it issued no request
+        // at all).
         retry: 1,
         retryDelay: 500,
       },

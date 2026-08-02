@@ -285,3 +285,21 @@ describe("createRpcClient", () => {
     expect(parsed[1].Results[0].Type).toBe("string");
   });
 });
+
+describe("connection failure does not poison the client", () => {
+  it("reconnects on the next call after a failed connect", async () => {
+    // The memo used to cache a REJECTED promise, so one unreachable moment
+    // made every later call fail instantly without touching the network —
+    // an app that stays dead until reload.
+    nock("http://unreachable.test").post("/").replyWithError("boom");
+    const client = createRpcClient({ ...topaz, rpcUrl: "http://unreachable.test" });
+
+    await expect(client.getStatus()).rejects.toThrow();
+
+    // The second call must reach the wire again. Without the fix this
+    // interceptor is never consumed, because no request is made.
+    const second = nock("http://unreachable.test").post("/").replyWithError("boom again");
+    await expect(client.getStatus()).rejects.toThrow();
+    expect(second.isDone()).toBe(true);
+  });
+});
