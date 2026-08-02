@@ -95,15 +95,24 @@ export function useFavorites(): {
   useEffect(() => {
     if (hydrated) return;
     let cancelled = false;
-    void sdk.favorites.list().then(
-      (rows) => {
+    // try/catch around the await, not .then(ok, err): where IndexedDB is
+    // blocked outright — Firefox private browsing, a locked-down enterprise
+    // profile — reading `window.indexedDB` THROWS rather than returning
+    // something that rejects. `sdk.favorites.list()` then throws
+    // synchronously, before there is a promise to attach a handler to, and
+    // the throw escapes the effect into the error boundary. That is a crash
+    // screen on a browser the app otherwise runs on perfectly well; an e2e
+    // caught it.
+    //
+    // Storage being unavailable means "no favorites", not "keep asking".
+    void (async () => {
+      try {
+        const rows = await sdk.favorites.list();
         if (!cancelled) useFavoritesStore.getState().setAll(rows);
-      },
-      // Storage being unavailable means "no favorites", not "keep asking".
-      () => {
+      } catch {
         if (!cancelled) useFavoritesStore.getState().setAll([]);
       }
-    );
+    })();
     return () => {
       cancelled = true;
     };
