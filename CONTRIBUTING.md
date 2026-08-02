@@ -56,6 +56,15 @@ preference.
 
 If you change a decision, add an ADR rather than editing the old one.
 
+### One vendored dependency
+
+`@gnolang/gno-js-client` is installed from a prebuilt tarball in `vendor/`,
+not from the registry — it is built from an unmerged PR
+([gnolang/gno-js-client#251](https://github.com/gnolang/gno-js-client/pull/251))
+that makes the client surface the node's real ABCI error. `vendor/README.md`
+explains why it is a tarball rather than a git dependency, and what to delete
+when that PR is released.
+
 ADR-019 covers dependencies: upgrade one thing at a time with a reason, and
 assess whether an advisory can actually reach a user before acting on it.
 `pnpm audit` currently reports two high-severity findings that are dev-only
