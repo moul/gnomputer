@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, renderHook, waitFor } from "@testing-library/react";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import type { GnomputerSDK } from "@gnomputer/app-sdk";
 import { SdkProvider } from "../sdk-context";
+import { useShellStore } from "../store";
 import { useFavorites, useFavoritesStore } from "./favorites-store";
 
 afterEach(() => {
@@ -70,5 +71,29 @@ describe("useFavorites hydration", () => {
     renderHook(() => useFavorites(), { wrapper });
     renderHook(() => useFavorites(), { wrapper });
     expect(list).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useFavorites and network switches", () => {
+  it("re-reads the network when the active one changes", async () => {
+    // sdk.networks.getActive() is a plain object React cannot observe, so
+    // reading only from it left the star showing a Topaz favourite as
+    // starred after a switch to betanet — the component simply never
+    // re-rendered. The hook subscribes to the shell store's mirror of the
+    // same choice to get the invalidation.
+    let active = "topaz";
+    const sdk = {
+      favorites: { list: () => Promise.resolve([]), toggle: () => Promise.resolve() },
+      networks: { getActive: () => ({ id: active }) },
+    } as unknown as GnomputerSDK;
+
+    const { result } = renderHook(() => useFavorites(), { wrapper: wrapperFor(sdk) });
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.networkId).toBe("topaz");
+
+    active = "betanet";
+    act(() => useShellStore.setState({ activeNetworkId: "betanet" }));
+
+    expect(result.current.networkId).toBe("betanet");
   });
 });

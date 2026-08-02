@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { create } from "zustand";
 import type { FavoriteRecord, GnomputerSDK } from "@gnomputer/app-sdk";
 import { useSdk } from "../sdk-context";
+import { useShellStore } from "../store";
 
 /** Favorites: realms you marked to come back to (AUD-044).
  *
@@ -90,6 +91,21 @@ export function useFavorites(): {
   const sdk = useSdk();
   const favorites = useFavoritesStore((s) => s.favorites);
   const hydrated = useFavoritesStore((s) => s.hydrated);
+
+  // Subscribed to purely so a network switch re-renders this hook. The
+  // SDK's active config is the authority on which chain is being queried,
+  // but it is a plain object React cannot observe — reading only the SDK
+  // left the star showing a Topaz favourite as starred after switching to
+  // betanet, because nothing told React to look again. The store is the
+  // reactive mirror of the same choice.
+  //
+  // The value still comes from the SDK, not the mirror: for the brief tick
+  // where they can disagree (boot, before network persistence has synced
+  // them), filing a favourite under the store's id would write it against
+  // a chain that isn't being queried. A stale render corrects itself; a
+  // wrongly-scoped row does not.
+  const mirroredNetworkId = useShellStore((s) => s.activeNetworkId);
+  void mirroredNetworkId;
   const networkId = sdk.networks.getActive().id;
 
   useEffect(() => {
