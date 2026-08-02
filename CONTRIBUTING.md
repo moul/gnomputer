@@ -56,6 +56,12 @@ preference.
 
 If you change a decision, add an ADR rather than editing the old one.
 
+ADR-019 covers dependencies: upgrade one thing at a time with a reason, and
+assess whether an advisory can actually reach a user before acting on it.
+`pnpm audit` currently reports two high-severity findings that are dev-only
+and not in the shipped bundle — the ADR shows the working, so nobody has to
+redo it or learn to ignore the tool.
+
 ## Tests
 
 Unit tests live next to what they test (`foo.ts` → `foo.test.ts`), run under
