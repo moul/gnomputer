@@ -25,6 +25,7 @@ import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
+import { ShareLinkButton } from "../shell/share-link-button";
 import {
   favoriteUri,
   toggleFavorite,
@@ -305,6 +306,7 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
         🏠 Home
       </button>
       <FavoriteToggle packagePath={tab.packagePath} />
+      <ShareLinkButton label={tab.packagePath === "" ? "this view" : tab.packagePath} />
     </form>
   );
 }
