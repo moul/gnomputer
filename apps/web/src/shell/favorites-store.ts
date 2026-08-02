@@ -76,7 +76,7 @@ export async function toggleFavorite(
 
   apply(record, !wasFavorite);
   try {
-    await sdk.favorites.toggle(refUri, label);
+    await sdk.favorites.set(refUri, label, !wasFavorite);
   } catch (error) {
     apply(record, wasFavorite);
     console.warn("Could not save that favorite — local storage is unavailable.", error);

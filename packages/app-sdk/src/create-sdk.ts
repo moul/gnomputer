@@ -112,7 +112,19 @@ export interface GnomputerSDK {
   };
   favorites: {
     list(): Promise<FavoriteRecord[]>;
-    toggle(refUri: string, label: string): Promise<void>;
+    /** Idempotent, and serialized against other favorite writes.
+     *
+     * This was `toggle(refUri, label)`, which re-derived from the database
+     * a decision the caller had already made — a read-modify-write with no
+     * ordering guarantee. Two toggles in one tick (an impatient
+     * double-click) both read "not favorited", both wrote, and the UI and
+     * the database disagreed permanently: the star read unstarred, the row
+     * was there, and a reload brought it back.
+     *
+     * Taking the desired state as an argument removes the read, and the
+     * queue keeps two writes for the same refUri in the order they were
+     * requested so the last one wins. */
+    set(refUri: string, label: string, favorite: boolean): Promise<void>;
   };
   uiState: {
     get(key: string): Promise<string | null>;
@@ -184,6 +196,19 @@ export function createGnomputerSDK(
   const db = openDatabase(options.dbName);
   const trailApi = createTrailApi(db);
 
+  // Same reasoning as the Trail write queue: IndexedDB writes here are
+  // ordered by when they are *requested*, not by when they happen to
+  // resolve, so two rapid stars of the same realm cannot land backwards.
+  let favoriteWrites: Promise<unknown> = Promise.resolve();
+  function serializeFavoriteWrite(fn: () => Promise<void>): Promise<void> {
+    const result = favoriteWrites.then(fn, fn);
+    favoriteWrites = result.then(
+      () => undefined,
+      () => undefined
+    );
+    return result;
+  }
+
   let activeNetwork =
     DEFAULT_NETWORKS.find((n) => n.id === (options.networkId ?? DEFAULT_NETWORK_ID)) ??
     DEFAULT_NETWORKS.find((n) => n.id === DEFAULT_NETWORK_ID)!;
@@ -231,14 +256,23 @@ export function createGnomputerSDK(
     },
     favorites: {
       list: () => db.favorites.toArray(),
-      toggle: async (refUri, label) => {
-        const existing = await db.favorites.get(refUri);
-        if (existing) {
-          await db.favorites.delete(refUri);
-        } else {
-          await db.favorites.put({ refUri, label, createdAt: new Date().toISOString() });
-        }
-      },
+      set: (refUri, label, favorite) =>
+        serializeFavoriteWrite(async () => {
+          if (!favorite) {
+            await db.favorites.delete(refUri);
+            return;
+          }
+          // Re-starring something already starred keeps its original
+          // createdAt, so the Browser home's newest-first order doesn't
+          // reshuffle on a no-op write. Safe to read here: this whole
+          // function runs inside the queue.
+          const existing = await db.favorites.get(refUri);
+          await db.favorites.put({
+            refUri,
+            label,
+            createdAt: existing?.createdAt ?? new Date().toISOString(),
+          });
+        }),
     },
     uiState: {
       // Shares the `meta` Dexie table with internal SDK state (e.g. Trails'
