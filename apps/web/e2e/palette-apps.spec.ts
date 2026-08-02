@@ -110,3 +110,26 @@ test("an empty palette lists nothing, and one keystroke does not list everything
 // palette-commands.test.ts, not here: the e2e suite runs against the mock
 // network, which is not in the switchable list at all, so any assertion
 // about it here would pass without exercising the rule.
+
+test("a command that could not act is not offered at all", async ({ page }) => {
+  // Overview refuses to engage with one window — one tile is not an
+  // overview. Listing it anyway gave a palette row that did nothing when
+  // clicked, which is indistinguishable from a broken command.
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  let input = await openPalette(page);
+  await input.fill("show all windows");
+  await expect(page.locator(".command-palette__commands button")).toHaveCount(0);
+  await page.keyboard.press("Escape");
+
+  // Open a second window, and it appears.
+  input = await openPalette(page);
+  await input.fill("editor");
+  await input.press("Enter");
+  await expect(page.locator("#window-editor")).toBeVisible();
+
+  input = await openPalette(page);
+  await input.fill("show all windows");
+  await expect(page.locator(".command-palette__commands button")).toHaveCount(1);
+});

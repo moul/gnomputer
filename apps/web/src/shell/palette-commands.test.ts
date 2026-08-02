@@ -8,8 +8,8 @@ const NETWORKS = [
   { id: "betanet", name: "Betanet", chainId: "beta" },
 ] as unknown as NetworkConfig[];
 
-function build(activeNetworkId = "topaz", setNetwork = vi.fn()) {
-  return buildCommands({ networks: NETWORKS, activeNetworkId, setNetwork });
+function build(activeNetworkId = "topaz", setNetwork = vi.fn(), openWindowCount = 2) {
+  return buildCommands({ networks: NETWORKS, activeNetworkId, setNetwork, openWindowCount });
 }
 
 describe("buildCommands", () => {
@@ -84,5 +84,20 @@ describe("matchCommands", () => {
     expect(dark).toContain("theme:ascii-dark");
     expect(dark).toContain("theme:modern-dark");
     expect(dark).not.toContain("theme:ascii-light");
+  });
+});
+
+describe("commands that cannot act are not offered", () => {
+  it("hides Show all windows below two open windows", () => {
+    // Overview deliberately refuses to engage with one window — one tile is
+    // not an overview. Listing it anyway produced a palette row that
+    // silently did nothing, which is the exact failure the effect-based e2e
+    // in palette-apps.spec.ts exist to catch.
+    expect(build("topaz", vi.fn(), 1).map((c) => c.id)).not.toContain("windows:overview");
+    expect(build("topaz", vi.fn(), 0).map((c) => c.id)).not.toContain("windows:overview");
+  });
+
+  it("offers it once a second window is open", () => {
+    expect(build("topaz", vi.fn(), 2).map((c) => c.id)).toContain("windows:overview");
   });
 });

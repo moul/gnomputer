@@ -39,6 +39,7 @@ export function CommandPalette() {
     buildCommands({
       networks: [...sdk.networks.list(), ...customNetworks],
       activeNetworkId,
+      openWindowCount: Object.values(windows).filter((w) => !w.closed).length,
       setNetwork: (config) => {
         // Both halves, in this order — the SDK owns which endpoint gets
         // queried and the store owns what the UI says it is connected to.
