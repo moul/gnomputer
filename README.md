@@ -6,7 +6,7 @@ Open a realm, read the source it was deployed from, watch transactions land, ins
 state — side by side, in resizable windows, against a live chain. No wallet, no signup,
 no install.
 
-### ▶ [Try it](https://moul.github.io/gnomputer/)
+### ▶ [Try it](https://moul.github.io/gnomputer/) &nbsp;·&nbsp; 🎬 [Watch a 20-second tour](docs/demo.mp4)
 
 ![The Gnomputer desktop: a realm browser showing live GovDAO proposals beside a live event feed](docs/screenshots/desktop.png)
 
@@ -80,8 +80,10 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm build
 pnpm --filter @gnomputer/web e2e    # Playwright, against a local mock chain
 ```
 
-<sub>Screenshots are generated from a running app, never staged — refresh them with
-`node scripts/capture-screenshots.mjs` from `apps/web`.</sub>
+<sub>Screenshots and the demo video are generated from a running app against a real chain,
+never staged — refresh them with `node scripts/capture-screenshots.mjs` and
+`node scripts/capture-demo.mjs` from `apps/web`. Both take an optional URL argument so
+you can capture a local dev server instead of the deployed site.</sub>
 
 ## Docs
 
