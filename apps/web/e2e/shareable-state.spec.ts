@@ -51,3 +51,21 @@ test("a link naming a network that does not exist says so", async ({ page }) => 
     timeout: 10000,
   });
 });
+
+test("the network survives navigating around inside the app", async ({ page }) => {
+  // The search object replaces the whole query string, so anything not
+  // explicitly carried through is dropped. net was being dropped: open a
+  // shared ?net=… link, click once, and the URL you could then copy sent
+  // the next person to their own default network instead.
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/?net=betanet&pkg=gno.land/r/sys/users");
+  await page.waitForSelector("#window-realm");
+  expect(new URL(page.url()).searchParams.get("net")).toBe("betanet");
+
+  const tabs = page.locator(".lens-tab-bar button, .realm-browser__lens-tabs button");
+  await tabs.filter({ hasText: /^Raw$/ }).first().click();
+
+  await expect.poll(() => new URL(page.url()).searchParams.get("lens")).toBe("raw");
+  expect(new URL(page.url()).searchParams.get("net")).toBe("betanet");
+  expect(new URL(page.url()).searchParams.get("pkg")).toBe("gno.land/r/sys/users");
+});
