@@ -79,6 +79,12 @@ Three gates are worth knowing about because they fail PRs:
   every surface, in every theme. Adding a theme means clearing that bar.
 - **axe** (`apps/web/e2e/accessibility.spec.ts`) scans the desktop in all
   themes and every app for WCAG A/AA violations.
+- **Release integrity** (`apps/web/scripts/check-release-integrity.mjs`, also
+  part of `build`) checks that `version.json` names the same commit as the
+  code beside it, that no source map is precached, and that every precached
+  file exists. Each of those has a failure mode that is invisible until it
+  is in front of users — a version mismatch, in particular, produces an
+  update banner that reloading cannot clear.
 - **Bundle budget** (`apps/web/scripts/check-bundle-budget.mjs`, run as part
   of `build`) caps what a *first visit* downloads, gzipped. Also a ratchet.
   It gates only the app shell — the per-app lazy chunks are reported but not
