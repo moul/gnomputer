@@ -22,14 +22,22 @@ export function openInRealmTab(
       // lens=render is omitted rather than written out: it is the default,
       // so a link with no lens must keep meaning "the default lens" and
       // every link shared before this stays valid.
-      search:
-        target.packagePath === ""
-          ? {}
-          : {
-              pkg: target.packagePath,
-              ...(renderPath ? { path: renderPath } : {}),
-              ...(!target.lens || target.lens === "render" ? {} : { lens: target.lens }),
-            },
+      //
+      // net is carried through rather than rebuilt. This object replaces the
+      // whole search string, so anything not named here is dropped — and
+      // dropping net meant opening a shared ?net=betanet link and clicking
+      // once left a URL that sends the next person to their own default
+      // network instead.
+      search: (previous: Record<string, unknown>) => {
+        const net = typeof previous.net === "string" ? { net: previous.net } : {};
+        if (target.packagePath === "") return net;
+        return {
+          ...net,
+          pkg: target.packagePath,
+          ...(renderPath ? { path: renderPath } : {}),
+          ...(!target.lens || target.lens === "render" ? {} : { lens: target.lens }),
+        };
+      },
     });
   }
 }

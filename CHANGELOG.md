@@ -6,6 +6,10 @@ banner links here.
 
 ## 2026-08-02
 
+- A shared link that names a network keeps naming it as you click around.
+  Opening `?net=betanet&…` and then navigating dropped the network from
+  the address bar, so copying the URL at that point sent the next person
+  to their own default network instead.
 - Fixed unreadable secondary text in the ASCII Dark theme. Muted labels
   and paths sat at 3.0:1 against the background, under the accessibility
   minimum — the one theme no automated check was looking at.

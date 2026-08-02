@@ -120,13 +120,20 @@ export function RealmBrowser({
 
   /** The URL a tab should produce. Render is omitted rather than written as
    * lens=render: it is the default, and a link with no lens must keep
-   * meaning "the default lens" so old links stay valid. */
+   * meaning "the default lens" so old links stay valid.
+   *
+   * net is carried through from the current URL: this replaces the whole
+   * search string, so anything not named here is dropped. */
   function searchForTab(tab: { packagePath: string; renderPath: string; lens: RealmLens }) {
-    if (tab.packagePath === "") return {};
-    return {
-      pkg: tab.packagePath,
-      ...(tab.renderPath ? { path: tab.renderPath } : {}),
-      ...(tab.lens === "render" ? {} : { lens: tab.lens }),
+    return (previous: Record<string, unknown>) => {
+      const net = typeof previous.net === "string" ? { net: previous.net } : {};
+      if (tab.packagePath === "") return net;
+      return {
+        ...net,
+        pkg: tab.packagePath,
+        ...(tab.renderPath ? { path: tab.renderPath } : {}),
+        ...(tab.lens === "render" ? {} : { lens: tab.lens }),
+      };
     };
   }
 
@@ -367,11 +374,12 @@ function RealmStatusBar({
     if (windowId !== "realm" || tab.packagePath === "") return;
     void router.navigate({
       to: "/",
-      search: {
+      search: (previous: Record<string, unknown>) => ({
+        ...(typeof previous.net === "string" ? { net: previous.net } : {}),
         pkg: tab.packagePath,
         ...(tab.renderPath ? { path: tab.renderPath } : {}),
         ...(lens === "render" ? {} : { lens }),
-      },
+      }),
     });
   }
 
