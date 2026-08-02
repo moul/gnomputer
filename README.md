@@ -32,6 +32,10 @@ resize and maximize, an overview mode, a command palette (⌘K), and per-realm l
 data comes from an indexer rather than the chain itself, it says so next to the
 timestamp, because a freshly-fetched but stale answer looks identical otherwise.
 
+**It starts you somewhere.** A first visit offers three things to click, not three
+things to read — live governance, a realm's on-chain source, events landing as blocks
+arrive. Each one proves the "this is live" claim faster than a paragraph asserting it.
+
 **Six themes, including one that commits.**
 
 ![The same realm in the Cypherpunk theme: green on black, with scanlines](docs/screenshots/cypherpunk.png)
@@ -56,14 +60,21 @@ option, and any custom RPC endpoint you add.
 | **Accounts & Users** | Look up an address or a registered username: balance, sequence, deployed package count, and links out to gnoweb and an explorer. |
 | **Resources** | The Gno monorepo's own `docs/`, live and navigable, plus the awesome-gno list. |
 | **History** | Every realm, block and address you've visited, recorded as a Trail. |
+| **Favorites** | Star a realm from its toolbar; it's on the Browser home and in the palette after that, scoped to the network you starred it on. |
 
-Layout, theme, zoom and your chosen network persist across reloads. Links carry the
-realm, the lens and the network, so a URL opens the same view for whoever you send it
-to. It installs as a PWA, and content you've already loaded keeps working offline.
+Star a realm and it's on the Browser home and in the command palette next time. Layout,
+theme, zoom and your chosen network persist across reloads too. Links carry the realm,
+the lens and the network, so a URL opens the same view for whoever you send it to. It
+installs as a PWA, and content you've already loaded keeps working offline.
 
-The desktop metaphor is built for a real screen. On a phone it adapts — a fresh mobile
-visit gets a zoomed-out, maximized-window default — so it's usable, but not yet a
-first-class mobile layout.
+The desktop metaphor is built for a real screen, and it adapts down to one. A fresh
+mobile visit gets a zoomed-out, maximized-window default; the island scrolls, window
+titles truncate, and the lens tabs collapse into an overflow menu. There's no horizontal
+scroll at 320px, which is narrower than any phone still in use.
+
+<img src="docs/screenshots/phone.png" alt="Gnomputer on a phone: the same GovDAO realm, maximized, with the island bar above it" width="300">
+
+
 
 ---
 
