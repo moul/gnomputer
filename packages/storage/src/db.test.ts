@@ -1,23 +1,11 @@
 import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
+import Dexie from "dexie";
 import { openDatabase } from "./db";
 
 describe("GnomputerDB", () => {
   beforeEach(async () => {
     indexedDB.deleteDatabase("gnomputer-test");
-  });
-
-  it("persists and restores a workspace", async () => {
-    const db = openDatabase("gnomputer-test");
-    await db.workspaces.put({
-      id: "explore",
-      name: "Explore",
-      networkId: "test13",
-      openRefs: [],
-      updatedAt: "2026-07-22T00:00:00.000Z",
-    });
-    const found = await db.workspaces.get("explore");
-    expect(found?.name).toBe("Explore");
   });
 
   it("persists Trail steps in order and restores them", async () => {
@@ -71,6 +59,43 @@ describe("trailSteps primary key", () => {
     const [inA] = await db.trailSteps.where("trailId").equals("a").toArray();
     expect(inA?.label).toBe("renamed");
 
+    db.close();
+  });
+});
+
+describe("v4 drops the workspaces store", () => {
+  it("removes a table that a v3 database still has, keeping user content", async () => {
+    // Dexie only deletes a store if a later version names it `null`;
+    // leaving it out silently keeps it. This opens a real v3 database with
+    // the old schema, writes to every store, then reopens at the current
+    // version and checks that workspaces is gone and nothing else is.
+    const name = "gnomputer-test-v4-migration";
+    indexedDB.deleteDatabase(name);
+
+    const v3 = new Dexie(name);
+    v3.version(3).stores({
+      workspaces: "id, networkId",
+      trails: "id",
+      trailSteps: "[trailId+order], trailId",
+      favorites: "refUri",
+      meta: "key",
+      queryCache: "key, insertSeq",
+      scripts: "id, updatedSeq",
+    });
+    await v3.open();
+    await v3.table("workspaces").put({ id: "explore", name: "Explore", networkId: "test13" });
+    await v3.table("favorites").put({ refUri: "gno://topaz/realm/r/x", label: "X", createdAt: "1" });
+    await v3.table("trails").put({ id: "t1", name: "T", createdAt: "1", updatedAt: "1" });
+    expect(v3.tables.map((t) => t.name)).toContain("workspaces");
+    v3.close();
+
+    const db = openDatabase(name);
+    await db.open();
+    expect(db.tables.map((t) => t.name)).not.toContain("workspaces");
+    // The migration is a deletion of one table, not a reset: everything the
+    // user actually authored has to survive it.
+    expect(await db.favorites.get("gno://topaz/realm/r/x")).toMatchObject({ label: "X" });
+    expect(await db.trails.get("t1")).toMatchObject({ name: "T" });
     db.close();
   });
 });

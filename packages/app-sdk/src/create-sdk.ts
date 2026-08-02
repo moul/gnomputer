@@ -55,7 +55,6 @@ export type {
 };
 import {
   openDatabase,
-  type WorkspaceRecord,
   type FavoriteRecord,
   type ScriptRecord,
 } from "@gnomputer/storage";
@@ -110,10 +109,6 @@ export interface GnomputerSDK {
     isChainPackage: typeof isChainPackage;
     parseExportedSymbols: typeof parseExportedSymbols;
     parseUserData: typeof parseUserData;
-  };
-  workspaces: {
-    get(id: string): Promise<WorkspaceRecord | undefined>;
-    save(record: WorkspaceRecord): Promise<void>;
   };
   favorites: {
     list(): Promise<FavoriteRecord[]>;
@@ -233,10 +228,6 @@ export function createGnomputerSDK(
       isChainPackage,
       parseExportedSymbols,
       parseUserData,
-    },
-    workspaces: {
-      get: (id) => db.workspaces.get(id),
-      save: (record) => db.workspaces.put(record).then(() => undefined),
     },
     favorites: {
       list: () => db.favorites.toArray(),

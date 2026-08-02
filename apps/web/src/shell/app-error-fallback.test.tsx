@@ -2,6 +2,7 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup, within, fireEvent } from "@testing-library/react";
 import { AppErrorFallback } from "./app-error-fallback";
+import { USER_CONTENT_STORES } from "./local-data-recovery";
 
 // No global setupFiles in this project, so unmount explicitly — otherwise
 // each render() stacks another copy into document.body and role queries
@@ -25,12 +26,27 @@ describe("AppErrorFallback recovery contract", () => {
     // we now explicitly name what is preserved.
     const text = container.textContent ?? "";
     expect(text).not.toContain("This only clears local settings/layout");
-    expect(text).toMatch(/keeps.*scripts and Trails/s);
-    // Not favorites or workspaces: the SDK exposes those APIs but no UI can
-    // create either, so promising to preserve them is a claim about data
-    // the user cannot have — and this screen is where someone decides
-    // whether to erase (AUD-044).
-    expect(text).not.toMatch(/favorites|workspaces/i);
+    expect(text).toMatch(/keeps.*scripts, Trails and favorites/s);
+    // Favorites belong in that list now that a UI can create them (#171).
+    // Workspaces never could, and the store is gone as of the v4 schema, so
+    // naming them here would promise to preserve something that cannot
+    // exist — on the one screen where someone is deciding whether to erase
+    // (AUD-044).
+    expect(text).not.toMatch(/workspaces/i);
+  });
+
+  it("names exactly the stores a scoped reset actually protects", () => {
+    // The copy and USER_CONTENT_STORES drifted apart once before, in both
+    // directions: the screen promised favorites and workspaces nothing
+    // could create, and later kept quiet about favorites after they
+    // shipped. Tying the assertion to the constant makes the next drift a
+    // test failure instead of a false promise.
+    const { container } = render(<AppErrorFallback error={err} />);
+    const text = (container.textContent ?? "").toLowerCase();
+    const named = { scripts: "scripts", trails: "trails", trailSteps: "trails", favorites: "favorites" };
+    for (const store of USER_CONTENT_STORES) {
+      expect(text, `recovery copy should name "${store}"`).toContain(named[store]);
+    }
   });
 
   it("keeps the destructive action behind a second confirm", () => {
