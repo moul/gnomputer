@@ -56,6 +56,21 @@ preference.
 
 If you change a decision, add an ADR rather than editing the old one.
 
+### One temporary dependency
+
+`@gnolang/gno-js-client` is pinned to a **commit on an unmerged PR**
+([gnolang/gno-js-client#251](https://github.com/gnolang/gno-js-client/pull/251)),
+not to a published version. That PR makes the client surface the node's real
+ABCI error instead of a generic one, which is what lets the realm browser
+detect "this package declares no Render" with `instanceof NoRenderDeclError`
+rather than by matching on message text.
+
+Pinned to a SHA, not a branch: a branch can be force-pushed, and a build that
+silently changes is worse than one that fails. Swap it for the published
+version once #251 is released, and drop the `onlyBuiltDependencies` entry in
+`pnpm-workspace.yaml` at the same time — a git dependency needs its build
+script to run, a registry one does not.
+
 ADR-019 covers dependencies: upgrade one thing at a time with a reason, and
 assess whether an advisory can actually reach a user before acting on it.
 `pnpm audit` currently reports two high-severity findings that are dev-only

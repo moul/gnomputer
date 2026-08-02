@@ -2,3 +2,14 @@ packages:
   - "packages/*"
   - "packages/apps/*"
   - "apps/*"
+
+# pnpm 10 does not run dependency install scripts unless they are listed
+# here. gno-js-client is consumed from a git ref while
+# gnolang/gno-js-client#251 is unmerged, and a git dependency has to be
+# built after cloning — that is what its `prepare` script does.
+#
+# An allowlist rather than a blanket opt-in: this is the one dependency
+# that needs to execute anything at install time, and it should stay
+# visible when that stops being true.
+onlyBuiltDependencies:
+  - "@gnolang/gno-js-client"

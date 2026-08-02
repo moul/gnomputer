@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-02
 
+- A package with no `Render()` function is detected properly rather than
+  by matching words in an error message, so the Render tab greys out and
+  the Source tab opens for the right reason.
 - Fixed unreadable secondary text in the ASCII Dark theme. Muted labels
   and paths sat at 3.0:1 against the background, under the accessibility
   minimum — the one theme no automated check was looking at.

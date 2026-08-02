@@ -9,6 +9,7 @@ import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
 import { useRealmRender } from "../shell/use-realm-render";
+import { NoRenderDeclError } from "@gnomputer/app-sdk";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
@@ -482,18 +483,21 @@ function RealmRenderView({
 
   // A package with no Render() function at all (a pure library p/ package,
   // or an r/ realm that just never defined one) always fails this query the
-  // same way — confirmed live: the VM's real error type is
-  // "/vm.NoRenderDeclError". Rather than showing that as a generic error
+  // same way, with the VM error type "/vm.NoRenderDeclError". The adapter
+  // surfaces that as a typed error, so this is an instanceof rather than a
+  // substring match on the message — the message is not an API, and a
+  // reworded one used to silently disable this whole behaviour.
+  // Rather than showing it as a generic error
   // (there's nothing to "retry"), mark it so the lens tab bar can gray out
   // Render, and jump straight to Source, which always works.
   useEffect(() => {
-    if (!error?.message.includes("NoRenderDeclError")) return;
+    if (!(error instanceof NoRenderDeclError)) return;
     useNoRenderStore.getState().markNoRender(packagePath);
     useRealmTabsStore.getState().updateActiveTab(windowId, { lens: "source" });
   }, [error, packagePath, windowId]);
 
   if (error) {
-    if (error.message.includes("NoRenderDeclError")) return null;
+    if (error instanceof NoRenderDeclError) return null;
     return (
       <ErrorState message="Could not load this realm" error={error} onRetry={() => void refetch()} />
     );
