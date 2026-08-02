@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import nock from "nock";
 import { createRpcClient } from "./client";
+import { NoRenderDeclError, InvalidPkgPathError } from "@gnolang/gno-js-client";
 import { DEFAULT_NETWORKS } from "@gnomputer/networks";
 import statusFixture from "./__fixtures__/status.json";
 import qrenderFixture from "./__fixtures__/qrender.json";
@@ -301,5 +302,47 @@ describe("connection failure does not poison the client", () => {
     const second = nock("http://unreachable.test").post("/").replyWithError("boom again");
     await expect(client.getStatus()).rejects.toThrow();
     expect(second.isDone()).toBe(true);
+  });
+});
+
+describe("typed ABCI errors from the render query", () => {
+  // These interceptors persist, so they have to be torn down or the first
+  // test's error type answers the second test's query.
+  afterEach(() => nock.cleanAll());
+
+  /** GnoJSONRPCProvider.create() probes `status` before any query, so the
+   * mock has to answer that too — routing by method rather than replying
+   * the same shape to every POST. */
+  function mockAbciError(type: string, log: string) {
+    nock(topaz.rpcUrl)
+      .post("/", (body: { method?: string }) => body.method === "status")
+      .reply(200, statusFixture)
+      .persist();
+    nock(topaz.rpcUrl)
+      .post("/", (body: { method?: string }) => body.method === "abci_query")
+      .reply(200, {
+        jsonrpc: "2.0",
+        id: 1,
+        result: { response: { ResponseBase: { Error: { "@type": type }, Data: null, Log: log } } },
+      })
+      .persist();
+  }
+
+  it("rejects with NoRenderDeclError for a package that declares no Render", async () => {
+    // The realm browser grays out the Render tab on exactly this condition.
+    // It used to detect it with error.message.includes("NoRenderDeclError")
+    // — a message is not an API, and a reworded one would have silently
+    // disabled the behaviour.
+    mockAbciError("/vm.NoRenderDeclError", "render function not declared\n--- stack trace ---\n…");
+    await expect(
+      createRpcClient(topaz).queryRender("gno.land/p/demo/lib", "", new Date().toISOString())
+    ).rejects.toBeInstanceOf(NoRenderDeclError);
+  });
+
+  it("rejects with InvalidPkgPathError for a realm that does not exist", async () => {
+    mockAbciError("/vm.InvalidPkgPathError", "package not found: gno.land/r/nope\n--- stack trace ---\n…");
+    await expect(
+      createRpcClient(topaz).queryRender("gno.land/r/nope", "", new Date().toISOString())
+    ).rejects.toBeInstanceOf(InvalidPkgPathError);
   });
 });

@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-02
 
+- A package with no `Render()` function is detected properly rather than
+  by matching words in an error message, so the Render tab greys out and
+  Source opens for the right reason.
 - A shared link that names a network keeps naming it as you click around.
   Opening `?net=betanet&…` and then navigating dropped the network from
   the address bar, so copying the URL at that point sent the next person

@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@gnolang/gno-js-client": "file:../../vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz",
     "@gnolang/tm2-js-client": "^2.0.4",
     "@gnolang/tm2-rpc": "^1.0.0",
     "@gnomputer/core": "workspace:*",

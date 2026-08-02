@@ -3,6 +3,7 @@ import type { JSONRPCProvider } from "@gnolang/tm2-js-client";
 import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 import { withDeadline, withDeadlines } from "./with-deadlines";
+import { GnoJSONRPCProvider } from "@gnolang/gno-js-client";
 import {
   connectTm2Client,
   connectProvider,
@@ -149,6 +150,23 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     return clientPromise;
   }
 
+  // Same no-caching-a-rejection rule as the others below.
+  let gnoProviderPromise: Promise<GnoJSONRPCProvider> | null = null;
+  function getGnoProvider(): Promise<GnoJSONRPCProvider> {
+    if (!gnoProviderPromise) {
+      gnoProviderPromise = withDeadline(
+        GnoJSONRPCProvider.create(network.rpcUrl),
+        network.rpcUrl
+      )
+        .then((provider) => withDeadlines(provider, network.rpcUrl))
+        .catch((error: unknown) => {
+          gnoProviderPromise = null;
+          throw error;
+        });
+    }
+    return gnoProviderPromise;
+  }
+
   let providerPromise: Promise<JSONRPCProvider> | null = null;
   function getProvider(): Promise<JSONRPCProvider> {
     if (!providerPromise) {
@@ -189,8 +207,17 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async queryRender(packagePath, path, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qrender", `${packagePath}:${path}`);
+      // Routed through gno-js-client rather than abciQueryString so callers
+      // get its TYPED errors — NoRenderDeclError, InvalidPkgPathError — and
+      // can branch with instanceof instead of matching on message text. The
+      // realm browser needs exactly that to gray out the Render tab for a
+      // package that declares no Render function.
+      //
+      // Verified live against Topaz that this returns byte-identical output
+      // to the hand-rolled query, and that both error types arrive with the
+      // same messages the old code parsed out of the Go stack trace.
+      const provider = await getGnoProvider();
+      const value = await provider.getRenderOutput(packagePath, path);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "realm", packagePath },
         data: value,

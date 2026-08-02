@@ -32,6 +32,11 @@ import {
 import type { DataEnvelope } from "@gnomputer/core";
 export type { DataEnvelope };
 
+// Re-exported for the same reason as DataEnvelope: apps are not allowed to
+// import @gnomputer/rpc directly, but they do need to branch on why a chain
+// query failed.
+export { GnoABCIError, InvalidPkgPathError, NoRenderDeclError } from "@gnomputer/rpc";
+
 export type {
   RpcClient,
   BlockSummary,
