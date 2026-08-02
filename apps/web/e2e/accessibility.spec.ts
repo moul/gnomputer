@@ -6,7 +6,17 @@ import AxeBuilder from "@axe-core/playwright";
 // the third that silently reappears with every new screen.
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
-const THEMES = ["ascii-light", "ascii-cypherpunk", "modern-light", "modern-dark", "modern-minimal"];
+// ascii-dark included even though it has no [data-theme] block — it falls
+// through to :root, which IS its palette. Leaving it out is how it went
+// unchecked long enough to ship a 3.01:1 contrast failure.
+const THEMES = [
+  "ascii-light",
+  "ascii-dark",
+  "ascii-cypherpunk",
+  "modern-light",
+  "modern-dark",
+  "modern-minimal",
+];
 
 // The island's app buttons, by accessible name.
 const APPS = ["Browser", "Discover", "Resources", "Editor", "Shell", "Chain", "Settings"];

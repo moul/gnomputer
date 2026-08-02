@@ -6,6 +6,9 @@ banner links here.
 
 ## 2026-08-02
 
+- Fixed unreadable secondary text in the ASCII Dark theme. Muted labels
+  and paths sat at 3.0:1 against the background, under the accessibility
+  minimum — the one theme no automated check was looking at.
 - The command palette (⌘K) can open apps now. It only resolved addresses,
   blocks, realms and usernames before, even though the README said apps
   lived behind it. Typing an app's name finds it, including the ones with

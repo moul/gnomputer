@@ -1,4 +1,11 @@
 :root {
+  /* This block IS the ascii-dark theme. The theme picker offers six themes
+     but only five have a [data-theme] block — selecting ascii-dark sets the
+     attribute, matches nothing, and falls through to here. It works, but by
+     coincidence rather than design, and it meant the contrast gate never
+     checked it: that test parses [data-theme="..."] blocks, so the one
+     theme defined here was invisible to it. contrast.test.ts now covers
+     this block explicitly. */
   --bg: #0b0f14;
   --bg-elevated: #121821;
   --bg-inset: #0e131a;
@@ -6,7 +13,9 @@
   --border-strong: #34404f;
   --text: #e6edf3;
   --text-dim: #8b96a5;
-  --text-faint: #5b6572;
+  /* Was #5b6572: 3.01:1 against --bg-elevated, under WCAG AA for small
+     text, and unnoticed because no gate looked at this theme. */
+  --text-faint: #778392;
   --accent: #22d3ee;
   --accent-dim: #155e75;
   --accent-cyan: #22d3ee;

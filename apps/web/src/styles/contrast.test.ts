@@ -24,6 +24,19 @@ interface Theme {
 
 function parseThemes(): Theme[] {
   const themes: Theme[] = [];
+
+  // The bare :root block is the ascii-dark theme. The picker offers six
+  // themes; only five have a [data-theme] block, and selecting ascii-dark
+  // falls through to :root. Parsing only [data-theme] blocks meant this
+  // one was never checked — and it was failing at 3.01:1.
+  const root = /^:root\s*\{([\s\S]*?)\n\}/m.exec(css);
+  if (root) {
+    const tokens: Record<string, string> = {};
+    for (const [, key, value] of root[1]!.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6});/g)) {
+      tokens[key!] = value!.toLowerCase();
+    }
+    themes.push({ name: "ascii-dark (:root)", tokens });
+  }
   const blocks = css.matchAll(/:root\[data-theme="([\w-]+)"\]\s*\{([\s\S]*?)\n\}/g);
   for (const [, name, body] of blocks) {
     const tokens: Record<string, string> = {};
@@ -64,6 +77,7 @@ describe("theme contrast", () => {
     // silently returns nothing, the rest of this suite would vacuously pass.
     expect(themes.map((t) => t.name).sort()).toEqual([
       "ascii-cypherpunk",
+      "ascii-dark (:root)",
       "ascii-light",
       "modern-dark",
       "modern-light",
