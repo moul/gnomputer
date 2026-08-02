@@ -11,8 +11,12 @@ Without that, the app grows its own private notion of what the chain looks
 like, scattered across components.
 
 ```ts
-const sdk = await createGnomputerSDK();
+const sdk = createGnomputerSDK();
 ```
+
+Synchronous — it opens the Dexie database lazily rather than awaiting it,
+so a browser with IndexedDB blocked still gets a working SDK whose storage
+calls fail individually instead of a constructor that throws.
 
 Depends on all seven other workspace packages and nothing external at
 runtime. Requires IndexedDB at construction.
