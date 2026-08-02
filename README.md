@@ -6,7 +6,7 @@ Open a realm, read the source it was deployed from, watch transactions land, ins
 state — side by side, in resizable windows, against a live chain. No wallet, no signup,
 no install.
 
-### ▶ [Try it](https://moul.github.io/gnomputer/) &nbsp;·&nbsp; 🎬 [Watch a 20-second tour](docs/demo.mp4)
+### ▶ [Try it](https://moul.github.io/gnomputer/) &nbsp;·&nbsp; 🎬 [Watch a 30-second tour](docs/demo.mp4)
 
 ![The Gnomputer desktop: a realm browser showing live GovDAO proposals beside a live event feed](docs/screenshots/desktop.png)
 
