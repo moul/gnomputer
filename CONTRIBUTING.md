@@ -56,14 +56,40 @@ preference.
 
 If you change a decision, add an ADR rather than editing the old one.
 
-### One vendored dependency
+### Two forked dependencies
 
-`@gnolang/gno-js-client` is installed from a prebuilt tarball in `vendor/`,
-not from the registry — it is built from an unmerged PR
-([gnolang/gno-js-client#251](https://github.com/gnolang/gno-js-client/pull/251))
-that makes the client surface the node's real ABCI error. `vendor/README.md`
-explains why it is a tarball rather than a git dependency, and what to delete
-when that PR is released.
+`@gnolang/gno-js-client` and `@gnolang/tm2-js-client` are installed from
+**forks pinned to a commit**, not from the registry:
+
+- [`moul/gno-js-client@gnomputer`](https://github.com/moul/gno-js-client/tree/gnomputer)
+  — upstream `main` + [#251](https://github.com/gnolang/gno-js-client/pull/251)
+  (typed ABCI errors) + [#253](https://github.com/gnolang/gno-js-client/pull/253)
+  (installable on pnpm 9)
+- [`moul/tm2-js-client@gnomputer`](https://github.com/moul/tm2-js-client/tree/gnomputer)
+  — upstream `main` + [#281](https://github.com/gnolang/tm2-js-client/pull/281)
+  (installable on pnpm 9)
+
+Each fork's README lists exactly which PRs it carries. Neither contains any
+change of our own.
+
+**tm2-js-client is also in `pnpm.overrides`**, and that is not optional.
+gno-js-client depends on it too, so without the override the graph resolves
+two copies — and `GnoABCIError extends TM2Error`, so `instanceof` across
+that boundary silently returns false. There is a live test asserting a
+thrown error is simultaneously `instanceof NoRenderDeclError` and
+`instanceof TM2Error`; that is the single-copy check.
+
+**Pinned to commits, not branches.** A branch can be force-pushed, and a
+build that changes silently is worse than one that fails.
+
+To go back to the registry once the PRs land:
+
+```bash
+pnpm --filter @gnomputer/rpc add @gnolang/gno-js-client@<v> @gnolang/tm2-js-client@<v>
+```
+
+then delete the `pnpm.overrides` block in the root `package.json` and this
+section.
 
 ADR-019 covers dependencies: upgrade one thing at a time with a reason, and
 assess whether an advisory can actually reach a user before acting on it.

@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  minimatch@10>brace-expansion: ^5.0.8
+  '@gnolang/tm2-js-client': github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
 
 importers:
 
@@ -241,11 +241,11 @@ importers:
   packages/rpc:
     dependencies:
       '@gnolang/gno-js-client':
-        specifier: file:../../vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz
-        version: file:vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz
+        specifier: github:moul/gno-js-client#654a8cad611525f2df322a32624cb479c25720c6
+        version: https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6
       '@gnolang/tm2-js-client':
-        specifier: ^2.0.4
-        version: 2.0.4
+        specifier: github:moul/tm2-js-client#1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
+        version: https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
       '@gnolang/tm2-rpc':
         specifier: ^1.0.0
         version: 1.0.0
@@ -1114,13 +1114,14 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@gnolang/gno-js-client@file:vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz':
-    resolution: {integrity: sha512-g9trtSael7wJ6FLpTN6yZ3QV+gwSeydLccDi8qOg+4IJnqXf7E1iETMl1FyqWGScty+onXHj8TYFmo1+bl/GWg==, tarball: file:vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz}
+  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6':
+    resolution: {tarball: https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6}
     version: 2.0.3
     hasBin: true
 
-  '@gnolang/tm2-js-client@2.0.4':
-    resolution: {integrity: sha512-WJScBJ82S6xYmDmmoV7YBJFKYqhJ4kHyHxCVy6L34lxZvMJrZD8WyKoT9Z1l0jgdeP2EQx0p1RbGzY9rQ+Nsug==}
+  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2':
+    resolution: {tarball: https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2}
+    version: 2.0.4
 
   '@gnolang/tm2-rpc@1.0.0':
     resolution: {integrity: sha512-iK+3FXYAGB8FAXAHodbCWyas+Akb9gag+EoVHtUP2Ue2DGt2P49pObbQL0QGDiIjlpi5wlanHHjQvQWOGEi0VA==}
@@ -3608,8 +3609,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@13.0.2:
-    resolution: {integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==}
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
   vfile-message@4.0.3:
@@ -4877,11 +4878,11 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@gnolang/gno-js-client@file:vendor/gno-js-client-2.0.3-pr251-2dcfc98.tgz':
+  '@gnolang/gno-js-client@https://codeload.github.com/moul/gno-js-client/tar.gz/654a8cad611525f2df322a32624cb479c25720c6':
     dependencies:
       '@bufbuild/protobuf': 2.13.0
       '@cosmjs/ledger-amino': 0.38.1
-      '@gnolang/tm2-js-client': 2.0.4
+      '@gnolang/tm2-js-client': https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2
       '@gnolang/tm2-rpc': 1.0.0
       protobufjs: 8.7.1
       yargs: 18.1.0
@@ -4892,7 +4893,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@gnolang/tm2-js-client@2.0.4':
+  '@gnolang/tm2-js-client@https://codeload.github.com/moul/tm2-js-client/tar.gz/1d32923a7e97bbe4e4bfa072d3f2c47c1bb976b2':
     dependencies:
       '@bufbuild/protobuf': 2.13.0
       '@cosmjs/amino': 0.38.1
@@ -4902,7 +4903,7 @@ snapshots:
       '@noble/hashes': 2.2.0
       axios: 1.18.1
       protobufjs: 8.7.1
-      uuid: 13.0.2
+      uuid: 14.0.1
       ws: 8.21.1
     transitivePeerDependencies:
       - bufferutil
@@ -7852,7 +7853,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@13.0.2: {}
+  uuid@14.0.1: {}
 
   vfile-message@4.0.3:
     dependencies:
