@@ -8,6 +8,8 @@ import { useRealmSuggestions } from "./use-realm-suggestions";
 import { useFocusTrap } from "./use-focus-trap";
 import { matchApps } from "./palette-apps";
 import { matchFavorites } from "./palette-favorites";
+import { buildCommands, matchCommands } from "./palette-commands";
+import { useCustomNetworksStore } from "./custom-networks-store";
 import { useFavoriteRealms } from "./favorites-store";
 import { useWindowStore } from "./window-store";
 import { focusFamilyOrOpenDefault } from "./focus-family";
@@ -29,6 +31,24 @@ export function CommandPalette() {
   // they were not (AUD-046).
   const appMatches = matchApps(query);
   const favoriteMatches = matchFavorites(query, useFavoriteRealms());
+  const setActiveNetwork = useShellStore((s) => s.setActiveNetwork);
+  const activeNetworkId = useShellStore((s) => s.activeNetworkId);
+  const customNetworks = useCustomNetworksStore((s) => s.networks);
+  const commandMatches = matchCommands(
+    query,
+    buildCommands({
+      networks: [...sdk.networks.list(), ...customNetworks],
+      activeNetworkId,
+      setNetwork: (config) => {
+        // Both halves, in this order — the SDK owns which endpoint gets
+        // queried and the store owns what the UI says it is connected to.
+        // Setting one without the other shows a chain name that does not
+        // match the data underneath it.
+        sdk.networks.setActiveConfig(config);
+        setActiveNetwork(config.id);
+      },
+    })
+  );
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -149,7 +169,7 @@ export function CommandPalette() {
               setQuery(e.target.value);
               setNotFound(false);
             }}
-            placeholder="g1 address, #block, r/realm/path, @user, or username…"
+            placeholder="Search or run a command — realm, @user, g1 address, #block, &quot;theme&quot;, &quot;zoom&quot;…"
           />
           <datalist id="command-palette-suggestions">
             {suggestions.map((s) => (
@@ -188,6 +208,33 @@ export function CommandPalette() {
             ))}
           </ul>
         )}
+        {commandMatches.length > 0 && (
+          <ul className="command-palette__apps command-palette__commands">
+            {commandMatches.map((command) => (
+              <li key={command.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    command.run();
+                    setQuery("");
+                    setNotFound(false);
+                    setCommandPaletteOpen(false);
+                  }}
+                >
+                  {/* Marker and label in one span: the row is
+                      space-between so a hint can sit at the right edge,
+                      and a bare text node beside the marker got flung
+                      there instead — every label right-aligned against
+                      nothing. */}
+                  <span>
+                    <span aria-hidden="true">▸</span> {command.label}
+                  </span>
+                  {command.hint && <span className="command-palette__path">{command.hint}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         {resolving && (
           <p className="command-palette__hint" aria-busy="true">
             Looking up &ldquo;{query}&rdquo;…
@@ -195,8 +242,8 @@ export function CommandPalette() {
         )}
         {notFound && !resolving && (
           <p className="command-palette__hint">
-            That doesn't look like an address, block number, realm path, or known username yet — keep
-            typing.
+            That doesn't match a command, app, favorite, address, block number, realm path or known
+            username yet — keep typing.
           </p>
         )}
       </div>
