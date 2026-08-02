@@ -4,6 +4,7 @@ import { useShellStore } from "../store";
 import { Window } from "./window";
 import { openRef } from "./open-ref";
 import { iconForRefUri } from "./entity-icon";
+import { downloadJson } from "./local-data-recovery";
 import type { TrailSummary } from "@gnomputer/app-sdk";
 
 export function HistoryWindow() {
@@ -46,6 +47,27 @@ export function HistoryWindow() {
   async function newTrail() {
     await sdk.trails.start("Untitled Trail");
     bumpTrailVersion();
+  }
+
+  async function removeTrail(id: string, name: string, stepCount: number) {
+    // Confirmed only when there is something to lose. A Trail you just
+    // started and never used is noise, and a dialog for it trains people
+    // to dismiss the one that matters.
+    if (stepCount > 0) {
+      const plural = stepCount === 1 ? "step" : "steps";
+      if (!window.confirm(`Delete "${name}" and its ${stepCount} ${plural}? This can't be undone.`)) {
+        return;
+      }
+    }
+    await sdk.trails.deleteTrail(id);
+    bumpTrailVersion();
+  }
+
+  async function exportTrail(id: string, name: string) {
+    const data = await sdk.trails.exportTrail(id);
+    if (!data) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "trail";
+    downloadJson(data, `gnomputer-trail-${slug}.json`);
   }
 
   async function commitRename() {
@@ -107,7 +129,13 @@ export function HistoryWindow() {
           </button>
         </div>
 
-        {trails.length > 1 && (
+        {/* Rendered for one Trail as well as many. The list used to appear
+            only at two or more, which was fine while it was purely a
+            switcher — but export and delete live here now, and gating them
+            on having happened to start a second Trail put "delete my
+            history" out of reach for exactly the person most likely to
+            want it. */}
+        {trails.length > 0 && (
           <ul className="history-window__trail-list">
             {trails.map((t) => (
               <li key={t.id}>
@@ -120,6 +148,24 @@ export function HistoryWindow() {
                   <span className="history-window__trail-steps">
                     {t.stepCount} {t.stepCount === 1 ? "step" : "steps"}
                   </span>
+                </button>
+                <button
+                  type="button"
+                  className="history-window__trail-action"
+                  aria-label={`Export "${t.name}"`}
+                  title="Export as JSON"
+                  onClick={() => void exportTrail(t.id, t.name)}
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  className="history-window__trail-action history-window__trail-delete"
+                  aria-label={`Delete "${t.name}"`}
+                  title="Delete this Trail"
+                  onClick={() => void removeTrail(t.id, t.name, t.stepCount)}
+                >
+                  ×
                 </button>
               </li>
             ))}
@@ -145,6 +191,15 @@ export function HistoryWindow() {
               ))}
           </ul>
         )}
+
+        {/* Says where this lives. A Trail records where you have been, and
+            leaving someone to guess whether that is on a server is not a
+            neutral omission — especially in an app whose whole pitch is
+            read-only and wallet-free. */}
+        <p className="history-window__scope state-line">
+          Trails stay in this browser. Nothing here is uploaded, and clearing your browser data
+          removes them.
+        </p>
       </div>
     </Window>
   );

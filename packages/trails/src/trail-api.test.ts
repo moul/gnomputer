@@ -3,6 +3,15 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openDatabase } from "@gnomputer/storage";
 import { createTrailApi } from "./trail-api";
 
+/** A database nothing else in this file touches. The suite's older tests
+ * share a handful of fixed names cleared in beforeEach; these newer ones
+ * each take their own so a failure cannot leak into the next. */
+function freshDb(suffix: string) {
+  const name = `gnomputer-trails-${suffix}`;
+  indexedDB.deleteDatabase(name);
+  return openDatabase(name);
+}
+
 describe("TrailAPI", () => {
   beforeEach(() => {
     indexedDB.deleteDatabase("gnomputer-trails-test");
@@ -149,5 +158,94 @@ describe("listTrails step counts", () => {
     expect(countSpy).not.toHaveBeenCalled();
     countSpy.mockRestore();
     db.close();
+  });
+});
+
+describe("deleting a Trail", () => {
+  it("removes the Trail and every step on it", async () => {
+    const db = freshDb("trail-delete");
+    const api = createTrailApi(db);
+    const a = await api.start("A");
+    await api.addStep(a, "gno://t/realm/x", "x");
+    await api.addStep(a, "gno://t/realm/y", "y");
+
+    await api.deleteTrail(a);
+
+    expect(await db.trails.get(a)).toBeUndefined();
+    // Orphaned steps would be invisible and permanent — the whole point of
+    // deleting a Trail is that what it recorded is gone.
+    expect(await db.trailSteps.where("trailId").equals(a).count()).toBe(0);
+  });
+
+  it("promotes the next most recent Trail when the active one is deleted", async () => {
+    const db = freshDb("trail-delete-active");
+    const api = createTrailApi(db);
+    const older = await api.start("Older");
+    await api.addStep(older, "gno://t/realm/x", "x");
+    const active = await api.start("Active");
+
+    const nowActive = await api.deleteTrail(active);
+
+    expect(nowActive).toBe(older);
+    expect(await api.getActiveTrailId()).toBe(older);
+  });
+
+  it("starts a fresh Trail when the last one is deleted", async () => {
+    // A null active Trail would make the next page visit silently start an
+    // unnamed one, which looks like the delete failed.
+    const db = freshDb("trail-delete-last");
+    const api = createTrailApi(db);
+    const only = await api.start("Only");
+
+    const nowActive = await api.deleteTrail(only);
+
+    expect(nowActive).not.toBe(only);
+    expect(await api.getActiveTrailId()).toBe(nowActive);
+    expect(await db.trails.get(nowActive)).toBeDefined();
+  });
+
+  it("leaves the active Trail alone when a different one is deleted", async () => {
+    const db = freshDb("trail-delete-other");
+    const api = createTrailApi(db);
+    const other = await api.start("Other");
+    const active = await api.start("Active");
+
+    expect(await api.deleteTrail(other)).toBe(active);
+    expect(await api.getActiveTrailId()).toBe(active);
+  });
+
+  it("keeps other Trails' steps", async () => {
+    const db = freshDb("trail-delete-isolation");
+    const api = createTrailApi(db);
+    const keep = await api.start("Keep");
+    await api.addStep(keep, "gno://t/realm/keep", "keep");
+    const drop = await api.start("Drop");
+    await api.addStep(drop, "gno://t/realm/drop", "drop");
+
+    await api.deleteTrail(drop);
+
+    expect((await api.getSteps(keep)).map((s) => s.label)).toEqual(["keep"]);
+  });
+});
+
+describe("exporting a Trail", () => {
+  it("returns the Trail with its steps in order", async () => {
+    const db = freshDb("trail-export");
+    const api = createTrailApi(db);
+    const id = await api.start("My Trail");
+    await api.addStep(id, "gno://t/realm/first", "first");
+    await api.addStep(id, "gno://t/realm/second", "second");
+
+    const exported = await api.exportTrail(id);
+
+    expect(exported?.name).toBe("My Trail");
+    expect(exported?.steps.map((s) => s.label)).toEqual(["first", "second"]);
+    expect(exported?.exportedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("is null for a Trail that no longer exists", async () => {
+    const db = freshDb("trail-export-missing");
+    const api = createTrailApi(db);
+    expect(await api.exportTrail("trail-nope")).toBeNull();
   });
 });
