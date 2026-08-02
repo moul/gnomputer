@@ -34,6 +34,11 @@ export function buildCommands(options: {
   networks: NetworkConfig[];
   activeNetworkId: string;
   setNetwork: (config: NetworkConfig) => void;
+  /** How many windows are open. Overview deliberately refuses to engage
+   * below two (window-store.ts: one tile is not an overview), so offering
+   * it below two is offering an action that cannot act — the precise
+   * failure this palette's tests assert against elsewhere. */
+  openWindowCount: number;
 }): PaletteCommand[] {
   const commands: PaletteCommand[] = [];
 
@@ -86,13 +91,6 @@ export function buildCommands(options: {
       run: () => useZoomStore.getState().resetZoom(),
     },
     {
-      id: "windows:overview",
-      label: "Show all windows",
-      hint: "Overview",
-      keywords: ["overview", "expose", "grid", "mission control"],
-      run: () => useWindowStore.getState().toggleOverview(),
-    },
-    {
       id: "settings:network",
       label: "Settings: Network",
       keywords: ["rpc", "endpoint", "custom", "chain"],
@@ -123,6 +121,16 @@ export function buildCommands(options: {
       run: () => openSettings("bug"),
     }
   );
+
+  if (options.openWindowCount >= 2) {
+    commands.push({
+      id: "windows:overview",
+      label: "Show all windows",
+      hint: "Overview",
+      keywords: ["overview", "expose", "grid", "mission control"],
+      run: () => useWindowStore.getState().toggleOverview(),
+    });
+  }
 
   return commands;
 }
