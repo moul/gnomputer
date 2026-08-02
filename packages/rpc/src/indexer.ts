@@ -121,13 +121,18 @@ async function queryIndexer<T extends z.ZodTypeAny>(
   graphqlUrl: string,
   query: string,
   schema: T,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
+  timeoutMs?: number
 ): Promise<z.infer<T>> {
-  const res = await fetchWithDeadline(graphqlUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-  });
+  const res = await fetchWithDeadline(
+    graphqlUrl,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
+    },
+    timeoutMs
+  );
   if (!res.ok) {
     throw new Error(`Indexer request failed: ${res.status} ${res.statusText}`);
   }
@@ -553,19 +558,41 @@ const DailyActivityBlockSchema = z.object({ time: z.string(), num_txs: z.number(
 // its "Analytics"/"Gas" pages are cumulative leaderboards, not
 // time-series) — this is genuinely ahead, not just parity.
 //
-// `num_txs: { gt: 0 }` cuts the row count from "every block ever" (which
-// blows the 10,000-row cap almost immediately — most blocks are empty) down
-// to just the ones worth bucketing, confirmed live to bring back a full
-// week of Topaz history (845 blocks) in one request. Still a real, several-
-// second round trip (confirmed live: ~10s) since the indexer has to scan
-// the full block range server-side to find them — worth caching
-// aggressively client-side (a long staleTime) rather than refetching often.
-const DAILY_ACTIVITY_QUERY = `{
-  getBlocks(where: { height: { gt: 0 }, num_txs: { gt: 0 } }, order: { height: ASC }) {
-    time
-    num_txs
+// `num_txs: { gt: 0 }` cuts the row count from "every block ever" (most
+// blocks are empty, and the unfiltered count blows the 10,000-row cap
+// immediately) down to just the ones worth bucketing.
+//
+// The height floor is the other half, and it is what makes this query work
+// at all. The indexer scans the whole height range server-side, so cost
+// tracks the RANGE, not the rows returned — and unbounded, that range grows
+// with the chain. Measured against Topaz on 2026-08-02:
+//
+//   unbounded          58.5s   1897 blocks   (past the 15s deadline: the
+//                                             chart simply never rendered)
+//   last 100k blocks   29.8s    434 blocks   ~5 days
+//   last  50k blocks   15.5s    197 blocks   ~2 days
+//   last  20k blocks    6.2s     99 blocks   ~1 day
+//
+// So there is no window that is both useful and fast. ~20k blocks is a day,
+// which is one or two bars on a daily chart. The choice made here is a
+// 5-day window with a deadline long enough to actually reach it, cached
+// hard — a slow chart that appears beats a fast one that does not (#138).
+const DAILY_ACTIVITY_BLOCK_WINDOW = 100_000;
+const DAILY_ACTIVITY_TIMEOUT_MS = 60_000;
+
+const LATEST_HEIGHT_QUERY = `{ latestBlockHeight }`;
+
+const DAILY_ACTIVITY_QUERY = `
+  query DailyActivity($fromHeight: Int!) {
+    getBlocks(
+      where: { height: { gt: $fromHeight }, num_txs: { gt: 0 } }
+      order: { height: ASC }
+    ) {
+      time
+      num_txs
+    }
   }
-}`;
+`;
 
 export async function dailyActivity(
   network: { id: string; indexerGraphqlUrl?: string },
@@ -575,10 +602,19 @@ export async function dailyActivity(
     throw new Error(`${network.id} has no indexer configured — daily activity needs one.`);
   }
 
+  // Cheap (measured 0.3s) and the only way to know where the window starts.
+  const { latestBlockHeight } = await queryIndexer(
+    network.indexerGraphqlUrl,
+    LATEST_HEIGHT_QUERY,
+    z.object({ latestBlockHeight: z.number() })
+  );
+
   const data = await queryIndexer(
     network.indexerGraphqlUrl,
     DAILY_ACTIVITY_QUERY,
-    z.object({ getBlocks: z.array(DailyActivityBlockSchema).nullable() })
+    z.object({ getBlocks: z.array(DailyActivityBlockSchema).nullable() }),
+    { fromHeight: Math.max(0, latestBlockHeight - DAILY_ACTIVITY_BLOCK_WINDOW) },
+    DAILY_ACTIVITY_TIMEOUT_MS
   );
 
   const byDate = new Map<string, { blockCount: number; txCount: number }>();
