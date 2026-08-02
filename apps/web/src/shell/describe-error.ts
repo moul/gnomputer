@@ -50,6 +50,30 @@ export function describeError(error: unknown): DescribedError {
     };
   }
 
+  // A JSON parse failure means the endpoint answered with something that
+  // is not JSON-RPC at all — a captive portal's login page, a proxy error
+  // page, a truncated response. The parser's own wording ("Unterminated
+  // string in JSON at position 21") describes the bytes, not the problem,
+  // and reads like a bug in this app rather than a bad endpoint. Found by
+  // pointing the app at each of those responses in turn.
+  if (
+    /is not valid JSON|Unexpected end of JSON input|Unterminated string in JSON|Unexpected token .* in JSON|JSON\.parse/i.test(
+      raw
+    )
+  ) {
+    return {
+      message:
+        "The endpoint answered with something that isn't valid JSON. It may not be an RPC endpoint, or something on the network is intercepting the request.",
+      detail,
+    };
+  }
+
+  // Tendermint2's client reports transport failures this way.
+  const badStatus = raw.match(/Bad status on response:\s*(\d{3})/i);
+  if (badStatus) {
+    return { message: `The endpoint returned an error (HTTP ${badStatus[1]}).`, detail };
+  }
+
   let message = raw;
   const marker = STACK_MARKERS.find((m) => message.includes(m));
   if (marker) message = message.slice(0, message.indexOf(marker));

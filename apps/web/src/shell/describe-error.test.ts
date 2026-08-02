@@ -57,3 +57,37 @@ describe("describeError", () => {
     expect(describeError(new Error("   \n  ")).message).toBe("Something went wrong.");
   });
 });
+
+describe("responses that are not JSON-RPC at all", () => {
+  // Each of these is a real message produced by pointing the app at that
+  // kind of response. The parser's wording describes the bytes, not the
+  // problem, and reads like a bug in this app rather than a bad endpoint.
+  const parserMessages = [
+    `Unexpected token '<', "<html>capt"... is not valid JSON`,
+    "Failed to execute 'json' on 'Response': Unexpected end of JSON input",
+    "Unterminated string in JSON at position 21 (line 1 column 22)",
+  ];
+
+  for (const raw of parserMessages) {
+    it(`explains rather than repeats: ${raw.slice(0, 40)}…`, () => {
+      const described = describeError(new Error(raw));
+      expect(described.message).toMatch(/isn't valid JSON/);
+      expect(described.message).toMatch(/may not be an RPC endpoint/);
+      // The parser's own text is kept for the bug report, not shown.
+      expect(described.detail).toContain(raw.slice(0, 20));
+    });
+  }
+
+  it("reports an HTTP status plainly", () => {
+    expect(describeError(new Error("Bad status on response: 500")).message).toBe(
+      "The endpoint returned an error (HTTP 500)."
+    );
+  });
+
+  it("leaves a genuine JSON-shaped message from our own code alone", () => {
+    // Guard against the pattern being too eager: this is not a parse error.
+    expect(describeError(new Error("gno.land/r/demo/x returned no JSON body")).message).toBe(
+      "gno.land/r/demo/x returned no JSON body"
+    );
+  });
+});
