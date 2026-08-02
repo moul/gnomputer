@@ -7,6 +7,8 @@ import { openEntityMatch, openRef } from "./open-ref";
 import { useRealmSuggestions } from "./use-realm-suggestions";
 import { useFocusTrap } from "./use-focus-trap";
 import { matchApps } from "./palette-apps";
+import { matchFavorites } from "./palette-favorites";
+import { useFavoriteRealms } from "./favorites-store";
 import { useWindowStore } from "./window-store";
 import { focusFamilyOrOpenDefault } from "./focus-family";
 
@@ -26,6 +28,7 @@ export function CommandPalette() {
   // Apps first: the README says they are reachable from here, and until now
   // they were not (AUD-046).
   const appMatches = matchApps(query);
+  const favoriteMatches = matchFavorites(query, useFavoriteRealms());
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -160,6 +163,26 @@ export function CommandPalette() {
               <li key={app.id}>
                 <button type="button" onClick={() => openApp(app.id)}>
                   <span aria-hidden="true">{app.icon}</span> {app.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {favoriteMatches.length > 0 && (
+          <ul className="command-palette__apps command-palette__favorites">
+            {favoriteMatches.map((favorite) => (
+              <li key={favorite.packagePath}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    openEntityMatch("realm", favorite.packagePath);
+                    setQuery("");
+                    setNotFound(false);
+                    setCommandPaletteOpen(false);
+                  }}
+                >
+                  <span aria-hidden="true">★</span> {favorite.label}
+                  <span className="command-palette__path">{favorite.packagePath}</span>
                 </button>
               </li>
             ))}
