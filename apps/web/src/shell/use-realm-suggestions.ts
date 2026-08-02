@@ -24,7 +24,7 @@ const ALL_PACKAGES_MATCH_LIMIT = 20;
 // domain (gno.land/...) — bare "r/..."/"p/..." shorthand (same convention
 // openEntityMatch's realm case uses) needs that prepended before it means
 // anything to the chain.
-function packagePrefixFromQuery(query: string): string | null {
+export function packagePrefixFromQuery(query: string): string | null {
   const trimmed = query.trim();
   if (trimmed === "") return null;
   if (trimmed.startsWith("gno.land/")) return trimmed;
@@ -115,33 +115,52 @@ export function useRealmSuggestions(active: boolean, query = ""): RealmSuggestio
     };
   }, [sdk, prefix]);
 
-  const activity = rankByActivity(events);
+  return combineSuggestions({
+    rpcMatches,
+    allPackageMatches,
+    indexerMatches,
+    knownRealms: KNOWN_REALMS,
+    activityPaths: rankByActivity(events).map((row) => row.packagePath),
+  });
+}
+
+/** Merges the five sources in precedence order, first mention winning.
+ *
+ * Extracted from the hook so the precedence and the de-duplication can be
+ * asserted directly. It is the only part of this file with a decision in
+ * it, and inside the hook it was reachable only through react-query, a
+ * live-events poll and an SDK — which is a lot of machinery standing
+ * between a test and a for-loop.
+ *
+ * A curated realm keeps its human label; everything else is labelled with
+ * its own path. That is why order matters beyond ranking: if a Staff Pick
+ * were merged before the RPC results it would still be listed once, but
+ * with the curated label rather than the path the chain knows it by. */
+export function combineSuggestions(sources: {
+  rpcMatches: string[];
+  allPackageMatches: string[];
+  indexerMatches: string[];
+  knownRealms: readonly RealmSuggestion[];
+  activityPaths: string[];
+}): RealmSuggestion[] {
   const seen = new Set<string>();
   const combined: RealmSuggestion[] = [];
-  for (const path of rpcMatches) {
-    if (seen.has(path)) continue;
+
+  const addPath = (path: string) => {
+    if (seen.has(path)) return;
     seen.add(path);
     combined.push({ label: path, packagePath: path });
-  }
-  for (const path of allPackageMatches) {
-    if (seen.has(path)) continue;
-    seen.add(path);
-    combined.push({ label: path, packagePath: path });
-  }
-  for (const path of indexerMatches) {
-    if (seen.has(path)) continue;
-    seen.add(path);
-    combined.push({ label: path, packagePath: path });
-  }
-  for (const realm of KNOWN_REALMS) {
+  };
+
+  for (const path of sources.rpcMatches) addPath(path);
+  for (const path of sources.allPackageMatches) addPath(path);
+  for (const path of sources.indexerMatches) addPath(path);
+  for (const realm of sources.knownRealms) {
     if (seen.has(realm.packagePath)) continue;
     seen.add(realm.packagePath);
     combined.push(realm);
   }
-  for (const row of activity) {
-    if (seen.has(row.packagePath)) continue;
-    seen.add(row.packagePath);
-    combined.push({ label: row.packagePath, packagePath: row.packagePath });
-  }
+  for (const path of sources.activityPaths) addPath(path);
+
   return combined;
 }
