@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-02
 
+- The Chain Stats daily-activity chart renders again. Its query asked the
+  indexer to scan every block ever produced, which had grown to take 58
+  seconds against a 15-second limit — so the chart silently never
+  appeared. It now covers a recent window (about five days on Topaz),
+  says which dates it is showing, and is cached for an hour because it
+  still takes around half a minute to fetch.
 - Gnomputer works in private browsing and other setups where the browser
   blocks local storage. It already did, in the sense that the desktop
   loaded and chain data appeared — but it also filled the console with

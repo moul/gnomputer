@@ -121,10 +121,12 @@ function DailyActivitySection() {
   } = useQuery({
     queryKey: ["daily-activity", networkId],
     queryFn: () => sdk.indexer.dailyActivity(),
-    // The indexer scans the whole block range server-side for this one
-    // (confirmed live: ~10s round trip) — this doesn't change fast enough
-    // to be worth refetching on every window focus.
-    staleTime: 5 * 60 * 1000,
+    // The indexer scans the block range server-side, so this is genuinely
+    // slow — measured at 30s against Topaz for a five-day window. Daily
+    // buckets do not change meaningfully within an hour, and paying 30s
+    // again on a window focus would be absurd.
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
   });
 
   if (error) {
@@ -135,7 +137,8 @@ function DailyActivitySection() {
   if (isPending) {
     return (
       <p className="state-line" aria-busy="true">
-        Loading daily activity (this scans the full chain history, can take several seconds)…
+        Loading daily activity — the indexer scans the block range for this, which
+        takes around half a minute. It is then cached for an hour.
       </p>
     );
   }

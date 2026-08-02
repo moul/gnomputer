@@ -12,6 +12,15 @@ import {
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
 
+/** dailyActivity makes TWO requests: latestBlockHeight, then the bounded
+ * block query. The height comes first and decides the window. */
+function mockDailyActivity(latestBlockHeight: number, data: unknown) {
+  const responses = [{ data: { latestBlockHeight } }, { data }];
+  global.fetch = vi.fn().mockImplementation(() =>
+    Promise.resolve({ ok: true, json: async () => responses.shift() ?? { data: {} } })
+  ) as unknown as typeof fetch;
+}
+
 function mockIndexerResponse(data: unknown, errors?: { message: string }[]) {
   global.fetch = vi.fn().mockResolvedValue({
     ok: true,
@@ -399,7 +408,7 @@ describe("dailyActivity", () => {
   });
 
   it("buckets blocks by UTC calendar date, sorted oldest first", async () => {
-    mockIndexerResponse({
+    mockDailyActivity(500_000, {
       getBlocks: [
         { time: "2026-07-20T10:00:00.000Z", num_txs: 3 },
         { time: "2026-07-21T05:00:00.000Z", num_txs: 1 },
@@ -416,13 +425,44 @@ describe("dailyActivity", () => {
   });
 
   it("returns an empty list when getBlocks is null", async () => {
-    mockIndexerResponse({ getBlocks: null });
+    mockDailyActivity(500_000, { getBlocks: null });
     const result = await dailyActivity(NETWORK, NOW);
     expect(result.data).toEqual([]);
   });
 
   it("throws when the network has no indexer configured", async () => {
     await expect(dailyActivity({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+
+  it("bounds the query to a recent window rather than the whole chain", async () => {
+    // Unbounded, this took 58.5s against Topaz and never rendered — the
+    // indexer scans the height range server-side, so cost tracks the range
+    // rather than the rows returned (#138).
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      const response = bodies.length === 1 ? { latestBlockHeight: 500_000 } : { getBlocks: [] };
+      return Promise.resolve({ ok: true, json: async () => ({ data: response }) });
+    }) as unknown as typeof fetch;
+
+    await dailyActivity(NETWORK, NOW);
+
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).toContain("latestBlockHeight");
+    // 500,000 - 100,000: the window is relative to the tip, not absolute.
+    expect(JSON.parse(bodies[1]!).variables).toEqual({ fromHeight: 400_000 });
+  });
+
+  it("does not ask for a negative height on a young chain", async () => {
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      const response = bodies.length === 1 ? { latestBlockHeight: 42 } : { getBlocks: [] };
+      return Promise.resolve({ ok: true, json: async () => ({ data: response }) });
+    }) as unknown as typeof fetch;
+
+    await dailyActivity(NETWORK, NOW);
+    expect(JSON.parse(bodies[1]!).variables).toEqual({ fromHeight: 0 });
   });
 });
 
