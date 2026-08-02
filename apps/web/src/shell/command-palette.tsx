@@ -63,6 +63,17 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [commandPaletteOpen, setCommandPaletteOpen]);
 
+  // Closing empties the box, however it was closed. Running a command
+  // already cleared it, but Escape and clicking away did not — so ⌘K could
+  // reopen onto a stale query and a stale list of results for something you
+  // had already finished doing. Two ways out of the same dialog leaving it
+  // in two different states is the kind of thing that reads as a glitch.
+  useEffect(() => {
+    if (commandPaletteOpen) return;
+    setQuery("");
+    setNotFound(false);
+  }, [commandPaletteOpen]);
+
   if (!commandPaletteOpen) return null;
 
   // A registered username has no fixed shape the regex patterns can

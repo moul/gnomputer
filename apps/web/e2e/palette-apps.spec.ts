@@ -133,3 +133,26 @@ test("a command that could not act is not offered at all", async ({ page }) => {
   await input.fill("show all windows");
   await expect(page.locator(".command-palette__commands button")).toHaveCount(1);
 });
+
+test("closing the palette empties it, however it was closed", async ({ page }) => {
+  // Running a command already cleared the box; Escape and clicking away did
+  // not, so ⌘K could reopen onto a stale query and a stale result list for
+  // something already done.
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  let input = await openPalette(page);
+  await input.fill("zoom");
+  await expect(page.locator(".command-palette__commands button").first()).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  input = await openPalette(page);
+  await expect(input).toHaveValue("");
+  await expect(page.locator(".command-palette__commands button")).toHaveCount(0);
+
+  // Same for dismissing by clicking the backdrop.
+  await input.fill("zoom");
+  await page.locator(".command-palette").click({ position: { x: 5, y: 5 } });
+  input = await openPalette(page);
+  await expect(input).toHaveValue("");
+});
