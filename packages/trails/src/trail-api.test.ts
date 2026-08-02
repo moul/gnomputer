@@ -1,5 +1,5 @@
 import "fake-indexeddb/auto";
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openDatabase } from "@gnomputer/storage";
 import { createTrailApi } from "./trail-api";
 
@@ -99,5 +99,55 @@ describe("TrailAPI", () => {
 
     const trails = await api.listTrails();
     expect(trails).toHaveLength(2);
+  });
+});
+
+describe("listTrails step counts", () => {
+  it("counts steps per trail correctly across several trails", async () => {
+    const db = openDatabase("trails-count-test");
+    await db.delete();
+    await db.open();
+    const api = createTrailApi(db);
+
+    const a = await api.start("A");
+    await api.addStep(a, { refUri: "gno://t/realm/x", label: "x" });
+    await api.addStep(a, { refUri: "gno://t/realm/y", label: "y" });
+    await api.addStep(a, { refUri: "gno://t/realm/z", label: "z" });
+
+    const b = await api.start("B");
+    await api.addStep(b, { refUri: "gno://t/realm/x", label: "x" });
+
+    await api.start("C"); // no steps at all
+
+    const byName = Object.fromEntries(
+      (await api.listTrails()).map((t) => [t.name, t.stepCount])
+    );
+    expect(byName).toEqual({ A: 3, B: 1, C: 0 });
+    db.close();
+  });
+
+  it("does not issue one query per trail", async () => {
+    // The old implementation ran a count() per trail. "Clear history"
+    // starts a fresh Trail rather than deleting the old one, so trails
+    // accumulate for the life of the profile — the N+1 got slower every
+    // time someone cleared their history (AUD-045).
+    const db = openDatabase("trails-nplus1-test");
+    await db.delete();
+    await db.open();
+    const api = createTrailApi(db);
+
+    for (let i = 0; i < 25; i++) {
+      const id = await api.start(`trail ${i}`);
+      await api.addStep(id, { refUri: `gno://t/realm/${i}`, label: `${i}` });
+    }
+
+    const countSpy = vi.spyOn(db.trailSteps, "where");
+    const trails = await api.listTrails();
+    expect(trails).toHaveLength(25);
+    expect(trails.every((t) => t.stepCount === 1)).toBe(true);
+    // The old code called where("trailId") once per trail.
+    expect(countSpy).not.toHaveBeenCalled();
+    countSpy.mockRestore();
+    db.close();
   });
 });
