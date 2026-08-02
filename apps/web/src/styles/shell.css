@@ -1291,10 +1291,77 @@ main {
   text-overflow: ellipsis;
 }
 
+/* Wraps rather than clips. At 320px this row ran the "Home" button off the
+   edge mid-word with nothing to scroll — the button was there, styled, and
+   half of it unreachable. The star made a tight row tighter, so the fix is
+   to let the controls fall to a second line instead of pretending they fit. */
 .open-package-form {
   display: flex;
   align-items: flex-end;
   gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Keeps the input from collapsing to nothing before the row wraps: without
+   a floor, flex shrinks the field first and you get three buttons beside a
+   sliver of text box. */
+.open-package-form label {
+  min-width: 12ch;
+}
+
+.realm-browser__favorite {
+  flex: 0 0 auto;
+  font-size: 15px;
+  line-height: 1;
+  padding: var(--space-2);
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.realm-browser__favorite[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.realm-browser__favorite:hover {
+  color: var(--accent);
+}
+
+/* The row owns the layout so the remove button can sit outside the main
+   button — nesting it would make a button inside a button. */
+.realm-browser-home__list li:has(.realm-browser-home__unfavorite) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* width:100% on the shared list button is not enough once the row is a flex
+   container — the button shrinks to its content and the × lands mid-row
+   instead of at the edge, which reads as part of the label. */
+.realm-browser-home__list li:has(.realm-browser-home__unfavorite) > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Scoped under the list on purpose: `.realm-browser-home__list button` sets
+   width:100% and outranks a bare `.realm-browser-home__unfavorite`
+   (0,1,1 beats 0,1,0). With flex-basis:auto that width won the whole row —
+   the × measured 924px and squeezed the realm button to 26, hiding the
+   path. Two classes (0,2,0) take it back. */
+.realm-browser-home__list .realm-browser-home__unfavorite {
+  flex: 0 0 auto;
+  width: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-faint);
+  font-size: 14px;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+}
+
+.realm-browser-home__unfavorite:hover,
+.realm-browser-home__unfavorite:focus-visible {
+  color: var(--danger);
+  border-color: var(--border);
 }
 
 .open-package-form label {
@@ -4185,4 +4252,29 @@ main {
 .command-palette__apps button:focus-visible {
   background: var(--bg-inset);
   border-color: var(--accent-dim);
+}
+
+/* Favourites sit below apps, separated by a rule rather than a heading:
+   the star already says what they are, and a second heading in a palette
+   this small costs more room than it explains. */
+.command-palette__favorites {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.command-palette__favorites button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.command-palette__path {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

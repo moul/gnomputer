@@ -25,6 +25,12 @@ import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
+import {
+  favoriteUri,
+  toggleFavorite,
+  useFavoriteRealms,
+  useFavorites,
+} from "../shell/favorites-store";
 import { LensTabBar, type LensTabBarItem } from "../shell/lens-tab-bar";
 import { RenderNodeView } from "../shell/render-node-view";
 import { formatNumber } from "../format-number";
@@ -298,7 +304,33 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
       >
         🏠 Home
       </button>
+      <FavoriteToggle packagePath={tab.packagePath} />
     </form>
+  );
+}
+
+/** The star. Renders nothing until the stored list has been read — an
+ * unstarred star on a realm you starred last week is a lie, and it appears
+ * for only as long as IndexedDB takes to answer. */
+function FavoriteToggle({ packagePath }: { packagePath: string }) {
+  const sdk = useSdk();
+  const { favorites, hydrated, networkId } = useFavorites();
+  if (packagePath === "" || !hydrated) return null;
+
+  const isFavorite = favorites.some((f) => f.refUri === favoriteUri(networkId, packagePath));
+  const label = `${isFavorite ? "Remove" : "Add"} ${packagePath} ${isFavorite ? "from" : "to"} favorites`;
+
+  return (
+    <button
+      type="button"
+      className="realm-browser__favorite"
+      aria-pressed={isFavorite}
+      aria-label={label}
+      title={label}
+      onClick={() => void toggleFavorite(sdk, networkId, packagePath, formatRealmLabel(packagePath, 40))}
+    >
+      {isFavorite ? "★" : "☆"}
+    </button>
   );
 }
 
@@ -572,6 +604,44 @@ function useIndexerRealms(indexerConfigured: boolean) {
   });
 }
 
+/** Absent rather than empty when you have no favorites.
+ *
+ * An empty "Favorites" heading above four populated sections reads as
+ * something broken, and the star on the toolbar is where the feature is
+ * discovered — not a placeholder here. */
+function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void }) {
+  const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
+  const favorites = useFavoriteRealms();
+  if (favorites.length === 0) return null;
+
+  return (
+    <CollapsibleSection id="favorites" title={`★ Favorites (${favorites.length})`}>
+      <ul className="realm-browser-home__list">
+        {favorites.map((favorite) => (
+          <li key={favorite.packagePath}>
+            <button type="button" onClick={() => onOpen(favorite.packagePath)}>
+              {favorite.label}
+              <span className="realm-browser-home__path">{favorite.packagePath}</span>
+            </button>
+            <button
+              type="button"
+              className="realm-browser-home__unfavorite"
+              aria-label={`Remove ${favorite.packagePath} from favorites`}
+              title="Remove from favorites"
+              onClick={() =>
+                void toggleFavorite(sdk, networkId, favorite.packagePath, favorite.label)
+              }
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+    </CollapsibleSection>
+  );
+}
+
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
   const sdk = useSdk();
   const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
@@ -589,6 +659,11 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
 
   return (
     <div className="realm-browser-home">
+      {/* First, above the chain-derived lists. Everything else here is
+          what the chain happens to be doing; this is the one section you
+          chose, and it was useless sitting under two long feeds. */}
+      <FavoritesSection onOpen={onOpen} />
+
       <CollapsibleSection id="recently-active" title="Recently active">
         {activity.length === 0 ? (
           <p className="state-line" aria-busy="true">
