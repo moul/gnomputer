@@ -25,7 +25,12 @@ describe("AppErrorFallback recovery contract", () => {
     // we now explicitly name what is preserved.
     const text = container.textContent ?? "";
     expect(text).not.toContain("This only clears local settings/layout");
-    expect(text).toMatch(/keeps.*scripts, Trails, favorites and workspaces/s);
+    expect(text).toMatch(/keeps.*scripts and Trails/s);
+    // Not favorites or workspaces: the SDK exposes those APIs but no UI can
+    // create either, so promising to preserve them is a claim about data
+    // the user cannot have — and this screen is where someone decides
+    // whether to erase (AUD-044).
+    expect(text).not.toMatch(/favorites|workspaces/i);
   });
 
   it("keeps the destructive action behind a second confirm", () => {
