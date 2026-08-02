@@ -183,9 +183,10 @@ export default defineConfig({
       exclude: ["src/**/*.d.ts", "src/main.tsx", "src/**/*.test.{ts,tsx}"],
       // A ratchet, not a target: set just under today's real numbers so the
       // gate catches a regression immediately, rather than an aspirational
-      // figure that ends up ignored. Measured on main 2026-08-02: 25.86% statements/lines,
-      // 89.2% branches, 37.79% functions. Each threshold sits just under
-      // its measurement, so the gate catches a real drop without failing on
+      // figure that ends up ignored. Measured on main 2026-08-02 after the
+      // favorites/palette/share work: 28.27% statements/lines, 90.31%
+      // branches, 41.16% functions. Each threshold sits just under its
+      // measurement, so the gate catches a real drop without failing on
       // rounding. Raise them as coverage improves; do not lower one to make
       // a branch pass.
       //
@@ -194,7 +195,7 @@ export default defineConfig({
       // (#105): lazy imports are not pulled in during unit tests, so those
       // modules count in the denominator without contributing covered
       // lines, and a branch that adds one reads about two points low.
-      thresholds: { lines: 25, statements: 25, functions: 37, branches: 88 },
+      thresholds: { lines: 28, statements: 28, functions: 41, branches: 90 },
     },
   },
 });
