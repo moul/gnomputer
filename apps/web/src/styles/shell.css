@@ -4144,3 +4144,17 @@ main {
     display: none;
   }
 }
+
+/* "via indexer" beside a freshness timestamp. Deliberately quiet: it is a
+   qualifier on the timestamp next to it, not a warning. */
+.freshness__source {
+  margin-left: var(--space-2);
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-faint);
+  cursor: help;
+}

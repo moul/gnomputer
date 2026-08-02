@@ -27,7 +27,10 @@ import {
   type BlockTxResult,
   type BlockEvents,
 } from "@gnomputer/rpc";
+// Re-exported so apps can type against provenance without depending on
+// @gnomputer/core directly — app-sdk is the one surface they may import.
 import type { DataEnvelope } from "@gnomputer/core";
+export type { DataEnvelope };
 
 export type {
   RpcClient,
@@ -136,8 +139,13 @@ const QUERY_CACHE_MAX_ENTRIES = 50;
 /** Bump when the shape of a cached query result changes in a way older
  * entries cannot satisfy. Rows written under a different version are
  * dropped on read instead of being handed to code that expects the new
- * shape. */
-const QUERY_CACHE_SCHEMA_VERSION = 1;
+ * shape.
+ *
+ * 2: indexer-backed queries now cache the whole DataEnvelope rather than
+ * just its .data, so Freshness can report where the data came from. A v1
+ * entry would deserialise into code expecting `.data` and `.source` and
+ * find neither. */
+const QUERY_CACHE_SCHEMA_VERSION = 2;
 
 export function createGnomputerSDK(
   options: { networkId?: string; dbName?: string } = {}
