@@ -69,7 +69,7 @@ function RecentEvents() {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load recent events: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load recent events" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {

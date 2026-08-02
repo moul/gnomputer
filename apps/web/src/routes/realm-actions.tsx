@@ -21,7 +21,7 @@ export function RealmActions({ packagePath }: { packagePath: string }) {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load actions: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load actions" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending || !symbols) {

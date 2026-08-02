@@ -495,7 +495,7 @@ function RealmRenderView({
   if (error) {
     if (error.message.includes("NoRenderDeclError")) return null;
     return (
-      <ErrorState message={`Could not load this realm: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load this realm" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {
@@ -606,7 +606,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
         {indexerConfigured ? (
           indexerError ? (
             <ErrorState
-              message={`Could not load recently deployed realms: ${indexerError.message}`}
+              message="Could not load recently deployed realms" error={indexerError}
               onRetry={() => void refetchIndexerRealms()}
             />
           ) : indexerPending ? (

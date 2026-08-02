@@ -177,7 +177,7 @@ export function Editor() {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load your scripts: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load your scripts" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending || !scripts) {

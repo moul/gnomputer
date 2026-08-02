@@ -79,7 +79,7 @@ function AddressLookupForm({ onResolved }: { onResolved: (address: string) => vo
         </p>
       )}
       {error && (
-        <ErrorState message={`Could not look up "${query}": ${error.message}`} onRetry={() => void refetch()} />
+        <ErrorState message={`Could not look up "${query}"`} error={error} onRetry={() => void refetch()} />
       )}
       {result && !result.found && (
         <p className="state-line">No registered user or address matches &ldquo;{query}&rdquo;.</p>
@@ -168,7 +168,7 @@ function AddressContent({ address }: { address: string }) {
       {!accountPending && !accountError && <Freshness dataUpdatedAt={dataUpdatedAt} />}
       {accountError ? (
         <ErrorState
-          message={`Could not load this account: ${accountError.message}`}
+          message="Could not load this account" error={accountError}
           onRetry={() => void refetchAccount()}
         />
       ) : accountPending ? (

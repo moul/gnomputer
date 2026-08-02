@@ -186,7 +186,7 @@ export function BlockExplorer() {
 
           {error ? (
             <ErrorState
-              message={`Could not load block #${height}: ${error.message}`}
+              message={`Could not load block #${height}`} error={error}
               onRetry={() => void refetch()}
             />
           ) : isPending || !block ? (

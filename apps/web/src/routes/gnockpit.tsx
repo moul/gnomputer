@@ -28,7 +28,7 @@ export function Gnockpit() {
   if (status.error) {
     return (
       <ErrorState
-        message={`Could not reach ${network.name}: ${status.error.message}`}
+        message={`Could not reach ${network.name}`} error={status.error}
         onRetry={() => void status.refetch()}
       />
     );

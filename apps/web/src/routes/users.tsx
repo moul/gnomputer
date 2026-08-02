@@ -273,7 +273,7 @@ export function Users() {
     <div className="users-app">
       {statsError ? (
         <ErrorState
-          message={`Could not load directory stats: ${statsError.message}`}
+          message="Could not load directory stats" error={statsError}
           onRetry={() => void refetchStats()}
         />
       ) : (
@@ -347,7 +347,7 @@ export function Users() {
         </p>
       ) : lookupError ? (
         <ErrorState
-          message={`Could not look up "${query}": ${lookupError.message}`}
+          message={`Could not look up "${query}"`} error={lookupError}
           onRetry={() => void refetchLookup()}
         />
       ) : !result?.found ? (

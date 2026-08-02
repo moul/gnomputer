@@ -26,7 +26,7 @@ export function RealmRaw({ packagePath, renderPath }: { packagePath: string; ren
   if (error) {
     return (
       <ErrorState
-        message={`Could not load the raw response: ${error.message}`}
+        message="Could not load the raw response" error={error}
         onRetry={() => void refetch()}
       />
     );

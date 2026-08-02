@@ -31,7 +31,7 @@ export function DiscoverTokens() {
   if (error) {
     return (
       <ErrorState
-        message={`Could not load the token registry: ${error.message}`}
+        message="Could not load the token registry" error={error}
         onRetry={() => void refetch()}
       />
     );

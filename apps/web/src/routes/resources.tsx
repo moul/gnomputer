@@ -108,7 +108,7 @@ function DocsTab() {
       <nav className="file-tree doc-tree-wrap">
         {treeError ? (
           <ErrorState
-            message={`Could not load the docs listing: ${treeError.message}`}
+            message="Could not load the docs listing" error={treeError}
             onRetry={() => void refetchTree()}
           />
         ) : treePending || !tree ? (
@@ -124,7 +124,7 @@ function DocsTab() {
           <p className="state-line">Pick a file from the tree to read it.</p>
         ) : contentError ? (
           <ErrorState
-            message={`Could not load ${selected}: ${contentError.message}`}
+            message={`Could not load ${selected}`} error={contentError}
             onRetry={() => void refetchContent()}
           />
         ) : contentPending || content === undefined ? (
@@ -152,7 +152,7 @@ function AwesomeGnoTab() {
       </p>
       {error ? (
         <ErrorState
-          message={`Could not load awesome-gno: ${error.message}`}
+          message="Could not load awesome-gno" error={error}
           onRetry={() => void refetch()}
         />
       ) : isPending || text === undefined ? (

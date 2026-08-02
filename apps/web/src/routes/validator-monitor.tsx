@@ -35,7 +35,7 @@ export function ValidatorMonitor() {
   if (error) {
     return (
       <ErrorState
-        message={`Could not load the validator set: ${error.message}`}
+        message="Could not load the validator set" error={error}
         onRetry={() => void refetch()}
       />
     );

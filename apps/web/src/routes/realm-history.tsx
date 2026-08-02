@@ -66,7 +66,7 @@ function HistoricalEvents({ packagePath }: { packagePath: string }) {
 
   if (error) {
     return (
-      <ErrorState message={`Could not load history: ${error.message}`} onRetry={() => void refetch()} />
+      <ErrorState message="Could not load history" error={error} onRetry={() => void refetch()} />
     );
   }
   if (isPending) {
