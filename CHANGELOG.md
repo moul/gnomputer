@@ -6,6 +6,25 @@ banner links here.
 
 ## 2026-08-02
 
+- You can copy a link to whatever you are looking at. Links have carried
+  the realm, the lens and the network for a while, but the only way to get
+  one was the browser's address bar — and the installed app does not have
+  one, so on a phone the feature was effectively unreachable. There is now
+  a button on the realm toolbar and a "copy link" command in the palette.
+  On a phone it offers the system share sheet instead.
+- Realms can be starred. A star on the realm toolbar puts it at the top of
+  the Browser home and into the command palette. Favorites are remembered
+  per network, because the same path on two chains is two different
+  deployments.
+- The command palette runs commands, not just lookups: switch theme or
+  network, zoom, show all windows, jump to any Settings section. Commands
+  answer to the word you would actually reach for — "appearance" finds the
+  theme settings, "dark" finds both dark themes.
+- A first visit offers three things to click rather than only something to
+  read: live governance proposals, a realm's on-chain source, and events
+  landing as blocks arrive.
+- At 320px wide, the realm toolbar's Home button was cut off mid-word with
+  no way to scroll to it. The row now wraps.
 - A package with no `Render()` function is detected properly rather than
   by matching words in an error message, so the Render tab greys out and
   Source opens for the right reason.
