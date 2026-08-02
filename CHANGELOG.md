@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-02
 
+- Gnomputer works in private browsing and other setups where the browser
+  blocks local storage. It already did, in the sense that the desktop
+  loaded and chain data appeared — but it also filled the console with
+  errors as every attempt to save a preference failed. Preferences and
+  the offline cache simply don't persist there now, and it says so once
+  rather than repeatedly.
 - An endpoint that answers with something other than JSON — a captive
   portal's login page, a proxy error page, a truncated response — now
   says so, instead of showing the JSON parser's own wording like
