@@ -6,6 +6,11 @@ banner links here.
 
 ## 2026-08-02
 
+- The command palette (⌘K) can open apps now. It only resolved addresses,
+  blocks, realms and usernames before, even though the README said apps
+  lived behind it. Typing an app's name finds it, including the ones with
+  no icon in the island bar — Governance, Tokens, Packages and the rest,
+  which previously had no deliberate way in at all.
 - The Chain Stats daily-activity chart renders again. Its query asked the
   indexer to scan every block ever produced, which had grown to take 58
   seconds against a 15-second limit — so the chart silently never
