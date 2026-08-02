@@ -1311,6 +1311,12 @@ main {
 
 .realm-browser__favorite {
   flex: 0 0 auto;
+  /* Icon-only buttons are the hardest things on this row to hit: the
+     labelled ones are 59-81px wide, these measured 31 and 34 on a phone.
+     Both clear the WCAG 2.2 AA minimum of 24px either way — this is for
+     thumbs, not for the gate. Height stays at the row's 38px so they still
+     line up with Open and Home. */
+  min-width: 44px;
   font-size: 15px;
   line-height: 1;
   padding: var(--space-2);
@@ -4379,6 +4385,7 @@ main {
 .share-link-button {
   flex: 0 0 auto;
   width: 2.6em;
+  min-width: 44px;
   font-size: 14px;
   line-height: 1;
   padding: var(--space-2) 0;
