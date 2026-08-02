@@ -80,6 +80,9 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm build
 pnpm --filter @gnomputer/web e2e    # Playwright, against a local mock chain
 ```
 
+<sub>Screenshots are generated from a running app, never staged — refresh them with
+`node scripts/capture-screenshots.mjs` from `apps/web`.</sub>
+
 ## Docs
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — repo layout, the architecture rules CI
