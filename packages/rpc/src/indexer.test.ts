@@ -6,6 +6,7 @@ import {
   chainActivityStats,
   dailyActivity,
   listTransactions,
+  listBlockHeightsWithTxs,
   recentEvents,
 } from "./indexer";
 
@@ -650,5 +651,78 @@ describe("per-query field validation", () => {
     // A schema that forgot this would break the most common case.
     mockIndexerResponse({ getTransactions: null });
     await expect(listRealms(NETWORK, NOW)).resolves.toMatchObject({ data: [] });
+  });
+});
+
+describe("listBlockHeightsWithTxs", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("returns distinct heights, newest first", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        { block_height: 300 },
+        { block_height: 300 },
+        { block_height: 288 },
+        { block_height: 271 },
+      ],
+    });
+    const result = await listBlockHeightsWithTxs(NETWORK, NOW);
+    expect(result.data).toEqual([300, 288, 271]);
+  });
+
+  it("de-duplicates before applying the cap, not after", async () => {
+    // Slicing first would return two blocks when three were asked for, just
+    // because one block happened to hold several transactions.
+    mockIndexerResponse({
+      getTransactions: [
+        { block_height: 300 },
+        { block_height: 300 },
+        { block_height: 300 },
+        { block_height: 288 },
+        { block_height: 271 },
+        { block_height: 264 },
+      ],
+    });
+    const result = await listBlockHeightsWithTxs(NETWORK, NOW, 3);
+    expect(result.data).toEqual([300, 288, 271]);
+  });
+
+  it("asks only for block_height", async () => {
+    // The equivalent full transaction query returns about 1MB on Topaz; this
+    // one returns 54KB. Requesting a field nobody reads would quietly give
+    // that back.
+    let sentQuery = "";
+    global.fetch = (async (_url: string, init: { body: string }) => {
+      sentQuery = JSON.parse(init.body).query as string;
+      return { ok: true, status: 200, json: async () => ({ data: { getTransactions: [] } }) };
+    }) as unknown as typeof global.fetch;
+
+    await listBlockHeightsWithTxs(NETWORK, NOW);
+
+    expect(sentQuery).toContain("block_height");
+    for (const field of ["gas_used", "messages", "response", "success", "index"]) {
+      expect(sentQuery, `should not request ${field}`).not.toContain(field);
+    }
+  });
+
+  it("is empty rather than throwing when the indexer returns null", async () => {
+    mockIndexerResponse({ getTransactions: null });
+    expect((await listBlockHeightsWithTxs(NETWORK, NOW)).data).toEqual([]);
+  });
+
+  it("refuses a network with no indexer, naming it", async () => {
+    await expect(
+      listBlockHeightsWithTxs({ id: "gnodev" }, NOW)
+    ).rejects.toThrow(/gnodev has no indexer/);
+  });
+
+  it("reports itself as indexer-derived, not live chain state", async () => {
+    mockIndexerResponse({ getTransactions: [{ block_height: 1 }] });
+    const result = await listBlockHeightsWithTxs(NETWORK, NOW);
+    expect(result.source).toBe("indexer");
+    expect(result.consistency).toBe("indexed");
   });
 });

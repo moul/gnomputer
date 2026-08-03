@@ -11,6 +11,7 @@ import {
   chainActivityStats,
   dailyActivity,
   listTransactions,
+  listBlockHeightsWithTxs,
   recentEvents,
   type RpcClient,
   type BlockSummary,
@@ -98,6 +99,9 @@ export interface GnomputerSDK {
     chainActivityStats(): Promise<DataEnvelope<ChainActivityStats>>;
     dailyActivity(): Promise<DataEnvelope<DailyActivity[]>>;
     listTransactions(): Promise<DataEnvelope<IndexerTransaction[]>>;
+    /** Heights of the most recent blocks containing transactions, newest
+     * first. Indexer-only; throws on a network without one. */
+    blockHeightsWithTxs(limit?: number): Promise<DataEnvelope<number[]>>;
     recentEvents(): Promise<DataEnvelope<IndexerRecentEvent[]>>;
   };
   trails: TrailAPI;
@@ -242,6 +246,8 @@ export function createGnomputerSDK(
       chainActivityStats: () => chainActivityStats(activeNetwork, new Date().toISOString()),
       dailyActivity: () => dailyActivity(activeNetwork, new Date().toISOString()),
       listTransactions: () => listTransactions(activeNetwork, new Date().toISOString()),
+      blockHeightsWithTxs: (limit) =>
+        listBlockHeightsWithTxs(activeNetwork, new Date().toISOString(), limit),
       recentEvents: () => recentEvents(activeNetwork, new Date().toISOString()),
     },
     trails: trailApi,
