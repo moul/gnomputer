@@ -735,3 +735,67 @@ export async function listTransactions(
     schema: "gnomputer.indexer.transaction-list.v1",
   });
 }
+
+// Only block_height, and nothing else. The full transaction query this
+// mirrors returns about 1MB on Topaz; asking for heights alone returns
+// 54KB, and "which recent blocks contain transactions" needs no more than
+// that. Measured live 2026-08-03.
+//
+// There is no `first`/`limit` argument to lean on — the tx-indexer rejects
+// both (ADR-016: the schema is narrower than it looks) — so the cap is
+// applied here, after the response arrives.
+const BLOCK_HEIGHTS_WITH_TXS_QUERY = `{
+  getTransactions(where: {}, order: { heightAndIndex: DESC }) {
+    block_height
+  }
+}`;
+
+const BlockHeightSchema = z.object({ block_height: z.number() });
+
+/** Heights of the most recent blocks that actually contain transactions,
+ * newest first and de-duplicated.
+ *
+ * The Block Explorer's "Only with txs" filter cannot be answered from the
+ * live window on a quiet chain: measured on Topaz, none of the last 40
+ * blocks had a transaction and the most recent one that did was 554 blocks
+ * behind the tip. Filtering a 12-block feed therefore returned nothing
+ * every time, and scanning backwards over RPC would be hundreds of calls
+ * to find one block.
+ *
+ * Needs an indexer. Networks without one (gnodev) can only search what the
+ * live feed has seen, and the caller says so rather than pretending. */
+export async function listBlockHeightsWithTxs(
+  network: { id: string; indexerGraphqlUrl?: string },
+  fetchedAt: string,
+  limit = 12
+): Promise<DataEnvelope<number[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — searching block history needs one.`);
+  }
+
+  const data = await queryIndexer(
+    network.indexerGraphqlUrl,
+    BLOCK_HEIGHTS_WITH_TXS_QUERY,
+    z.object({ getTransactions: z.array(BlockHeightSchema).nullable() })
+  );
+
+  // De-duplicated before the cap, not after: several transactions in one
+  // block are one block, and slicing first would return fewer blocks than
+  // asked for whenever a busy block appeared.
+  const heights: number[] = [];
+  for (const row of data.getTransactions ?? []) {
+    if (heights.length >= limit) break;
+    if (!heights.includes(row.block_height)) heights.push(row.block_height);
+  }
+
+  return wrapEnvelope({
+    ref: { uri: `gno://${network.id}/network/${network.id}`, kind: "network", networkId: network.id },
+    data: heights,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.block-heights-with-txs.v1",
+  });
+}

@@ -5,6 +5,7 @@ import { useTrailRecorder } from "../use-trail-recorder";
 import { usePendingRefsStore } from "../shell/pending-refs-store";
 import { useNetworkStatus } from "../shell/use-network-status";
 import { useLiveActivity } from "../use-live-activity";
+import { useBlocksWithTxs } from "../use-blocks-with-txs";
 import { formatTimeAgo } from "../format-time-ago";
 import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
@@ -89,7 +90,16 @@ export function BlockExplorer() {
     setDraftHeight(String(h));
   }
 
-  const visibleBlocks = txsOnly ? blocks.filter((b) => b.numTxs > 0) : blocks;
+  // With the filter on, the list comes from the indexer rather than from the
+  // live feed. Filtering the feed could not answer the question: on Topaz
+  // none of the last 40 blocks had a transaction, so the honest result of
+  // filtering twelve live blocks was always "none".
+  const withTxs = useBlocksWithTxs(txsOnly);
+  const visibleBlocks = txsOnly
+    ? withTxs.indexerConfigured
+      ? withTxs.blocks
+      : blocks.filter((b) => b.numTxs > 0)
+    : blocks;
 
   return (
     <div className="block-explorer">
@@ -105,13 +115,39 @@ export function BlockExplorer() {
               {paused ? "▶ Resume" : "⏸ Pause"}
             </button>
           </div>
+          {/* The app's rule is to say where data came from (AUD-047). With
+              the filter on this list is indexer-derived history, not the
+              live feed, and those blocks can be a long way behind the tip —
+              554 blocks, when this was measured on Topaz. Presenting them
+              in the same list as live blocks without saying so would make
+              the feed look stalled. */}
+          {txsOnly && withTxs.indexerConfigured && visibleBlocks.length > 0 && (
+            <p className="state-line">
+              Most recent blocks containing transactions, from the indexer — not the live feed, so
+              these can sit well behind the current height.
+            </p>
+          )}
           {warnings.length > 0 && (
             <p className="panel__notice">{warnings.map((w) => w.message).join(" ")}</p>
           )}
-          {blocks.length === 0 ? (
+          {txsOnly && withTxs.error ? (
+            <ErrorState
+              message="Could not search block history"
+              error={withTxs.error}
+              onRetry={withTxs.retry}
+            />
+          ) : txsOnly && withTxs.isPending ? (
+            <p className="state-line" aria-busy="true">
+              Searching block history for transactions…
+            </p>
+          ) : blocks.length === 0 && !txsOnly ? (
             <LiveFeedStatus isError={isError} watching="Watching the chain for new blocks…" />
           ) : visibleBlocks.length === 0 ? (
-            <p className="state-line">No blocks with transactions in the current window yet.</p>
+            <p className="state-line">
+              {txsOnly && !withTxs.indexerConfigured
+                ? `${sdk.networks.getActive().name} has no indexer, so only the blocks seen since this window opened can be searched — and none of them have transactions.`
+                : "No blocks with transactions found."}
+            </p>
           ) : (
             <ul className="activity-list">
               {visibleBlocks.map((b) => (
