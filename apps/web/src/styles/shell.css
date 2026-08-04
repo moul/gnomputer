@@ -4406,3 +4406,85 @@ main {
   color: var(--danger);
   border-color: currentColor;
 }
+
+/* "Changed at block #N" on the Render lens (#90). A restrained pulse, not a
+   toast: it appears above the content rather than over it, because an
+   announcement you must dismiss before reading what it announces is worse
+   than none. */
+.realm-change-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--bg-inset);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--text);
+  animation: realm-change-in 320ms ease-out;
+}
+
+.realm-change-badge > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+
+.realm-change-badge button {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 var(--space-1);
+}
+
+.realm-change-badge button:hover,
+.realm-change-badge button:focus-visible {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.realm-change-badge__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: realm-change-pulse 1.6s ease-out 3;
+}
+
+@keyframes realm-change-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes realm-change-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent);
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+    opacity: 0.65;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    opacity: 1;
+  }
+}
+
+/* Honours the OS setting: the pulse is decoration, the badge is the message.
+   Everything else in this app already respects this (Playwright runs with
+   reducedMotion:"reduce"), and a pulsing dot is exactly the kind of thing
+   the preference exists for. */
+@media (prefers-reduced-motion: reduce) {
+  .realm-change-badge,
+  .realm-change-badge__dot {
+    animation: none;
+  }
+}

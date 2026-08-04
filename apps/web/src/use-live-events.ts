@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSdk } from "./sdk-context";
 import { useChainHeight } from "./use-chain-height";
 import type { ChainEvent } from "@gnomputer/app-sdk";
@@ -24,6 +25,8 @@ export function useLiveEvents(
   pkgPath?: string
 ): { events: LiveEvent[]; isError: boolean } {
   const sdk = useSdk();
+  const networkId = sdk.networks.getActive().id;
+  const queryClient = useQueryClient();
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const lastSeenHeight = useRef<number | null>(null);
 
@@ -44,8 +47,29 @@ export function useLiveEvents(
         const heights: number[] = [];
         for (let h = from; h <= height; h++) heights.push(h);
 
+        // Through react-query's cache, on the same key the Block Explorer's
+        // detail pane uses, rather than calling the RPC directly.
+        //
+        // Every instance of this hook used to fetch every block's events for
+        // itself: Event Explorer and the Browser home's "Recently active"
+        // both call it, so with both open each block was fetched twice, and
+        // each realm window that wanted to watch its own package would have
+        // added another copy. Sharing one request per height is what makes a
+        // per-realm watcher free (use-realm-change-watch.ts) instead of a
+        // multiplier on RPC load.
+        //
+        // staleTime Infinity because a finalized block's events are
+        // immutable — the reason this is cacheable at all, and why revisiting
+        // a block in the explorer now costs nothing.
         const results = await Promise.all(
-          heights.map((h) => sdk.rpc.getBlockEvents(h, new Date().toISOString()).then((env) => env.data))
+          heights.map((h) =>
+            queryClient.fetchQuery({
+              queryKey: ["block-events", networkId, h],
+              queryFn: async () =>
+                (await sdk.rpc.getBlockEvents(h, new Date().toISOString())).data,
+              staleTime: Infinity,
+            })
+          )
         );
         if (cancelled) return;
 
@@ -74,7 +98,7 @@ export function useLiveEvents(
     return () => {
       cancelled = true;
     };
-  }, [sdk, paused, pkgPath, height]);
+  }, [sdk, networkId, queryClient, paused, pkgPath, height]);
 
   return { events, isError };
 }

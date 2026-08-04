@@ -25,6 +25,7 @@ import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
+import { useRealmChangeWatch, type RealmChange } from "../use-realm-change-watch";
 import { ShareLinkButton } from "../shell/share-link-button";
 import {
   favoriteUri,
@@ -518,6 +519,10 @@ function RealmRenderView({
     renderPath
   );
 
+  // Watches the events this realm emits and refetches when it changes, so the
+  // view stops silently showing state the chain has moved past (#90).
+  const { change, acknowledge } = useRealmChangeWatch(packagePath, !error);
+
   useEffect(() => {
     if (!data) return;
     onStats?.({ updatedAt: dataUpdatedAt, loadMs: data.loadMs, refetch: () => void refetch(), isFetching });
@@ -553,10 +558,38 @@ function RealmRenderView({
   }
   return (
     <article aria-label={`Realm ${packagePath}`}>
+      {/* Keyed on the height so a second change re-triggers the animation
+          rather than leaving a badge that has already stopped moving. */}
+      {change && (
+        <ChangeBadge key={change.height} change={change} onDismiss={acknowledge} />
+      )}
       {data.nodes.map((node, i) => (
         <RenderNodeView key={i} node={node} windowId={windowId} />
       ))}
     </article>
+  );
+}
+
+/** "Changed at block #N" — a block height, not "just now".
+ *
+ * A wall-clock time would be this browser's opinion; the height is what every
+ * observer of the chain agrees on, which is the whole point being
+ * demonstrated. Dismissible, and it never covers the content: an announcement
+ * that has to be dismissed before you can read what it is announcing would be
+ * worse than no announcement. */
+function ChangeBadge({ change, onDismiss }: { change: RealmChange; onDismiss: () => void }) {
+  return (
+    <div className="realm-change-badge" role="status">
+      <span className="realm-change-badge__dot" aria-hidden="true" />
+      <span>
+        Changed at block #{formatNumber(change.height)}
+        {change.eventType ? ` · ${change.eventType}` : ""}
+        {change.count > 1 ? ` · ${change.count} events` : ""}
+      </span>
+      <button type="button" onClick={onDismiss} aria-label="Dismiss this change notice">
+        ×
+      </button>
+    </div>
   );
 }
 
