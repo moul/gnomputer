@@ -52,6 +52,52 @@ export async function clearDisposableData(): Promise<void> {
   }
 }
 
+/** How many rows each store holds, so the Storage settings tab can say what
+ * is actually taking up room rather than only a total from
+ * navigator.storage.estimate() — which reports a single opaque number
+ * covering caches, the service worker and IndexedDB together. */
+export async function countRows(): Promise<Record<string, number>> {
+  const db = await openDb();
+  try {
+    const out: Record<string, number> = {};
+    for (const store of [...USER_CONTENT_STORES, ...DISPOSABLE_STORES]) {
+      if (!db.objectStoreNames.contains(store)) continue;
+      out[store] = await new Promise<number>((resolve, reject) => {
+        const req = db.transaction(store, "readonly").objectStore(store).count();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error ?? new Error(`Could not count ${store}`));
+      });
+    }
+    return out;
+  } finally {
+    db.close();
+  }
+}
+
+/** Clears ONLY the cached chain responses.
+ *
+ * Deliberately not clearDisposableData(), which also empties `meta` — that
+ * holds the window layout, theme, zoom and every other preference. Someone
+ * pressing "clear cached chain data" is reclaiming space, not asking for
+ * their desktop to be rearranged, and a button that silently did both would
+ * be the same class of overreach as the recovery screen that claimed to
+ * clear settings and deleted everything. */
+export async function clearQueryCache(): Promise<void> {
+  const db = await openDb();
+  try {
+    if (!db.objectStoreNames.contains("queryCache")) return;
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction("queryCache", "readwrite");
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error ?? new Error("Could not clear the cache"));
+      tx.onabort = () => reject(tx.error ?? new Error("Clearing the cache was aborted"));
+      tx.objectStore("queryCache").clear();
+    });
+  } finally {
+    db.close();
+  }
+}
+
 /** Everything the user authored, as a JSON-serializable object — offered as
  * a download before any destructive reset so "erase" is never the only
  * option. */

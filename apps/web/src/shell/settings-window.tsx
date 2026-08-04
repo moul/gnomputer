@@ -3,6 +3,7 @@ import { useSettingsUiStore, type SettingsTab } from "./settings-store";
 import { SettingsNetworkTab } from "./settings-network-tab";
 import { SettingsUserTab } from "./settings-user-tab";
 import { SettingsThemeTab } from "./settings-theme-tab";
+import { SettingsStorageTab } from "./settings-storage-tab";
 import { SettingsAboutTab } from "./settings-about-tab";
 import { SettingsBugTab } from "./settings-bug-tab";
 import { SettingsChangelogTab } from "./settings-changelog-tab";
@@ -15,6 +16,7 @@ export const SETTINGS_TABS: { id: SettingsTab; emoji: string; label: string }[] 
   { id: "network", emoji: "📡", label: "Network" },
   { id: "user", emoji: "👤", label: "User" },
   { id: "theme", emoji: "🎨", label: "Theme" },
+  { id: "storage", emoji: "💾", label: "Storage" },
   { id: "bug", emoji: "🐛", label: "Report a bug" },
   { id: "changelog", emoji: "📜", label: "Changelog" },
   { id: "about", emoji: "ℹ️", label: "About" },
@@ -61,6 +63,7 @@ export function SettingsWindow() {
           {activeTab === "network" && <SettingsNetworkTab />}
           {activeTab === "user" && <SettingsUserTab />}
           {activeTab === "theme" && <SettingsThemeTab />}
+          {activeTab === "storage" && <SettingsStorageTab />}
           {activeTab === "about" && <SettingsAboutTab />}
           {activeTab === "bug" && <SettingsBugTab />}
           {activeTab === "changelog" && <SettingsChangelogTab />}
