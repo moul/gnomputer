@@ -22,9 +22,17 @@ export function matchApps(query: string, limit = 6): AppDescriptor[] {
   const scored: { app: AppDescriptor; rank: number }[] = [];
   for (const app of APP_REGISTRY) {
     const label = app.label.toLowerCase();
+    const aliases = app.aliases ?? [];
     if (label === needle) scored.push({ app, rank: 0 });
     else if (label.startsWith(needle)) scored.push({ app, rank: 1 });
     else if (label.includes(needle)) scored.push({ app, rank: 2 });
+    // Aliases rank below every label match, so a word that happens to be
+    // one app's alias can never beat the app whose actual name was typed.
+    // They exist because the product does not always use one name for a
+    // thing: the island's Chain menu says "Blocks", this registry says
+    // "Block Explorer", and typing the word you just read found nothing.
+    else if (aliases.some((a) => a === needle)) scored.push({ app, rank: 3 });
+    else if (aliases.some((a) => a.startsWith(needle))) scored.push({ app, rank: 4 });
   }
 
   return scored

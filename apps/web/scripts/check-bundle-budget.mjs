@@ -18,11 +18,16 @@ const DIST = new URL("../dist/", import.meta.url).pathname;
 /** Gzipped kilobytes. Gzip because that is what actually crosses the
  * network; raw bytes would flatter minified JavaScript. */
 const BUDGETS_KB = {
-  total: 410,
+  total: 400,
   "index.html": 3,
   "index-*.js": 130,
   "vendor-*.js": 92,
-  "chain-client-*.js": 185,
+  // Lowered from 185 after telling Rollup the chain-client packages are
+  // side-effect-free: @gnolang/tm2-js-client ships no `sideEffects` field, so
+  // the bundler had to keep modules it could not prove were inert — which
+  // included @cosmjs/ledger-amino, i.e. Ledger hardware-wallet support, in a
+  // read-only app that cannot sign. See the treeshake block in vite.config.ts.
+  "chain-client-*.js": 175,
   "*.css": 14,
 };
 
