@@ -1,9 +1,10 @@
 import { Suspense, lazy, type ReactNode } from "react";
+import { SettingsWindow } from "../shell/settings-window";
 import { useSearch } from "@tanstack/react-router";
 import type { RealmLens } from "../shell/realm-tabs-store";
 import { RealmBrowser } from "./realm-browser";
 import { Window } from "../shell/window";
-import { SettingsWindow } from "../shell/settings-window";
+
 import { HistoryWindow } from "../shell/history-window";
 import { AddressWindow } from "../shell/address-window";
 import { ExplorerWindow } from "../shell/explorer-window";
@@ -34,6 +35,7 @@ const Gnockpit = lazy(() => import("./gnockpit").then((x) => ({ default: x.Gnock
 const Resources = lazy(() => import("./resources").then((x) => ({ default: x.Resources })));
 const Editor = lazy(() => import("./editor").then((x) => ({ default: x.Editor })));
 const ShellApp = lazy(() => import("./shell-app").then((x) => ({ default: x.ShellApp })));
+
 
 /** Windows are already framed chrome, so a lazy app only needs a quiet
  * placeholder inside that frame while its chunk loads. */

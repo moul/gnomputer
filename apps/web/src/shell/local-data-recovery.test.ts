@@ -2,6 +2,8 @@ import "fake-indexeddb/auto";
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   clearDisposableData,
+  clearQueryCache,
+  countRows,
   exportUserContent,
   eraseAllLocalData,
   USER_CONTENT_STORES,
@@ -115,5 +117,54 @@ describe("local data recovery", () => {
   it("clearDisposableData tolerates a database with none of those stores", async () => {
     await eraseAllLocalData();
     await expect(clearDisposableData()).resolves.toBeUndefined();
+  });
+});
+
+describe("storage reporting and cache clearing", () => {
+  beforeEach(async () => {
+    await new Promise<void>((r) => {
+      const d = indexedDB.deleteDatabase(DB_NAME);
+      d.onsuccess = () => r();
+      d.onerror = () => r();
+      d.onblocked = () => r();
+    });
+    await seedDb();
+  });
+
+  it("countRows reports every store, user content and disposable alike", async () => {
+    // The Storage tab lists these in two groups; both have to be countable or
+    // the panel can only report one half of what is stored.
+    const counts = await countRows();
+    for (const store of ALL_STORES) {
+      expect(counts[store], `${store} should be counted`).toBe(1);
+    }
+  });
+
+  it("clearQueryCache empties the cache and nothing else", async () => {
+    // Deliberately NOT clearDisposableData(), which also empties `meta` —
+    // window layout, theme, zoom, every preference. Someone reclaiming space
+    // is not asking for their desktop to be rearranged, and this is the same
+    // class of overreach as the recovery screen that once claimed to clear
+    // settings and deleted the whole database.
+    await clearQueryCache();
+
+    expect(await readAll("queryCache")).toHaveLength(0);
+    expect(await readAll("meta"), "preferences must survive a cache clear").toHaveLength(1);
+    for (const store of USER_CONTENT_STORES) {
+      expect(await readAll(store), `${store} must survive a cache clear`).toHaveLength(1);
+    }
+  });
+
+  it("clearQueryCache is safe to call twice", async () => {
+    await clearQueryCache();
+    await expect(clearQueryCache()).resolves.toBeUndefined();
+    expect(await readAll("queryCache")).toHaveLength(0);
+  });
+
+  it("countRows reflects a cleared cache", async () => {
+    await clearQueryCache();
+    const counts = await countRows();
+    expect(counts.queryCache).toBe(0);
+    expect(counts.meta).toBe(1);
   });
 });

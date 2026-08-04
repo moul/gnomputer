@@ -1,7 +1,7 @@
 import { useThemeStore, THEME_LABELS } from "./theme-store";
 import { useZoomStore, ZOOM_MIN, ZOOM_MAX } from "./zoom-store";
 import { openSettings } from "./open-settings";
-import { SETTINGS_TABS } from "./settings-window";
+import { SETTINGS_TABS } from "./settings-tabs";
 
 export function IslandSettingsMenu() {
   const theme = useThemeStore((s) => s.theme);
