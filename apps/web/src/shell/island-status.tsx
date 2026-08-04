@@ -1,6 +1,8 @@
 import { useSdk } from "../sdk-context";
 import { useChainHeight } from "../use-chain-height";
 import { useWalletStore } from "./wallet-store";
+import { useLiveUpdatesStore } from "./live-updates-store";
+import { useOnlineStatus } from "./use-online-status";
 
 /** Network, height and identity, in the chrome rather than behind a menu.
  *
@@ -19,6 +21,8 @@ export function IslandStatus() {
   const network = sdk.networks.getActive();
   const { height } = useChainHeight();
   const account = useWalletStore((s) => s.account);
+  const lowData = useLiveUpdatesStore((s) => s.lowData);
+  const online = useOnlineStatus();
 
   return (
     <div className="island__status">
@@ -30,6 +34,19 @@ export function IslandStatus() {
         <span className="visually-hidden">Block height: </span>
         {height === null ? "—" : `#${height.toLocaleString()}`}
       </span>
+      {/* Offline wins over low-data in the badge: one of them the user chose
+          and can undo, the other happened to them. Saying "Low data" to
+          someone in a tunnel would be answering a question they did not
+          ask. */}
+      {!online ? (
+        <span className="island__status-item island__status-badge" data-kind="offline" title="No network — showing what was already loaded, and will catch up when you reconnect">
+          Offline
+        </span>
+      ) : lowData ? (
+        <span className="island__status-item island__status-badge" data-kind="low-data" title="Live updates paused to save data. Nothing is polling the chain.">
+          Paused
+        </span>
+      ) : null}
       <span className="island__status-item island__status-item--identity">
         <span className="visually-hidden">Signed in as: </span>
         {account ? shortAddress(account.address) : "Guest"}

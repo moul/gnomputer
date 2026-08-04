@@ -21,6 +21,7 @@ import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 import { useNetworkPersistence } from "../shell/use-network-persistence";
+import { useLiveUpdatesPersistence } from "../shell/use-live-updates-persistence";
 import { NetworkRecoveryBanner } from "../shell/network-recovery-banner";
 import { FirstRunNote } from "../shell/first-run-note";
 import { isRealmLens, type RealmLens } from "../shell/realm-tabs-store";
@@ -33,6 +34,7 @@ function RootLayout() {
   useSettingsTabPersistence();
   useRealmTabsPersistence();
   useZoomPersistence();
+  useLiveUpdatesPersistence();
   useBrowserHomePersistence();
   // Owns the custom-network list hydration too — the active network can
   // only be resolved once that list is known.
