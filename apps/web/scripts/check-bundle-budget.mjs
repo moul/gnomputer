@@ -17,8 +17,16 @@ const DIST = new URL("../dist/", import.meta.url).pathname;
 
 /** Gzipped kilobytes. Gzip because that is what actually crosses the
  * network; raw bytes would flatter minified JavaScript. */
+// MEASURE THESE ON CI, NOT LOCALLY. A macOS build of the same commit gzips
+// about 2KB smaller than ubuntu-latest does, so a budget set from a local
+// number leaves no real headroom: 400 was set from a local 397.8KB while CI
+// measured 399.8KB on the same commit, and the next 0.5KB of feature broke
+// the build on main. The gate runs on CI, so CI is the measurement that
+// counts. Read the number out of the build log, then add a small margin.
 const BUDGETS_KB = {
-  total: 400,
+  // CI: 400.3KB at the time of writing. 402 leaves ~1.7KB, still 8KB tighter
+  // than the 410 this started at.
+  total: 402,
   "index.html": 3,
   "index-*.js": 130,
   "vendor-*.js": 92,
