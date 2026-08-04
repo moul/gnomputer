@@ -13,6 +13,17 @@ export interface AppDescriptor {
    * the clock's History menu) rather than its own island icon — the window
    * itself still exists and renders normally in home.tsx. */
   hiddenFromIsland?: boolean;
+  /** Other names this app answers to in the command palette.
+   *
+   * The app's own UI does not always use one name for it: the island's
+   * Chain menu says "Blocks" while this registry says "Block Explorer", so
+   * typing the word the user just read in the menu found nothing at all.
+   * Aliases also cover the obvious near-misses — "wallet" for Accounts,
+   * "repl" and "terminal" for Shell, "bookmarks" for Browser favorites.
+   *
+   * Ranked below label matches (palette-apps.ts), so an alias can never
+   * outrank an app the user typed the real name of. */
+  aliases?: string[];
 }
 
 export interface IslandGroup {
@@ -31,33 +42,33 @@ export const ISLAND_GROUPS: Record<string, IslandGroup> = {
 // a multi-window one focuses its most recently active window (new instances
 // come from an in-app "pop out" action, not from repeated icon clicks).
 export const APP_REGISTRY: AppDescriptor[] = [
-  { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true },
+  { id: "realm", label: "Browser", icon: "🌐", supportsMultiWindow: true, aliases: ["realm", "web", "render", "surf"] },
   { id: "resources", label: "Resources", icon: "📚", supportsMultiWindow: false },
-  { id: "editor", label: "Editor", icon: "📝", supportsMultiWindow: false },
-  { id: "shell", label: "Shell", icon: "⌨️", supportsMultiWindow: false },
-  { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false, group: "chain" },
-  { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false, group: "chain" },
-  { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false, group: "chain" },
-  { id: "event-explorer", label: "Event Explorer", icon: "🔔", supportsMultiWindow: false, group: "chain" },
-  { id: "chain-stats", label: "Chain Stats", icon: "⛽", supportsMultiWindow: false, group: "chain" },
+  { id: "editor", label: "Editor", icon: "📝", supportsMultiWindow: false, aliases: ["write", "code", "ide", "scripts"] },
+  { id: "shell", label: "Shell", icon: "⌨️", supportsMultiWindow: false, aliases: ["repl", "terminal", "console", "qeval", "eval"] },
+  { id: "network-monitor", label: "Network Monitor", icon: "📡", supportsMultiWindow: false, group: "chain", aliases: ["rpc", "latency", "endpoint", "status"] },
+  { id: "validator-monitor", label: "Validator Monitor", icon: "🛡️", supportsMultiWindow: false, group: "chain", aliases: ["validators", "valset", "consensus"] },
+  { id: "block-explorer", label: "Block Explorer", icon: "🧱", supportsMultiWindow: false, group: "chain", aliases: ["blocks", "height"] },
+  { id: "event-explorer", label: "Event Explorer", icon: "🔔", supportsMultiWindow: false, group: "chain", aliases: ["events", "feed", "live"] },
+  { id: "chain-stats", label: "Chain Stats", icon: "⛽", supportsMultiWindow: false, group: "chain", aliases: ["gas", "leaderboard", "activity", "stats"] },
   { id: "gnockpit", label: "Gnockpit", icon: "📊", supportsMultiWindow: false, group: "chain" },
-  { id: "settings", label: "Settings", icon: "⚙️", supportsMultiWindow: false },
+  { id: "settings", label: "Settings", icon: "⚙️", supportsMultiWindow: false, aliases: ["preferences", "config", "options"] },
   // Reachable via the clock's History menu (island-clock.tsx) instead of its
   // own icon — see AppDescriptor.hiddenFromIsland.
-  { id: "history", label: "History", icon: "🕘", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "history", label: "History", icon: "🕘", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["trail", "trails", "visited", "recent"] },
   // The generic "look up any address" viewer, opened contextually from
   // entity links (openRef) rather than from an island icon of its own.
-  { id: "address", label: "Accounts", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "address", label: "Accounts", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["address", "wallet", "balance", "account"] },
   // Discover isn't a real app of its own — it's a hover-only dropdown
   // (island-bar.tsx, hardcoded next to the Browser icon since it has no
   // single underlying window to focus-or-open) listing these five genuinely
   // independent apps, each with its own window. Each reachable only from
   // that dropdown, not its own island icon.
-  { id: "users", label: "Users", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true },
-  { id: "packages", label: "Packages", icon: "📦", supportsMultiWindow: false, hiddenFromIsland: true },
-  { id: "transactions", label: "Transactions", icon: "🧾", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "users", label: "Users", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["usernames", "registry", "names"] },
+  { id: "packages", label: "Packages", icon: "📦", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["realms", "deployed", "pkg"] },
+  { id: "transactions", label: "Transactions", icon: "🧾", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["txs", "tx"] },
   { id: "tokens", label: "Tokens", icon: "🪙", supportsMultiWindow: false, hiddenFromIsland: true },
-  { id: "governance", label: "Governance", icon: "🏛️", supportsMultiWindow: false, hiddenFromIsland: true },
+  { id: "governance", label: "Governance", icon: "🏛️", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["govdao", "dao", "proposals", "vote"] },
   // Dedicated windows for the real mygnoscan/Gnockpit instances — each
   // opened contextually from an "Open the explorer"/"Open Gnockpit" button
   // elsewhere in the app, not from an island icon of its own. Distinct app

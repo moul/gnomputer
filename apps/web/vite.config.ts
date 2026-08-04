@@ -80,6 +80,28 @@ export default defineConfig({
           return undefined;
         },
       },
+      // @gnolang/tm2-js-client declares no `sideEffects` field, so Rollup has
+      // to assume every module in it might do something on import and keeps
+      // them all. What that kept, in a read-only app with no signing at all,
+      // included @cosmjs/ledger-amino — Ledger hardware-wallet support — plus
+      // axios, on top of the fetch layer this app already has.
+      //
+      // Declaring these packages inert is safe to assert but not safe to
+      // assume, so it was verified against the live chain rather than by
+      // reading: render and source queries, block detail with transaction
+      // decoding, the validator set, and an account balance (the amino and
+      // bech32 paths most likely to break) all still work, with no console
+      // or page errors. Scoped to these packages on purpose — a blanket
+      // `moduleSideEffects: false` would also strip real polyfills.
+      treeshake: {
+        preset: "recommended",
+        moduleSideEffects(id) {
+          if (/[\\/]node_modules[\\/](@gnolang|@cosmjs|@noble|protobufjs|@bufbuild)[\\/]/.test(id)) {
+            return false;
+          }
+          return true;
+        },
+      },
     },
   },
   plugins: [
