@@ -1,8 +1,23 @@
 import { create } from "zustand";
 
-export type SettingsTab = "network" | "user" | "theme" | "about" | "bug" | "changelog";
+export type SettingsTab =
+  | "network"
+  | "user"
+  | "theme"
+  | "storage"
+  | "about"
+  | "bug"
+  | "changelog";
 
-const SETTINGS_TABS: SettingsTab[] = ["network", "user", "theme", "about", "bug", "changelog"];
+const SETTINGS_TABS: SettingsTab[] = [
+  "network",
+  "user",
+  "theme",
+  "storage",
+  "about",
+  "bug",
+  "changelog",
+];
 
 export function isSettingsTab(value: string): value is SettingsTab {
   return (SETTINGS_TABS as string[]).includes(value);

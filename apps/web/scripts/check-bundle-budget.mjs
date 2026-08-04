@@ -24,11 +24,14 @@ const DIST = new URL("../dist/", import.meta.url).pathname;
 // the build on main. The gate runs on CI, so CI is the measurement that
 // counts. Read the number out of the build log, then add a small margin.
 const BUDGETS_KB = {
-  // CI: 400.3KB at the time of writing. 402 leaves ~1.7KB, still 8KB tighter
-  // than the 410 this started at.
-  total: 402,
+  // Local 381.2KB; CI reads ~2KB higher, so ~383. 388 leaves real headroom
+  // this time rather than the 0.2KB that 402 turned out to be.
+  total: 388,
   "index.html": 3,
-  "index-*.js": 130,
+  // Was 130. Settings is lazy now (it carried seven tab components in the main
+  // chunk only because the island dropdown imported the tab list from the same
+  // module), which took index from 128.2KB to 111.3KB locally.
+  "index-*.js": 118,
   "vendor-*.js": 92,
   // Lowered from 185 after telling Rollup the chain-client packages are
   // side-effect-free: @gnolang/tm2-js-client ships no `sideEffects` field, so
