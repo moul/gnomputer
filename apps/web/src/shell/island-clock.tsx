@@ -3,6 +3,7 @@ import { useSdk } from "../sdk-context";
 import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
 import { useOnlineStatus } from "./use-online-status";
+import { useLiveUpdatesStore } from "./live-updates-store";
 import { IslandPopover } from "./island-popover";
 import { openRef, focusOrReopen } from "./open-ref";
 import { openSettings } from "./open-settings";
@@ -34,6 +35,8 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const trailVersion = useShellStore((s) => s.trailVersion);
   const { data, state } = useNetworkStatus();
   const online = useOnlineStatus();
+  const lowData = useLiveUpdatesStore((s) => s.lowData);
+  const setLowData = useLiveUpdatesStore((s) => s.setLowData);
   // The browser's own offline signal is more immediate and more certain than
   // waiting for an RPC call to time out — and unambiguous in a way "error"
   // isn't (that could just as easily mean a network hiccup or a bad
@@ -189,6 +192,25 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
               ))}
             </ul>
           )}
+          {/* Lives beside the height because that is what it affects, and
+              because someone deciding whether to keep polling is already
+              looking at the number that tells them whether it is worth it.
+              Naming the consequence rather than the setting: "Pause live
+              updates" says what happens, "Low-data mode" says what it is
+              called. */}
+          <label className="island-menu__toggle">
+            <input
+              type="checkbox"
+              checked={lowData}
+              onChange={(e) => setLowData(e.target.checked)}
+            />
+            Pause live updates
+            <span className="island-menu__toggle-hint">
+              {lowData
+                ? "Nothing is polling the chain. Everything already loaded stays readable."
+                : "Stops the block, event and transaction feeds — useful on mobile data."}
+            </span>
+          </label>
           <button
             type="button"
             className="island-menu__action"
