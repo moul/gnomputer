@@ -4,6 +4,15 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-06
+
+- Tables in a realm's output are rendered as tables. Gno realms use
+  Markdown pipe tables for anything tabular, and the renderer had no
+  support for them at all — so every row was joined together into one
+  unreadable run of pipes and dashes. Links inside a cell work like any
+  other link, and a table wider than the window scrolls on its own rather
+  than stretching the page.
+
 ## 2026-08-02
 
 - You can copy a link to whatever you are looking at. Links have carried

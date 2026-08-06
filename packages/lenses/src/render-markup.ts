@@ -1,13 +1,28 @@
 import type { EntityRef } from "@gnomputer/entities";
 import { safeExternalUrl } from "./safe-url";
 
+export type RenderNodeType =
+  | "text"
+  | "heading"
+  | "paragraph"
+  | "link"
+  | "code"
+  | "list-item"
+  | "table"
+  | "table-row"
+  | "table-cell";
+
 export interface RenderNode {
-  type: "text" | "heading" | "paragraph" | "link" | "code" | "list-item";
+  type: RenderNodeType;
   content?: string;
   href?: string;
   ref?: EntityRef;
   renderPath?: string;
   children?: RenderNode[];
+  /** Column alignment from the table's delimiter row (`:---`, `:---:`,
+   * `---:`) — only set on table-cell nodes, and only when the delimiter
+   * actually asked for one. */
+  align?: "left" | "center" | "right";
   /** The fenced code block's language hint (```go, ```bash, ...), when
    * present — undefined for a bare ``` fence or any other node type. */
   lang?: string;
@@ -98,6 +113,113 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
 
 const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 
+// A GFM delimiter row: the second line of every table, and the only thing
+// that distinguishes a table from ordinary text that happens to contain
+// pipes. Each column is dashes with optional leading/trailing colons for
+// alignment. The outer pipes are optional in GFM, so both "|---|---|" and
+// "---|---" are valid.
+const TABLE_DELIMITER_RE = /^\s*\|?(?:\s*:?-+:?\s*\|)+\s*:?-*:?\s*\|?\s*$/;
+
+/** Splits one table line into its cells.
+ *
+ * Pipes are the cell separator, so a literal pipe inside a cell is written
+ * `\|` — split on unescaped pipes only, then unescape. The outer pipes are
+ * structure rather than an empty first/last cell, so a single leading and
+ * trailing one is stripped before splitting. */
+function splitTableRow(line: string): string[] {
+  const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  const cells: string[] = [];
+  let current = "";
+  for (let i = 0; i < trimmed.length; i++) {
+    const char = trimmed[i]!;
+    if (char === "\\" && trimmed[i + 1] === "|") {
+      current += "|";
+      i++;
+      continue;
+    }
+    if (char === "|") {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+    current += char;
+  }
+  cells.push(current.trim());
+  return cells;
+}
+
+function parseAlignments(delimiterLine: string): (RenderNode["align"] | undefined)[] {
+  return splitTableRow(delimiterLine).map((spec) => {
+    const left = spec.startsWith(":");
+    const right = spec.endsWith(":");
+    if (left && right) return "center";
+    if (right) return "right";
+    if (left) return "left";
+    return undefined;
+  });
+}
+
+/** Builds one `table-row` whose children are `table-cell`s, normalized to
+ * the header's column count: GFM drops cells past the header and pads a
+ * short row with empty ones, so a ragged row can't shift the columns of
+ * everything after it. */
+function buildTableRow(
+  line: string,
+  columnCount: number,
+  alignments: (RenderNode["align"] | undefined)[],
+  currentPackagePath: string
+): RenderNode {
+  const cells = splitTableRow(line);
+  const children: RenderNode[] = [];
+  for (let i = 0; i < columnCount; i++) {
+    const align = alignments[i];
+    children.push({
+      type: "table-cell",
+      children: parseInlineLinks(cells[i] ?? "", currentPackagePath),
+      ...(align ? { align } : {}),
+    });
+  }
+  return { type: "table-row", children };
+}
+
+/** A GFM pipe table, which Gno realms use for any tabular Render() output.
+ * Without this the lines fell through to the paragraph path and were joined
+ * with spaces into one unreadable run of pipes and dashes.
+ *
+ * The first child row is always the header — GFM requires one, and the
+ * delimiter row is what identifies the table at all, so there is no such
+ * thing here as a table without one. */
+function parseTable(
+  lines: string[],
+  start: number,
+  currentPackagePath: string
+): { node: RenderNode; nextIndex: number } | null {
+  const headerLine = lines[start]!;
+  const delimiterLine = lines[start + 1];
+  if (delimiterLine === undefined || !TABLE_DELIMITER_RE.test(delimiterLine)) return null;
+  if (!headerLine.includes("|")) return null;
+
+  const headerCells = splitTableRow(headerLine);
+  const alignments = parseAlignments(delimiterLine);
+  // A delimiter row that doesn't describe the same number of columns as the
+  // header isn't a table in GFM — treat it as ordinary text rather than
+  // guessing which side is right.
+  if (alignments.length !== headerCells.length) return null;
+
+  const columnCount = headerCells.length;
+  const rows: RenderNode[] = [
+    buildTableRow(headerLine, columnCount, alignments, currentPackagePath),
+  ];
+
+  let index = start + 2;
+  while (index < lines.length && lines[index]!.includes("|")) {
+    rows.push(buildTableRow(lines[index]!, columnCount, alignments, currentPackagePath));
+    index++;
+  }
+
+  return { node: { type: "table", children: rows }, nextIndex: index };
+}
+
 // A block (still relative to the outer \n\n+ split below) may pack several
 // ATX headings and paragraph lines together with only single newlines
 // between them — confirmed live: gno.land/r/gov/dao's Render() output does
@@ -123,7 +245,22 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
     }
   }
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]!;
+
+    // Tables are detected before headings and paragraphs because a table is
+    // recognised by its *second* line, so the header row has to be held
+    // back rather than flushed into the paragraph buffer first.
+    if (line.includes("|")) {
+      const table = parseTable(lines, i, currentPackagePath);
+      if (table) {
+        flushParagraph();
+        nodes.push(table.node);
+        i = table.nextIndex - 1;
+        continue;
+      }
+    }
+
     const headingMatch = HEADING_RE.exec(line);
     if (!headingMatch) {
       paragraphLines.push(line);

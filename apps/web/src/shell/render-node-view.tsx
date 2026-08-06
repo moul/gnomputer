@@ -39,6 +39,8 @@ export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId:
       );
     case "link":
       return <GnoLink node={node} windowId={windowId} />;
+    case "table":
+      return <RenderTable node={node} windowId={windowId} />;
     case "paragraph":
       return (
         <p>
@@ -56,6 +58,57 @@ export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId:
         </span>
       );
   }
+}
+
+/** A realm's GFM table. The first row is always the header — parseTable
+ * only produces a table when a delimiter row identified one, and GFM
+ * requires the header above it — so this can emit a real <thead>/<th
+ * scope="col"> rather than a grid of anonymous cells.
+ *
+ * The wrapper scrolls rather than the page: a realm can render as many
+ * columns as it likes, and the shell must still have no horizontal scroll
+ * at 320px. */
+function RenderTable({ node, windowId }: { node: RenderNode; windowId: string }) {
+  const [header, ...body] = node.children ?? [];
+  if (!header) return null;
+  return (
+    <div className="render-table-scroll">
+      <table className="render-table">
+        <thead>
+          <tr>
+            {(header.children ?? []).map((cell, i) => (
+              <th key={i} scope="col" style={cell.align ? { textAlign: cell.align } : undefined}>
+                <RenderCellContent node={cell} windowId={windowId} />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {body.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {(row.children ?? []).map((cell, i) => (
+                <td key={i} style={cell.align ? { textAlign: cell.align } : undefined}>
+                  <RenderCellContent node={cell} windowId={windowId} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** A cell's inline children rendered without the <p> that the paragraph
+ * case would wrap them in. */
+function RenderCellContent({ node, windowId }: { node: RenderNode; windowId: string }) {
+  return (
+    <>
+      {(node.children ?? []).map((child, i) => (
+        <RenderNodeView key={i} node={child} windowId={windowId} />
+      ))}
+    </>
+  );
 }
 
 function GnoLink({ node, windowId }: { node: RenderNode; windowId: string }) {
