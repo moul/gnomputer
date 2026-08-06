@@ -7,6 +7,7 @@ import { ErrorState } from "../shell/error-state";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { focusOrReopen } from "../shell/open-ref";
 import { formatNumber } from "../format-number";
+import { packageKind, type PackageKind } from "../package-kind";
 
 const PACKAGE_LIMIT = 2000;
 // How many rows to render at once. Small enough that the initial DOM is
@@ -16,9 +17,25 @@ const PAGE_SIZE = 100;
 type SortKey = "path" | "activity";
 type SortDir = "asc" | "desc";
 
-export function DiscoverPackages() {
+/** The two kinds are genuinely different things to go looking for — a realm
+ * is something to open and use, a pure package is something to import — so
+ * each gets its own window rather than one list you have to read the paths
+ * of to tell apart. Measured on Topaz: 196 realms and 145 libraries. */
+const COPY: Record<"realm" | "library", { noun: string; empty: string }> = {
+  realm: {
+    noun: "realms",
+    empty: "No realms match",
+  },
+  library: {
+    noun: "libraries",
+    empty: "No libraries match",
+  },
+};
+
+export function DiscoverPackages({ kind = "realm" }: { kind?: Extract<PackageKind, "realm" | "library"> }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
+  const copy = COPY[kind];
   const [filter, setFilter] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("activity");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -35,6 +52,10 @@ export function DiscoverPackages() {
       const env = await sdk.rpc.listPackagesByPrefix("gno.land/", PACKAGE_LIMIT, new Date().toISOString());
       return env.data;
     },
+    // One fetch shared by both windows — the chain has no separate "list
+    // realms" call, so each filters the same listing rather than issuing
+    // its own identical query.
+    select: (all: string[]) => all.filter((p) => packageKind(p) === kind),
   });
 
   // Live-observed activity since this window opened — the same
@@ -75,12 +96,14 @@ export function DiscoverPackages() {
   const visible = sorted.slice(0, visibleCount);
 
   if (error) {
-    return <ErrorState message="Could not list packages" error={error} onRetry={() => void refetch()} />;
+    return (
+      <ErrorState message={`Could not list ${copy.noun}`} error={error} onRetry={() => void refetch()} />
+    );
   }
   if (isPending || !paths) {
     return (
       <p className="state-line" aria-busy="true">
-        Loading packages…
+        Loading {copy.noun}…
       </p>
     );
   }
@@ -110,10 +133,12 @@ export function DiscoverPackages() {
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter by path…"
         />
-        <span className="state-line">{formatNumber(paths.length)} packages</span>
+        <span className="state-line">{formatNumber(paths.length)} {copy.noun}</span>
       </div>
       {sorted.length === 0 ? (
-        <p className="state-line">No packages match &ldquo;{filter}&rdquo;.</p>
+        <p className="state-line">
+          {copy.empty} &ldquo;{filter}&rdquo;.
+        </p>
       ) : (
         <table className="data-table">
           <thead>

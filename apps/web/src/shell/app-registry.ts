@@ -65,7 +65,12 @@ export const APP_REGISTRY: AppDescriptor[] = [
   // independent apps, each with its own window. Each reachable only from
   // that dropdown, not its own island icon.
   { id: "users", label: "Users", icon: "👤", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["usernames", "registry", "names"] },
-  { id: "packages", label: "Packages", icon: "📦", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["realms", "deployed", "pkg"] },
+  // Realms and pure packages were one "Packages" list, which made the
+  // thing most people are looking for (a realm to open) share a window
+  // with the thing almost nobody browses directly (a library to import).
+  // "packages" stays an alias on both so the old word still finds them.
+  { id: "realms", label: "Realms", icon: "📦", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["realm", "packages", "deployed", "pkg", "apps"] },
+  { id: "libraries", label: "Developer libraries", icon: "🧩", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["library", "libs", "packages", "pure", "imports", "dependencies"] },
   { id: "transactions", label: "Transactions", icon: "🧾", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["txs", "tx"] },
   { id: "tokens", label: "Tokens", icon: "🪙", supportsMultiWindow: false, hiddenFromIsland: true },
   { id: "governance", label: "Governance", icon: "🏛️", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["govdao", "dao", "proposals", "vote"] },
