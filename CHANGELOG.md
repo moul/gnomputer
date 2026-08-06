@@ -6,6 +6,17 @@ banner links here.
 
 ## 2026-08-06
 
+- A block's transactions say what they actually did. The list showed an
+  index, success or failure, and a gas pair — so a block containing a
+  15 GNOT transfer between two accounts looked identical to one running a
+  contract. Each transaction now shows who signed it, which function it
+  called on which realm and with what arguments, how much was sent, the
+  fee, the memo, and its hash. Addresses and realms are clickable.
+- A failed transaction says why it failed. It previously said only
+  "failed", which is the least useful thing that panel could show.
+- Where the chain and the transaction indexer disagree about whether a
+  transaction succeeded — which does happen — the chain's own result is
+  shown, and the disagreement is stated rather than hidden.
 - Discover lists Realms and Developer libraries separately, instead of one
   "Packages" window holding both. They are different things to go looking
   for — a realm is something to open and use, a pure `/p/` package is
