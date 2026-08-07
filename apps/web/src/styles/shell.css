@@ -3947,6 +3947,49 @@ main {
   min-width: 0;
 }
 
+/* What a block's transactions actually did. The RPC row above gives gas
+   and events; everything in here is the indexer's message detail, and is
+   simply absent on a network without one. */
+.block-tx__message {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--border);
+}
+
+.block-tx__summary {
+  margin: 0 0 var(--space-1);
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* Arguments are the one field that genuinely needs to wrap: a call can
+   carry a long address or an amount, and truncating it to one line hides
+   the thing the reader came for. */
+.block-tx__args {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+
+.block-tx__hash {
+  overflow-wrap: anywhere;
+  white-space: normal !important;
+}
+
+.block-tx__error {
+  margin: var(--space-2) 0 0;
+  font-size: 11px;
+  color: var(--danger);
+}
+
+/* Two sources contradicting each other is a fact about the data worth
+   showing, not a bug to hide — but it is not itself an error, so it does
+   not get the danger colour (ADR-020). */
+.block-tx__disagreement {
+  margin: var(--space-2) 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 /* Editor autosave state — silent data loss is worse than a little chrome,
    so the user always knows whether their script is actually saved. */
 .editor-window__save-state {

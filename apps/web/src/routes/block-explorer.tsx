@@ -11,13 +11,165 @@ import { Linkified } from "../shell/linkify";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { openExplorer } from "../shell/open-explorer";
-import { formatNumber } from "../format-number";
+import { formatNumber, formatGnotAmount } from "../format-number";
 import { BlockStrip } from "./block-strip";
 import { LiveFeedStatus } from "../shell/live-feed-status";
+import { describeTxMessage } from "../shell/describe-tx-message";
+import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { focusOrReopen } from "../shell/open-ref";
+import type { BlockTxResult, IndexerBlockTx } from "@gnomputer/app-sdk";
 
 // Trail a couple of blocks behind the chain tip — the very latest block can
 // briefly 404 against getBlockSummary before it's fully indexed.
 const LATEST_SAFETY_MARGIN = 2;
+
+/** One transaction in a block.
+ *
+ * Two sources, deliberately layered. `tx` is RPC `block_results` — always
+ * available, authoritative for gas, success and emitted events, and
+ * carrying no message bodies whatsoever. `detail` is the indexer's record
+ * of what the transaction actually did, and is simply absent on a network
+ * without one, which is why every part of it is guarded rather than
+ * assumed. */
+function BlockTxRow({ tx, detail }: { tx: BlockTxResult; detail?: IndexerBlockTx }) {
+  return (
+    <li className="event-list__row">
+      <div className="event-list__head">
+        <span className="event-list__type">
+          Tx #{tx.txIndex} · {tx.success ? "success" : "failed"}
+        </span>
+        <span className="event-list__pkg">
+          gas {formatNumber(tx.gasUsed)} / {formatNumber(tx.gasWanted)}
+          {detail && detail.feeUgnot > 0 ? ` · fee ${formatGnotAmount(detail.feeUgnot)}` : ""}
+        </span>
+      </div>
+
+      {detail?.messages.map((message, i) => (
+        <div key={i} className="block-tx__message">
+          <p className="block-tx__summary">{describeTxMessage(message)}</p>
+          <dl className="event-list__attrs">
+            {message.kind === "send" && (
+              <>
+                <span className="event-list__attr">
+                  <dt>from</dt>
+                  <dd><Linkified text={message.from} /></dd>
+                </span>
+                <span className="event-list__attr">
+                  <dt>to</dt>
+                  <dd><Linkified text={message.to} /></dd>
+                </span>
+              </>
+            )}
+            {message.kind === "call" && (
+              <>
+                <span className="event-list__attr">
+                  <dt>caller</dt>
+                  <dd><Linkified text={message.caller} /></dd>
+                </span>
+                <span className="event-list__attr">
+                  <dt>realm</dt>
+                  <dd>
+                    <button
+                      type="button"
+                      className="data-table__link"
+                      onClick={() => {
+                        openInRealmTab("realm", { packagePath: message.packagePath });
+                        focusOrReopen("realm");
+                      }}
+                    >
+                      {message.packagePath}
+                    </button>
+                  </dd>
+                </span>
+                {message.args.length > 0 && (
+                  <span className="event-list__attr">
+                    <dt>args</dt>
+                    <dd className="block-tx__args">{message.args.join(", ")}</dd>
+                  </span>
+                )}
+              </>
+            )}
+            {message.kind === "addpkg" && (
+              <>
+                <span className="event-list__attr">
+                  <dt>creator</dt>
+                  <dd><Linkified text={message.creator} /></dd>
+                </span>
+                <span className="event-list__attr">
+                  <dt>path</dt>
+                  <dd>{message.packagePath}</dd>
+                </span>
+              </>
+            )}
+            {message.kind === "run" && (
+              <span className="event-list__attr">
+                <dt>caller</dt>
+                <dd><Linkified text={message.caller} /></dd>
+              </span>
+            )}
+          </dl>
+        </div>
+      ))}
+
+      {/* The reason, not just the fact. block_results says only that an
+          error occurred; a failed transaction with no explanation is the
+          least useful thing this panel could show.
+
+          Gated on the RPC result agreeing that it failed. The two sources
+          can disagree: on Topaz block 427346 the node reports the
+          transaction as successful (Error null, 528,532,282 gas, every
+          message success:true) while the indexer has success:false,
+          "unauthorized error" and an impossible gas_wanted of 0 — for the
+          same transaction, confirmed by hash. The node's own execution
+          result is authoritative, so its verdict wins and the indexer's
+          contradicting text is not printed over a transaction the chain
+          says worked. See ADR-020. */}
+      {detail?.error && !tx.success && (
+        <p className="block-tx__error" role="alert">
+          {detail.error}
+        </p>
+      )}
+      {detail?.error && tx.success && (
+        <p className="block-tx__disagreement">
+          The indexer records this as failed ({detail.error}), but the chain itself reports it
+          succeeded. Showing the chain&rsquo;s result.
+        </p>
+      )}
+
+      <dl className="event-list__attrs">
+        {detail?.memo && (
+          <span className="event-list__attr">
+            <dt>memo</dt>
+            <dd>{detail.memo}</dd>
+          </span>
+        )}
+        {tx.events.length > 0 && (
+          <span className="event-list__attr">
+            <dt>events</dt>
+            {/* Named types only. Some chain events carry an empty type —
+                a real gnoswap transaction on Topaz emits 38 events of
+                which 9 are unnamed — and joining those in produced a run
+                of ", , , , ," that read as a rendering bug. The count
+                still covers all of them. */}
+            <dd>
+              {tx.events.length}
+              {(() => {
+                const named = tx.events.map((e) => e.type).filter(Boolean);
+                return named.length > 0 ? ` (${named.join(", ")})` : "";
+              })()}
+            </dd>
+          </span>
+        )}
+        {detail?.hash && (
+          <span className="event-list__attr">
+            <dt>hash</dt>
+            <dd className="block-tx__hash">{detail.hash}</dd>
+          </span>
+        )}
+      </dl>
+    </li>
+  );
+}
 
 export function BlockExplorer() {
   const sdk = useSdk();
@@ -83,6 +235,22 @@ export function BlockExplorer() {
     },
     enabled: height !== null && !!block && block.numTxs > 0,
   });
+
+  // What the transactions actually DID — signer, function, arguments,
+  // amounts, failure reason. None of that is in block_results, so this is
+  // a separate, additive query: without an indexer the rows below still
+  // render from RPC alone, just without the detail.
+  const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
+  const { data: txDetail } = useQuery({
+    queryKey: ["block-transactions", networkId, height],
+    queryFn: async () => (await sdk.indexer.blockTransactions(height!)).data,
+    enabled: height !== null && !!block && block.numTxs > 0 && indexerConfigured,
+    // A missing indexer row is a downgrade in detail, not an error worth
+    // showing — the RPC row above is still correct and complete on its own
+    // terms.
+    retry: false,
+  });
+  const detailByIndex = new Map((txDetail ?? []).map((tx) => [tx.txIndex, tx]));
 
   function selectBlock(h: number) {
     setLatest(false);
@@ -259,26 +427,11 @@ export function BlockExplorer() {
                 <ul className="event-list block-explorer__txs">
                   {blockEvents
                     ? blockEvents.txs.map((tx) => (
-                        <li key={tx.txIndex} className="event-list__row">
-                          <div className="event-list__head">
-                            <span className="event-list__type">
-                              Tx #{tx.txIndex} · {tx.success ? "success" : "failed"}
-                            </span>
-                            <span className="event-list__pkg">
-                              gas {formatNumber(tx.gasUsed)} / {formatNumber(tx.gasWanted)}
-                            </span>
-                          </div>
-                          {tx.events.length > 0 && (
-                            <dl className="event-list__attrs">
-                              <span className="event-list__attr">
-                                <dt>events</dt>
-                                <dd>
-                                  {tx.events.length} ({tx.events.map((e) => e.type).join(", ")})
-                                </dd>
-                              </span>
-                            </dl>
-                          )}
-                        </li>
+                        <BlockTxRow
+                          key={tx.txIndex}
+                          tx={tx}
+                          detail={detailByIndex.get(tx.txIndex)}
+                        />
                       ))
                     : (
                         <li className="state-line" aria-busy="true">

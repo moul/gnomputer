@@ -799,3 +799,179 @@ export async function listBlockHeightsWithTxs(
     schema: "gnomputer.indexer.block-heights-with-txs.v1",
   });
 }
+
+/** One message inside a transaction, in the terms the chain actually
+ * records it — not a flattened summary.
+ *
+ * Discriminated on `kind` rather than the indexer's `__typename` so the
+ * app never has to know GraphQL naming. Every variant carries who signed
+ * it, because "who did this" is the first thing anyone asks of a
+ * transaction and the RPC block_results path cannot answer it at all. */
+export type IndexerMessage =
+  | { kind: "send"; from: string; to: string; amount: string }
+  | { kind: "call"; caller: string; packagePath: string; func: string; args: string[]; send: string }
+  | { kind: "addpkg"; creator: string; packagePath: string; packageName: string; deposit: string }
+  | { kind: "run"; caller: string; send: string }
+  | { kind: "unknown"; route: string; typeUrl: string };
+
+export interface IndexerBlockTx {
+  hash: string;
+  txIndex: number;
+  success: boolean;
+  gasUsed: number;
+  gasWanted: number;
+  feeUgnot: number;
+  memo: string;
+  messages: IndexerMessage[];
+  /** The node's own reason a transaction failed, empty when it succeeded.
+   * block_results only exposes that an error happened, not what it was. */
+  error: string;
+}
+
+// Every field here was confirmed live against Topaz's indexer before being
+// asked for — the schema is narrower than a typical GraphQL API (see the
+// note at the top of this file), so a plausible-looking field is not
+// evidence it exists.
+const BLOCK_TRANSACTIONS_QUERY = `query BlockTransactions($height: Int!) {
+  getTransactions(where: { block_height: { eq: $height } }, order: { heightAndIndex: ASC }) {
+    hash
+    index
+    success
+    gas_used
+    gas_wanted
+    gas_fee { amount }
+    memo
+    messages {
+      route
+      typeUrl
+      value {
+        ... on BankMsgSend { from_address to_address amount }
+        ... on MsgCall { caller send pkg_path func args }
+        ... on MsgAddPackage { creator deposit package { name path } }
+        ... on MsgRun { caller send }
+      }
+    }
+    response { error }
+  }
+}`;
+
+const BlockTxMessageSchema = z.object({
+  route: z.string().nullish(),
+  typeUrl: z.string().nullish(),
+  value: z
+    .object({
+      from_address: z.string().nullish(),
+      to_address: z.string().nullish(),
+      amount: z.string().nullish(),
+      caller: z.string().nullish(),
+      send: z.string().nullish(),
+      pkg_path: z.string().nullish(),
+      func: z.string().nullish(),
+      args: z.array(z.string()).nullish(),
+      creator: z.string().nullish(),
+      deposit: z.string().nullish(),
+      package: z.object({ name: z.string().nullish(), path: z.string().nullish() }).nullish(),
+    })
+    .nullable(),
+});
+
+const BlockTxSchema = z.object({
+  hash: z.string().nullish(),
+  index: z.number(),
+  success: z.boolean(),
+  gas_used: z.number(),
+  gas_wanted: z.number(),
+  gas_fee: z.object({ amount: z.number() }).nullable(),
+  memo: z.string().nullish(),
+  messages: z.array(BlockTxMessageSchema),
+  response: z.object({ error: z.string().nullish() }).nullable(),
+});
+
+/** The union is resolved by which fields came back, not by `__typename`:
+ * the inline fragments above mean exactly one variant's fields are
+ * populated, and asking for `__typename` too would be a second thing that
+ * could disagree with the first. */
+function toMessage(raw: z.infer<typeof BlockTxMessageSchema>): IndexerMessage {
+  const v = raw.value;
+  if (v) {
+    if (v.from_address) {
+      return { kind: "send", from: v.from_address, to: v.to_address ?? "", amount: v.amount ?? "" };
+    }
+    if (v.pkg_path) {
+      return {
+        kind: "call",
+        caller: v.caller ?? "",
+        packagePath: v.pkg_path,
+        func: v.func ?? "",
+        args: v.args ?? [],
+        send: v.send ?? "",
+      };
+    }
+    if (v.creator) {
+      return {
+        kind: "addpkg",
+        creator: v.creator,
+        packagePath: v.package?.path ?? "",
+        packageName: v.package?.name ?? "",
+        deposit: v.deposit ?? "",
+      };
+    }
+    if (v.caller) {
+      return { kind: "run", caller: v.caller, send: v.send ?? "" };
+    }
+  }
+  // A message type this build has no fragment for still gets a row saying
+  // what it was, rather than an empty gap in the list.
+  return { kind: "unknown", route: raw.route ?? "?", typeUrl: raw.typeUrl ?? "?" };
+}
+
+/** What a block's transactions actually did — who signed them, what they
+ * called, how much moved, and why any of them failed.
+ *
+ * The RPC `block_results` path (client.ts getBlockEvents) is the
+ * authoritative source for gas and emitted events and works on every
+ * network, but it carries no message bodies at all: it cannot say that a
+ * transaction was a 15 GNOT transfer between two accounts, only that it
+ * used some gas and emitted no events. That detail lives in the indexer,
+ * so this is additive — the caller keeps showing the RPC row and enriches
+ * it where an indexer exists. */
+export async function blockTransactions(
+  network: { id: string; indexerGraphqlUrl?: string },
+  height: number,
+  fetchedAt: string
+): Promise<DataEnvelope<IndexerBlockTx[]>> {
+  if (!network.indexerGraphqlUrl) {
+    throw new Error(`${network.id} has no indexer configured — transaction detail needs one.`);
+  }
+
+  const data = await queryIndexer(
+    network.indexerGraphqlUrl,
+    BLOCK_TRANSACTIONS_QUERY,
+    z.object({ getTransactions: z.array(BlockTxSchema).nullable() }),
+    { height }
+  );
+
+  const txs: IndexerBlockTx[] = (data.getTransactions ?? []).map((tx) => ({
+    hash: tx.hash ?? "",
+    txIndex: tx.index,
+    success: tx.success,
+    gasUsed: tx.gas_used,
+    gasWanted: tx.gas_wanted,
+    feeUgnot: tx.gas_fee?.amount ?? 0,
+    memo: tx.memo ?? "",
+    messages: tx.messages.map(toMessage),
+    error: tx.response?.error ?? "",
+  }));
+
+  return wrapEnvelope({
+    ref: { ...{ uri: `gno://${network.id}/block/${height}`, kind: "block" as const, networkId: network.id }, objectId: String(height) },
+    data: txs,
+    source: "indexer",
+    consistency: "indexed",
+    networkId: network.id,
+    height,
+    fetchedAt,
+    freshness: "live",
+    schema: "gnomputer.indexer.block-transactions.v1",
+  });
+}

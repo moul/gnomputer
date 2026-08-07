@@ -8,7 +8,10 @@ import {
   listTransactions,
   listBlockHeightsWithTxs,
   recentEvents,
+  blockTransactions,
 } from "./indexer";
+
+import FIXTURES from "./__fixtures__/indexer-block-transactions.json";
 
 const NETWORK = { id: "topaz", indexerGraphqlUrl: "https://indexer.example/graphql/query" };
 const NOW = "2026-07-24T00:00:00.000Z";
@@ -724,5 +727,96 @@ describe("listBlockHeightsWithTxs", () => {
     const result = await listBlockHeightsWithTxs(NETWORK, NOW);
     expect(result.source).toBe("indexer");
     expect(result.consistency).toBe("indexed");
+  });
+});
+
+describe("blockTransactions", () => {
+  const originalFetch = global.fetch;
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it("decodes a real bank transfer, which block_results cannot describe at all", () => {
+    // Topaz block 467231. The RPC path reports this as "Tx #0 · success,
+    // gas 1,238,416" and nothing else — the 15 GNOT actually moving between
+    // two accounts is invisible there.
+    mockIndexerResponse(FIXTURES.bankSend.response.data);
+    return blockTransactions(NETWORK, 467231, NOW).then((env) => {
+      expect(env.data).toHaveLength(1);
+      const tx = env.data[0]!;
+      expect(tx.hash).toBe("YQ2UFOf2lJotfbBSwSw9NIQjP5pk9tn+Bp0cr8Nl324=");
+      expect(tx.feeUgnot).toBe(1000000);
+      expect(tx.messages[0]).toEqual({
+        kind: "send",
+        from: "g18qhq2fl54lszhmxeyqlvxnwjzc3xpu4nnakclp",
+        to: "g1sd2hazs3wgxj0xm2v07dycg27r583vjehxaxhk",
+        amount: "15000000ugnot",
+      });
+    });
+  });
+
+  it("decodes a real realm call with its arguments and memo", async () => {
+    // Topaz block 462543 — a gnoswap Approve, sent through gnoswap.io.
+    mockIndexerResponse(FIXTURES.call.response.data);
+    const env = await blockTransactions(NETWORK, 462543, NOW);
+    const tx = env.data[0]!;
+    expect(tx.memo).toBe("Executed through gnoswap.io");
+    expect(tx.messages[0]).toMatchObject({
+      kind: "call",
+      caller: "g1zzr0xsuh4msmz6e55q9tp3yq6fu63at54lr8qu",
+      packagePath: "gno.land/r/gnoswap/common",
+      func: "Approve",
+      args: ["gno.land/r/gnoswap/gns.GNS", "g1em9s40nfrwd2aqn9ypjv7d9x9z9c8uk5uxrza9", "10000000000"],
+    });
+  });
+
+  it("surfaces why a transaction failed, not just that it did", async () => {
+    // Topaz block 427346. block_results only exposes that an error
+    // happened; the reason is the whole point of looking.
+    mockIndexerResponse(FIXTURES.failedCall.response.data);
+    const env = await blockTransactions(NETWORK, 427346, NOW);
+    expect(env.data[0]!.success).toBe(false);
+    expect(env.data[0]!.error).toBe("unauthorized error");
+  });
+
+  it("decodes a real package deployment", async () => {
+    // Topaz block 454237.
+    mockIndexerResponse(FIXTURES.addPackage.response.data);
+    const env = await blockTransactions(NETWORK, 454237, NOW);
+    expect(env.data[0]!.messages[0]).toMatchObject({
+      kind: "addpkg",
+      creator: "g1j2adx6ngvawtmkhq7eexsk9uq4u9zsrealpye2",
+      packagePath: "gno.land/r/g1j2adx6ngvawtmkhq7eexsk9uq4u9zsrealpye2/testtoken",
+      packageName: "testtoken",
+    });
+  });
+
+  it("marks the data as indexer-derived so the UI can say so", async () => {
+    mockIndexerResponse(FIXTURES.bankSend.response.data);
+    const env = await blockTransactions(NETWORK, 467231, NOW);
+    expect(env.source).toBe("indexer");
+    expect(env.consistency).toBe("indexed");
+  });
+
+  it("still lists a message type it has no fragment for", async () => {
+    mockIndexerResponse({
+      getTransactions: [
+        {
+          hash: "h", index: 0, success: true, gas_used: 1, gas_wanted: 2,
+          gas_fee: { amount: 3 }, memo: "", response: { error: "" },
+          messages: [{ route: "vm", typeUrl: "something_new", value: {} }],
+        },
+      ],
+    });
+    const env = await blockTransactions(NETWORK, 1, NOW);
+    expect(env.data[0]!.messages[0]).toEqual({
+      kind: "unknown",
+      route: "vm",
+      typeUrl: "something_new",
+    });
+  });
+
+  it("refuses without an indexer rather than pretending there is no detail", async () => {
+    await expect(blockTransactions({ id: "gnodev" }, 1, NOW)).rejects.toThrow(/no indexer/);
   });
 });
