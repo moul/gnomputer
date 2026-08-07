@@ -137,9 +137,19 @@ describe("SettingsStorageTab", () => {
     });
     try {
       render(<SettingsStorageTab />, { wrapper });
-      await waitFor(() => expect(screen.getByText("Regenerable")).toBeTruthy());
       // Zeroes, not a crash and not "…" forever.
-      expect(screen.getByText("Editor scripts").nextElementSibling?.textContent).toBe("0");
+      //
+      // The count has to be awaited in its own right. Waiting only for the
+      // "Regenerable" heading and then asserting synchronously was a race:
+      // the heading is static markup and renders immediately, while the
+      // count starts at "…" and settles a tick later, so the assertion
+      // passed only when the query happened to resolve first. It usually
+      // did locally and intermittently did not under CI's slower
+      // coverage-instrumented run, which is the definition of a flake —
+      // and one that failed an unrelated PR.
+      await waitFor(() =>
+        expect(screen.getByText("Editor scripts").nextElementSibling?.textContent).toBe("0")
+      );
     } finally {
       if (original) Object.defineProperty(globalThis, "indexedDB", original);
     }
