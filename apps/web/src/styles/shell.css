@@ -2404,6 +2404,48 @@ main {
   overflow: hidden;
 }
 
+/* A realm decides its own column count, so the table scrolls inside this
+   wrapper instead of widening the window — the shell has to stay free of
+   horizontal scroll down to 320px. */
+.render-table-scroll {
+  margin: var(--space-3) 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.render-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.render-table th,
+.render-table td {
+  padding: var(--space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.render-table th {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.render-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.render-table tbody tr:hover {
+  background: var(--bg-inset);
+}
+
 .state-line {
   padding: var(--space-4);
   color: var(--text-dim);

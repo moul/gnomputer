@@ -117,3 +117,101 @@ describe("heading levels", () => {
     expect(heading?.level).toBe(3);
   });
 });
+
+describe("tables", () => {
+  const GNOMEM_PATH = "gno.land/r/g1manfred47kzduec920z88wfr64ylksmdcedlf5/agents/gnomem";
+  // Captured live from Topaz (vm/qrender on the path above) — the realm in
+  // the bug report. Before table support these six lines were joined with
+  // spaces into one unreadable run of pipes and dashes.
+  const GNOMEM_RENDER = `# GnoMem — Contested Shared Memory
+
+A graph of 2 structured claim(s) maintained by multiple agents.
+
+| # | Claim | Status | ✋ support | ⚔ contest |
+|---|---|---|---|---|
+| [1](/r/g1manfred47kzduec920z88wfr64ylksmdcedlf5/agents/gnomem:1) | foo/v2 — is — safe to deploy | ♻️ superseded | 0 | 1 |
+| [2](/r/g1manfred47kzduec920z88wfr64ylksmdcedlf5/agents/gnomem:2) | foo/v2 — is — unsafe before commit abc123 | ✋ supported | 1 | 0 |`;
+
+  function cellText(cell: { children?: { content?: string }[] }): string {
+    return (cell.children ?? []).map((c) => c.content ?? "").join("");
+  }
+
+  it("parses a real realm's table into header and body rows", () => {
+    const nodes = parseRenderMarkup(GNOMEM_RENDER, GNOMEM_PATH);
+    const table = nodes.find((n) => n.type === "table");
+    expect(table).toBeDefined();
+    // Header + two claims.
+    expect(table!.children).toHaveLength(3);
+    const [header, first] = table!.children!;
+    expect(header!.children!.map(cellText)).toEqual([
+      "#",
+      "Claim",
+      "Status",
+      "✋ support",
+      "⚔ contest",
+    ]);
+    expect(cellText(first!.children![1]!)).toBe("foo/v2 — is — safe to deploy");
+    expect(cellText(first!.children![4]!)).toBe("1");
+  });
+
+  it("keeps the rest of the document around the table", () => {
+    const nodes = parseRenderMarkup(GNOMEM_RENDER, GNOMEM_PATH);
+    expect(nodes.map((n) => n.type)).toEqual(["heading", "paragraph", "table"]);
+  });
+
+  it("resolves a link inside a table cell like any other link", () => {
+    const nodes = parseRenderMarkup(GNOMEM_RENDER, GNOMEM_PATH);
+    const table = nodes.find((n) => n.type === "table")!;
+    const firstCell = table.children![1]!.children![0]!;
+    const link = firstCell.children![0]!;
+    expect(link).toMatchObject({ type: "link", content: "1" });
+    expect(link.ref?.packagePath).toBe(GNOMEM_PATH);
+    expect(link.renderPath).toBe("1");
+  });
+
+  it("reads column alignment from the delimiter row", () => {
+    const nodes = parseRenderMarkup(
+      "| L | C | R |\n| :--- | :---: | ---: |\n| a | b | c |",
+      "gno.land/r/demo/a"
+    );
+    const table = nodes.find((n) => n.type === "table")!;
+    expect(table.children![1]!.children!.map((c) => c.align)).toEqual(["left", "center", "right"]);
+  });
+
+  it("leaves alignment undefined for a plain delimiter", () => {
+    const nodes = parseRenderMarkup("| a |\n|---|\n| b |", "gno.land/r/demo/a");
+    const table = nodes.find((n) => n.type === "table")!;
+    expect(table.children![0]!.children![0]!.align).toBeUndefined();
+  });
+
+  it("normalizes a ragged row to the header's column count", () => {
+    const nodes = parseRenderMarkup(
+      "| a | b | c |\n|---|---|---|\n| 1 |\n| 1 | 2 | 3 | 4 |",
+      "gno.land/r/demo/a"
+    );
+    const table = nodes.find((n) => n.type === "table")!;
+    for (const row of table.children!) {
+      expect(row.children).toHaveLength(3);
+    }
+    // The short row is padded...
+    expect(cellText(table.children![1]!.children![1]!)).toBe("");
+    // ...and the long one is truncated rather than shifting the columns.
+    expect(table.children![2]!.children!.map(cellText)).toEqual(["1", "2", "3"]);
+  });
+
+  it("treats an escaped pipe as cell content, not a separator", () => {
+    const nodes = parseRenderMarkup("| a \\| b | c |\n|---|---|\n| 1 | 2 |", "gno.land/r/demo/a");
+    const table = nodes.find((n) => n.type === "table")!;
+    expect(table.children![0]!.children!.map(cellText)).toEqual(["a | b", "c"]);
+  });
+
+  it("does not treat a paragraph containing a pipe as a table", () => {
+    const nodes = parseRenderMarkup("Run `a | b` to pipe.", "gno.land/r/demo/a");
+    expect(nodes.map((n) => n.type)).toEqual(["paragraph"]);
+  });
+
+  it("does not build a table when the delimiter's column count disagrees", () => {
+    const nodes = parseRenderMarkup("| a | b | c |\n|---|---|\n| 1 | 2 | 3 |", "gno.land/r/demo/a");
+    expect(nodes.every((n) => n.type !== "table")).toBe(true);
+  });
+});
