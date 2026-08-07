@@ -8,7 +8,8 @@ import { useSdk } from "../sdk-context";
 // needs its own island icon too. Same emoji as each window's own icon.
 const DISCOVER_ITEMS: { id: string; emoji: string; label: string }[] = [
   { id: "users", emoji: "👤", label: "Users" },
-  { id: "packages", emoji: "📦", label: "Packages" },
+  { id: "realms", emoji: "📦", label: "Realms" },
+  { id: "libraries", emoji: "🧩", label: "Developer libraries" },
   { id: "transactions", emoji: "🧾", label: "Transactions" },
   { id: "tokens", emoji: "🪙", label: "Tokens" },
   { id: "governance", emoji: "🏛️", label: "Governance" },

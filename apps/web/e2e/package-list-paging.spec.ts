@@ -7,7 +7,7 @@ test("the package list renders a page at a time and pages on demand", async ({ p
   await page.goto("/");
   await page.waitForSelector(".island");
   await page.getByRole("button", { name: "Discover", exact: true }).hover();
-  await page.getByRole("button", { name: /Packages/ }).first().click();
+  await page.getByRole("button", { name: /Realms/ }).first().click();
 
   const win = page.locator(".window", { has: page.locator(".discover-packages") });
   await expect(win).toBeVisible();

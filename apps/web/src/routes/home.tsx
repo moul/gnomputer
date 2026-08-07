@@ -52,7 +52,11 @@ export function Home() {
   // makes that visible to existing visitors too, since ensureWindow()
   // otherwise never touches a window id that's already in a restored
   // layout (saved positions/sizes always win over a new default).
-  useWindowPersistence("window-layout:home:v9");
+  //
+  // v10 retires "packages" in turn, for "realms" + "libraries". Same
+  // reason: without the bump, anyone with a saved layout would keep a
+  // "Packages" window that no longer has an app behind it.
+  useWindowPersistence("window-layout:home:v10");
   useWindowViewportReclamp();
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
@@ -116,14 +120,25 @@ export function Home() {
             </LazyApp>
           </Window>
           <Window
-            id="packages"
-            title="Packages"
+            id="realms"
+            title="Realms"
             accent="amber"
             startClosed
             defaultGeometry={{ x: 200, y: 150, width: 560, height: 480 }}
           >
             <LazyApp>
-              <DiscoverPackages />
+              <DiscoverPackages kind="realm" />
+            </LazyApp>
+          </Window>
+          <Window
+            id="libraries"
+            title="Developer libraries"
+            accent="amber"
+            startClosed
+            defaultGeometry={{ x: 220, y: 160, width: 560, height: 480 }}
+          >
+            <LazyApp>
+              <DiscoverPackages kind="library" />
             </LazyApp>
           </Window>
           <Window

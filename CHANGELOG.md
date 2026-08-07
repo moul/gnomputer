@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-06
 
+- Discover lists Realms and Developer libraries separately, instead of one
+  "Packages" window holding both. They are different things to go looking
+  for — a realm is something to open and use, a pure `/p/` package is
+  something realms import — and mixing them meant scrolling past 145
+  libraries to find one of Topaz's 196 realms. "Packages" still finds
+  either one in the command palette.
 - Tables in a realm's output are rendered as tables. Gno realms use
   Markdown pipe tables for anything tabular, and the renderer had no
   support for them at all — so every row was joined together into one
