@@ -24,9 +24,18 @@ import {
  * range server-side and takes ~58s against Topaz today, well past the 15s
  * deadline. That is a real, separate bug — not a schema problem.
  */
+/** Which network to check. Defaults to Topaz; override to vet a new one:
+ *   LIVE_INDEXER=1 LIVE_INDEXER_ID=sapphire \
+ *   LIVE_INDEXER_URL=https://indexer.sapphire.testnets.gno.land/graphql/query \
+ *   pnpm --filter @gnomputer/rpc exec vitest run src/live-schema-check.test.ts
+ *
+ * A newly launched chain is exactly where a schema differs — a field the
+ * indexer has not started emitting yet reads identically to one it never
+ * will, and both break parsing the same way. */
 const NETWORK = {
-  id: "topaz",
-  indexerGraphqlUrl: "https://indexer.topaz.testnets.gno.land/graphql/query",
+  id: process.env.LIVE_INDEXER_ID ?? "topaz",
+  indexerGraphqlUrl:
+    process.env.LIVE_INDEXER_URL ?? "https://indexer.topaz.testnets.gno.land/graphql/query",
 };
 const NOW = new Date().toISOString();
 

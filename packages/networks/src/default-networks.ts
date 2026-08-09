@@ -32,6 +32,35 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     capabilities: ["network.read", "indexer.read"],
   },
   {
+    id: "sapphire",
+    name: "Sapphire (official testnet)",
+    chainId: "sapphire-1",
+    rpcUrl: "https://rpc.sapphire.testnets.gno.land",
+    websocketUrl: withWebsocket("https://rpc.sapphire.testnets.gno.land"),
+    gnowebUrl: "https://sapphire.testnets.gno.land",
+    // NOT the `/graphql` in the announcement — that path serves the GraphQL
+    // *playground* (an HTML page), so the app would have been parsing markup
+    // as JSON. `/graphql/query` is the API, same convention as Topaz, and
+    // answers `{ latestBlockHeight }` with real data. Confirmed live, along
+    // with `access-control-allow-origin: *` (so ADR-018 holds here too) and
+    // the full getTransactions message union the Block Explorer needs.
+    indexerGraphqlUrl: "https://indexer.sapphire.testnets.gno.land/graphql/query",
+    gnockpitUrl: "https://gnockpit.sapphire.testnets.gno.land",
+    // Not in the announcement, but deployed and serving the real mygnoscan
+    // for this chain — confirmed live by its page title, the same check the
+    // Topaz entry above rests on.
+    explorerUrl: "https://explorer.sapphire.testnets.gno.land",
+    statusUrl: "https://status.sapphire.testnets.gno.land",
+    environment: "testnet",
+    // Assumed to match Topaz, the testnet it sits alongside. Nothing in the
+    // announcement states a retention policy, and a rolling claim is the
+    // conservative one: it warns that history may not go back forever
+    // rather than promising it does.
+    persistence: "rolling",
+    trust: "official",
+    capabilities: ["network.read", "indexer.read"],
+  },
+  {
     id: "betanet",
     name: "Betanet",
     chainId: "gnoland1",
