@@ -20,12 +20,19 @@ test("a custom network is checked before it is saved, and its chain ID is read f
     '#window-settings button:has-text("Check and add"), #window-settings button:has-text("Checking the endpoint")'
   );
 
+  // Counted rather than hardcoded: the assertion below is "the bogus
+  // endpoint was not added", and pinning it to a literal made it a second,
+  // accidental assertion about how many networks ship by default — which
+  // failed the moment a real one (Sapphire) was added.
+  const options = page.locator("#window-settings select option");
+  const beforeAdding = await options.count();
+
   // Something that answers but is not a Gno RPC must not be saved.
   await name.fill("Bogus");
   await rpcUrl.fill("https://example.com");
   await submit.click();
   await expect(page.locator('#window-settings [role="alert"]')).toBeVisible();
-  await expect(page.locator("#window-settings select option")).toHaveCount(3);
+  await expect(options).toHaveCount(beforeAdding);
 
   // A real endpoint is saved, tagged local, and shows the chain ID it
   // reported rather than "unknown".

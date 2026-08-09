@@ -4,6 +4,14 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-09
+
+- Sapphire, the new official testnet, is selectable from the network menu.
+  Everything works against it the same way it does against Topaz: live
+  blocks and events, realm source, the Block Explorer's transaction
+  detail, and the Realms and Developer libraries listings. Topaz is still
+  the default, so nothing changes for you unless you switch.
+
 ## 2026-08-06
 
 - A block's transactions say what they actually did. The list showed an
