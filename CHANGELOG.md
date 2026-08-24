@@ -6,6 +6,14 @@ banner links here.
 
 ## 2026-08-24
 
+- Switching network rebuilds the desktop instead of relabelling it. Each
+  network now keeps its own windows, not just its own realm tabs, so a Block
+  window on a height or an Address window on an account no longer follows you
+  onto a chain where it means nothing. Every window is torn down and reopened
+  from that network's own layout, behind a short boot screen — the window you
+  were actually in comes with you, so switching from Settings does not close
+  Settings under you.
+
 - Each network remembers its own open realms. Tabs were shared across every
   chain, so switching networks left the previous chain's realms on screen
   while every query behind them went to the new one — a realm path names a

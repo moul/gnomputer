@@ -48,6 +48,66 @@ test("each network keeps its own open realm", async ({ page }) => {
   );
 });
 
+test("each network keeps its own set of open windows", async ({ page }) => {
+  // Tabs alone were not enough: the desktop itself is per-chain. A Block
+  // window sitting on a height, an Address window on an account — neither
+  // means anything once pointed at a different chain.
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  // Both of these are in the switcher, unlike the network the e2e override
+  // starts on — so each one has a desktop of its own to save and restore.
+  await switchNetwork(page, "Topaz");
+
+  const settings = page.locator("#window-settings");
+  await page.locator("button.island__icon[aria-label='Settings']").click();
+  await expect(settings).toBeVisible();
+
+  // Bring another window to the front, so Settings is open but not what the
+  // switch is carrying — otherwise this would only be testing the carry.
+  await page.locator("#window-realm").click({ position: { x: 10, y: 10 } });
+
+  await switchNetwork(page, "Betanet");
+  // Betanet has its own desktop, and Settings was never opened on it.
+  await expect(settings).toBeHidden({ timeout: 15000 });
+
+  await switchNetwork(page, "Topaz");
+  // Topaz still has it, because the desktop was saved against that chain.
+  await expect(settings).toBeVisible({ timeout: 15000 });
+});
+
+test("the window you are in survives the switch", async ({ page }) => {
+  // The network picker lives in Settings, so a per-network desktop would
+  // otherwise close the window being used at the moment it is used.
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  const settings = page.locator("#window-settings");
+  await page.locator("button.island__icon[aria-label='Settings']").click();
+  await expect(settings).toBeVisible();
+
+  await switchNetwork(page, "Betanet");
+
+  await expect(settings).toBeVisible({ timeout: 15000 });
+});
+
+test("switching shows a boot overlay rather than windows blinking out", async ({ page }) => {
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  await page.locator("button.island__status-item--network").click();
+  await page.locator(".island-menu button", { hasText: "Betanet" }).first().click();
+
+  // The desktop is genuinely torn down and rebuilt, which without cover reads
+  // as the app glitching at the moment the user is least sure what happened.
+  const overlay = page.locator(".network-switch");
+  await expect(overlay).toContainText("Switching to Betanet");
+  await expect(overlay).toBeHidden({ timeout: 15000 });
+});
+
 test("the network switcher is reachable from the island, and names the current chain", async ({
   page,
 }) => {

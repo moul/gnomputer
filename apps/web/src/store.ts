@@ -21,10 +21,22 @@ interface ShellState {
    * the previous chain's tabs, for one — has to tell those two apart, or it
    * fires during boot and discards state the URL had just set. */
   networkSwitchSeq: number;
+  /** True from the moment a switch is asked for until the new chain's desktop
+   * has been restored. The whole desktop is torn down and rebuilt in between,
+   * so this is what the boot overlay is shown against — otherwise the rebuild
+   * reads as the app glitching rather than as changing chain. */
+  networkSwitching: boolean;
+  /** The window that was in front when a switch started, to be reopened on the
+   * new chain's desktop. Each network has its own set of open windows, so
+   * switching from inside one — Settings, most obviously, which is where the
+   * network picker lives — would otherwise close the window being used. */
+  carryWindowId: string | null;
   setCommandPaletteOpen: (open: boolean) => void;
   setShortcutsHelpOpen: (open: boolean) => void;
   setActiveNetwork: (id: string) => void;
   noteNetworkSwitch: () => void;
+  setNetworkSwitching: (switching: boolean) => void;
+  setCarryWindowId: (id: string | null) => void;
   bumpTrailVersion: () => void;
   setHoveredWindowIds: (ids: string[]) => void;
 }
@@ -37,10 +49,14 @@ export const useShellStore = create<ShellState>((set) => ({
   trailVersion: 0,
   hoveredWindowIds: [],
   networkSwitchSeq: 0,
+  networkSwitching: false,
+  carryWindowId: null,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   setShortcutsHelpOpen: (open) => set({ shortcutsHelpOpen: open }),
   setActiveNetwork: (id) => set({ activeNetworkId: id }),
   noteNetworkSwitch: () => set((s) => ({ networkSwitchSeq: s.networkSwitchSeq + 1 })),
+  setNetworkSwitching: (switching) => set({ networkSwitching: switching }),
+  setCarryWindowId: (id) => set({ carryWindowId: id }),
   bumpTrailVersion: () => set((s) => ({ trailVersion: s.trailVersion + 1 })),
   setHoveredWindowIds: (ids) => set({ hoveredWindowIds: ids }),
 }));

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSdk } from "../sdk-context";
+import { useShellStore } from "../store";
 import { useWindowStore, type WindowRecord } from "./window-store";
 import { isPhoneViewport } from "./viewport";
 
@@ -60,13 +61,40 @@ export function parseLayout(raw: string): {
   return { windows: filterValidWindows(parsed), viewport: null };
 }
 
-export function useWindowPersistence(storageKey: string) {
+/**
+ * Restores and saves the desktop layout for the active network.
+ *
+ * The layout is per-network for the same reason the realm tabs are: which
+ * windows you had open, and what they were showing, belongs to a chain. A
+ * Block window sitting on a height, an Address window on an account — neither
+ * survives being pointed at a different chain, so carrying the desktop across
+ * left windows that looked untouched and meant nothing.
+ * @param {string} baseKey the layout key, before the network is appended
+ */
+export function useWindowPersistence(baseKey: string) {
   const sdk = useSdk();
+  const networkId = useShellStore((s) => s.activeNetworkId);
+  const switchSeq = useShellStore((s) => s.networkSwitchSeq);
+  const seenSwitchSeq = useRef(switchSeq);
+  const storageKey = `${baseKey}:${networkId}`;
+  /** Which key writes belong to, so a change landing mid-switch cannot save
+   * the outgoing chain's desktop under the incoming chain's key. */
+  const activeKey = useRef(storageKey);
   const hydrated = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
+    const isSwitch = switchSeq !== seenSwitchSeq.current;
+    seenSwitchSeq.current = switchSeq;
+    activeKey.current = storageKey;
+    hydrated.current = false;
+
     void (async () => {
+      // Clear first, so the desktop that comes back is this network's and not
+      // the previous one's with a few windows overwritten. Everything mounted
+      // re-registers itself through ensureWindow with its defaults.
+      if (isSwitch) useWindowStore.setState({ windows: {}, topZIndex: 1 });
+
       const raw = await sdk.uiState.get(storageKey);
       if (cancelled) return;
       if (raw) {
@@ -130,15 +158,32 @@ export function useWindowPersistence(storageKey: string) {
         }
       }
       hydrated.current = true;
+
+      if (isSwitch) {
+        // Deferred a frame: the windows are mounting as this resolves, and
+        // reopen() only acts on a record that already exists. By the next
+        // frame every window has registered through ensureWindow.
+        const carry = useShellStore.getState().carryWindowId;
+        if (carry) {
+          requestAnimationFrame(() => {
+            useWindowStore.getState().reopen(carry);
+            useShellStore.getState().setCarryWindowId(null);
+          });
+        }
+        // The desktop for this chain is up. Whatever the overlay was covering
+        // is done, so it can come down — this is the last of the switch to
+        // finish.
+        useShellStore.getState().setNetworkSwitching(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [sdk, storageKey]);
+  }, [sdk, storageKey, switchSeq]);
 
   useEffect(() => {
     const unsubscribe = useWindowStore.subscribe((state) => {
-      if (!hydrated.current) return;
+      if (!hydrated.current || activeKey.current !== storageKey) return;
       // The viewport is stored with the layout so a restore can tell
       // "this arrived from a bigger screen" from "you are back where you
       // saved it". Without that, pulling stray windows into view would

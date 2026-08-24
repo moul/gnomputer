@@ -4621,3 +4621,71 @@ main {
   gap: var(--space-2);
   margin: var(--space-3) 0;
 }
+
+/* Covers the desktop while it is rebuilt for another chain. Switching network
+   unmounts every window and remounts it, which without this reads as the app
+   glitching at the exact moment the user is least sure what happened. */
+.network-switch {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.network-switch__panel {
+  min-width: min(320px, calc(100vw - var(--space-4) * 2));
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  font-family: var(--ui-font);
+  text-align: center;
+}
+
+.network-switch__label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.network-switch__bar {
+  margin: var(--space-3) 0 var(--space-2);
+  height: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 999px;
+}
+
+/* Indeterminate: the work is a teardown and a restore, with no measurable
+   progress to report, and inventing a percentage would be a lie. The fill
+   keeps a real width so that under prefers-reduced-motion — where theme.css
+   turns every animation off — this is still a bar rather than an empty
+   groove. */
+.network-switch__bar-fill {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  animation: network-switch-sweep 900ms ease-in-out infinite;
+}
+
+@keyframes network-switch-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.network-switch__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
