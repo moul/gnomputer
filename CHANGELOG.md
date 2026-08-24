@@ -4,6 +4,13 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-24
+
+- Sapphire is now the network Gnomputer opens on, and heads the network
+  menu. If you have ever picked a network, that choice still wins — this
+  only changes where a first visit lands, or one whose storage was cleared.
+  Topaz is unchanged and one menu entry away.
+
 ## 2026-08-09
 
 - Sapphire, the new official testnet, is selectable from the network menu.

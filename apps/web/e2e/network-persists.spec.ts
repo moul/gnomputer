@@ -15,7 +15,12 @@ test("the chosen network survives a reload", async ({ page }) => {
   await page.waitForSelector(".island__clock");
 
   const select = await openNetworkSettings(page);
-  await expect(select).toHaveValue("topaz");
+  // Deliberately not asserting the starting value. Under the e2e RPC override
+  // the active network is "mock", which `sdk.networks.list()` does not offer
+  // as an option — so the control falls back to rendering whichever entry is
+  // first in DEFAULT_NETWORKS. Pinning that would be pinning the array order,
+  // not the default. What this test is about is that a choice survives.
+  await expect(select).not.toHaveValue("betanet");
   await select.selectOption("betanet");
   await expect(select).toHaveValue("betanet");
 
@@ -42,7 +47,8 @@ test("a network that no longer exists is reported, not silently swapped", async 
 
   const banner = page.locator(".network-recovery-banner");
   await expect(banner).toContainText("ghost-net", { timeout: 10000 });
-  await expect(banner).toContainText("Topaz");
+  // Names whichever network it fell back to, which is the default.
+  await expect(banner).toContainText("Sapphire");
 
   await banner.getByRole("button", { name: "Dismiss" }).click();
   await expect(banner).toHaveCount(0);
