@@ -44,13 +44,34 @@ function makeHomeTab(id: string): RealmTab {
   return { id, packagePath: "", renderPath: "", lens: "render" };
 }
 
+/** Highest numeric suffix on an `id` of the form `<prefix><n>`, or -1. Used to
+ * keep the id counters ahead of any set installed from storage. */
+function maxSuffix(id: string, prefix: string): number {
+  const n = Number(id.slice(prefix.length));
+  return Number.isFinite(n) ? n : -1;
+}
+
 interface RealmTabsState {
   windows: Record<string, RealmWindowTabs>;
   extraWindowIds: string[];
   nextTabSeq: number;
   nextWindowSeq: number;
+  /** Windows whose active tab was named by the URL on this load. Restoration
+   * is async and merges saved windows over the store, so without knowing
+   * this it would overwrite a tab a shared link had just set. */
+  urlSeeded: Record<string, true>;
 
   ensureWindow: (windowId: string) => void;
+  /** Records that a link, not restoration, decided this window's realm. */
+  markUrlSeeded: (windowId: string) => void;
+  /** Swaps the whole tab set at once, for switching to another network's
+   * saved tabs. A realm path only means something on the chain it was
+   * opened against, so these do not carry over. */
+  replaceAll: (windows: Record<string, RealmWindowTabs>, extraWindowIds: string[]) => void;
+  /** Sends every open window back to its Home tab, keeping the windows
+   * themselves. For switching to a network that has nothing saved: closing
+   * the windows outright would be a bigger surprise than emptying them. */
+  resetTabsToHome: () => void;
   openTab: (windowId: string, seed?: Partial<Omit<RealmTab, "id">>) => void;
   closeTab: (windowId: string, tabId: string) => void;
   setActiveTab: (windowId: string, tabId: string) => void;
@@ -68,6 +89,42 @@ export const useRealmTabsStore = create<RealmTabsState>((set, get) => ({
   extraWindowIds: [],
   nextTabSeq: 1,
   nextWindowSeq: 1,
+  urlSeeded: {},
+
+  markUrlSeeded: (windowId) => {
+    if (get().urlSeeded[windowId]) return;
+    set((state) => ({ urlSeeded: { ...state.urlSeeded, [windowId]: true } }));
+  },
+
+  replaceAll: (windows, extraWindowIds) => {
+    // Same reconciliation restoration does: the id counters are not part of
+    // what is stored, so they would reset low and could mint an id that
+    // collides with one in the set being installed.
+    let nextTabSeq = get().nextTabSeq;
+    let nextWindowSeq = get().nextWindowSeq;
+    for (const win of Object.values(windows)) {
+      for (const tab of win.tabs) {
+        nextTabSeq = Math.max(nextTabSeq, maxSuffix(tab.id, "tab-") + 1);
+      }
+    }
+    for (const id of extraWindowIds) {
+      nextWindowSeq = Math.max(nextWindowSeq, maxSuffix(id, "realm-") + 1);
+    }
+    // urlSeeded is cleared with the tabs: it records that a link decided the
+    // realm for *this* chain's tabs, and those are being replaced.
+    set({ windows, extraWindowIds, nextTabSeq, nextWindowSeq, urlSeeded: {} });
+  },
+
+  resetTabsToHome: () => {
+    let seq = get().nextTabSeq;
+    const windows: Record<string, RealmWindowTabs> = {};
+    for (const windowId of Object.keys(get().windows)) {
+      const homeTab = makeHomeTab(`tab-${seq}`);
+      seq += 1;
+      windows[windowId] = { tabs: [homeTab], activeTabId: homeTab.id };
+    }
+    set({ windows, nextTabSeq: seq, urlSeeded: {} });
+  },
 
   ensureWindow: (windowId) => {
     if (get().windows[windowId]) return;

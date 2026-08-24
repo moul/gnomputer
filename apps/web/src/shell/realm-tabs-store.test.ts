@@ -175,3 +175,84 @@ describe("createNewWindow and removeWindow", () => {
     expect(useRealmTabsStore.getState().extraWindowIds).not.toContain(id);
   });
 });
+
+describe("markUrlSeeded", () => {
+  it("records a window, and is a no-op the second time", () => {
+    useRealmTabsStore.getState().markUrlSeeded("realm");
+    const first = useRealmTabsStore.getState().urlSeeded;
+    expect(first.realm).toBe(true);
+
+    useRealmTabsStore.getState().markUrlSeeded("realm");
+    // Same object: restoration reads this on every merge, so an idempotent
+    // call must not invalidate subscribers.
+    expect(useRealmTabsStore.getState().urlSeeded).toBe(first);
+  });
+});
+
+describe("replaceAll", () => {
+  // Switching network installs that chain's saved tabs wholesale — the
+  // previous chain's realms are not merged in, because a realm path only
+  // means something on the chain it was opened against.
+  const saved = {
+    realm: {
+      tabs: [{ id: "tab-7", packagePath: "gno.land/r/x", renderPath: "", lens: "source" as const }],
+      activeTabId: "tab-7",
+    },
+  };
+
+  it("installs the given set, dropping what was open", () => {
+    useRealmTabsStore.getState().ensureWindow("realm");
+    useRealmTabsStore.getState().updateActiveTab("realm", { packagePath: "gno.land/r/old" });
+
+    useRealmTabsStore.getState().replaceAll(saved, []);
+
+    const win = useRealmTabsStore.getState().windows.realm!;
+    expect(win.tabs).toHaveLength(1);
+    expect(win.tabs[0]!.packagePath).toBe("gno.land/r/x");
+  });
+
+  it("keeps the id counters ahead of the set it installs", () => {
+    // The counters are not stored, so they would reset low and could mint an
+    // id colliding with one just installed.
+    useRealmTabsStore.getState().replaceAll(saved, ["realm-4"]);
+
+    expect(useRealmTabsStore.getState().nextTabSeq).toBeGreaterThan(7);
+    expect(useRealmTabsStore.getState().nextWindowSeq).toBeGreaterThan(4);
+  });
+
+  it("clears urlSeeded, which described the tabs being replaced", () => {
+    useRealmTabsStore.getState().markUrlSeeded("realm");
+    useRealmTabsStore.getState().replaceAll(saved, []);
+
+    expect(useRealmTabsStore.getState().urlSeeded).toEqual({});
+  });
+});
+
+describe("resetTabsToHome", () => {
+  it("empties every open window without closing any of them", () => {
+    // Switching to a network with nothing saved: closing the windows outright
+    // would be a bigger surprise than emptying them.
+    useRealmTabsStore.getState().ensureWindow("realm");
+    const extra = useRealmTabsStore.getState().createNewWindow();
+    useRealmTabsStore.getState().updateActiveTab("realm", { packagePath: "gno.land/r/x" });
+
+    useRealmTabsStore.getState().resetTabsToHome();
+
+    const windows = useRealmTabsStore.getState().windows;
+    expect(Object.keys(windows).sort()).toEqual(["realm", extra].sort());
+    for (const win of Object.values(windows)) {
+      expect(win.tabs).toHaveLength(1);
+      expect(win.tabs[0]!.packagePath).toBe("");
+      expect(win.activeTabId).toBe(win.tabs[0]!.id);
+    }
+  });
+
+  it("mints fresh tab ids rather than reusing the ones it replaced", () => {
+    useRealmTabsStore.getState().ensureWindow("realm");
+    const before = useRealmTabsStore.getState().windows.realm!.activeTabId;
+
+    useRealmTabsStore.getState().resetTabsToHome();
+
+    expect(useRealmTabsStore.getState().windows.realm!.activeTabId).not.toBe(before);
+  });
+});

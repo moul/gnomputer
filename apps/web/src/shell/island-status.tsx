@@ -1,5 +1,8 @@
+import { networkShortName } from "@gnomputer/app-sdk";
 import { useSdk } from "../sdk-context";
 import { useChainHeight } from "../use-chain-height";
+import { IslandPopover } from "./island-popover";
+import { IslandNetworkMenu } from "./island-network-menu";
 import { useWalletStore } from "./wallet-store";
 import { useLiveUpdatesStore } from "./live-updates-store";
 import { useOnlineStatus } from "./use-online-status";
@@ -26,10 +29,24 @@ export function IslandStatus() {
 
   return (
     <div className="island__status">
-      <span className="island__status-item island__status-item--network" title={network.rpcUrl}>
-        <span className="visually-hidden">Network: </span>
-        {network.name}
-      </span>
+      <IslandPopover
+        align="left"
+        trigger={
+          <button
+            type="button"
+            className="island__status-item island__status-item--network"
+            // The qualifier ("official testnet") is dropped from the label —
+            // it is the same for most entries, so it costs width without
+            // telling them apart. Kept in the tooltip alongside the RPC host.
+            title={`${network.name} — ${network.rpcUrl}`}
+          >
+            <span className="visually-hidden">Network: </span>
+            {networkShortName(network)}
+          </button>
+        }
+      >
+        <IslandNetworkMenu />
+      </IslandPopover>
       <span className="island__status-item island__status-item--height">
         <span className="visually-hidden">Block height: </span>
         {height === null ? "—" : `#${height.toLocaleString()}`}

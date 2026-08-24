@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import { FIXTURES } from "./fixtures.js";
+import { abciErrorResponse, ERROR_PACKAGES, FIXTURES } from "./fixtures.js";
 
 export interface MockServerHandle {
   url: string;
@@ -8,13 +8,45 @@ export interface MockServerHandle {
   close(): Promise<void>;
 }
 
-function fixtureFor(body: { method?: string; params?: { path?: string } }): unknown {
+/**
+ * Recovers the package path a VM query was asking about.
+ *
+ * `data` is base64 of the query arguments joined by a separator — for
+ * `vm/qrender` that is `<pkgPath>:<renderPath>`, for `vm/qfile` just the
+ * package path. Only the leading package path is needed here.
+ * @param {string} [data] the base64 `params.data` of the abci_query
+ * @returns {string} the package path, or "" when it cannot be read
+ */
+function queriedPackagePath(data?: string): string {
+  if (!data) return "";
+  try {
+    return Buffer.from(data, "base64").toString("utf-8").split(":")[0] ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function fixtureFor(body: { method?: string; params?: { path?: string; data?: string } }): unknown {
   if (body.method === "status") return FIXTURES.status;
   if (body.method === "abci_query") {
     const path = body.params?.path ?? "";
     // qpaths carries a limit query string (vm/qpaths?limit=2000), so match
     // on the prefix rather than the whole path.
     if (path.startsWith("vm/qpaths")) return FIXTURES.qpaths;
+
+    // A handful of paths stand in for packages the VM refuses, so the app's
+    // error branches are reachable offline. Applied to qfile too: a package
+    // that does not exist has no source either.
+    const packagePath = queriedPackagePath(body.params?.data);
+    const errorType = ERROR_PACKAGES[packagePath];
+    if (errorType && (path === "vm/qrender" || path === "vm/qfile")) {
+      // A missing package fails every query; a package that merely declares no
+      // Render still has source to serve.
+      if (errorType !== "/vm.NoRenderDeclError" || path === "vm/qrender") {
+        return abciErrorResponse(errorType, packagePath);
+      }
+    }
+
     if (path === "vm/qfile") return FIXTURES.qfile;
     return FIXTURES.qrender;
   }

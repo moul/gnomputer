@@ -10,7 +10,7 @@ import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
 import { useRealmRender } from "../shell/use-realm-render";
 import { NoRenderDeclError } from "@gnomputer/app-sdk";
-import { openInRealmTab } from "../shell/open-in-realm-tab";
+import { applyUrlToActiveTab, openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
 import { SourceExplorer } from "./source-explorer";
@@ -76,26 +76,32 @@ export function RealmBrowser({
   // Primary window only: when the URL changes (a Linkify click, a shared
   // link, browser back/forward), bring the active tab in line with it. Tab
   // switches and in-tab navigation flow the other direction (see selectTab
-  // and openInRealmTab) — this effect exists only to react to external URL
-  // changes, so it deliberately does not depend on tab/window state.
+  // and openInRealmTab).
+  //
+  // This raced the persisted tabs, and whichever landed second decided which
+  // of two bugs you got. Restoring merges saved windows over the store, so
+  // when it landed late it overwrote the tab a link had just set — the reader
+  // got their own last-used realm under the linked realm's title. When it
+  // landed early, this effect saw the restored tab and read a bare "/" as
+  // "go Home", wiping the session that had just come back.
+  //
+  // Applied immediately rather than waiting for restoration: deferring meant
+  // the Home view mounted first and issued its own queries (AUD-026's
+  // duplicate-fetch guard catches that). Restoration defers to `urlSeeded`
+  // instead, so the ordering no longer matters.
+  const coldLoadHandled = useRef(false);
   useEffect(() => {
     if (!isPrimary || urlPackagePath === undefined) return;
-    const state = useRealmTabsStore.getState();
-    const current = state.windows[windowId];
-    const activeTab = current?.tabs.find((t) => t.id === current.activeTabId);
-    if (!activeTab) return;
-    if (
-      activeTab.packagePath === urlPackagePath &&
-      activeTab.renderPath === (urlRenderPath ?? "") &&
-      (urlLens === undefined || activeTab.lens === urlLens)
-    ) {
-      return;
+    if (!coldLoadHandled.current) {
+      coldLoadHandled.current = true;
+      // Two intents look identical here on a cold load: a link names what to
+      // show, a bare visit resumes what was open. Only a link overrides the
+      // restored tab. Every later run is a real URL change, where clearing
+      // pkg (Home, or Back out of a realm) does mean go Home.
+      if (!urlPackagePath) return;
+      useRealmTabsStore.getState().markUrlSeeded(windowId);
     }
-    openInRealmTab(windowId, {
-      packagePath: urlPackagePath,
-      renderPath: urlRenderPath,
-      lens: urlLens,
-    });
+    applyUrlToActiveTab(windowId, urlPackagePath, urlRenderPath, urlLens);
   }, [isPrimary, urlPackagePath, urlRenderPath, urlLens, windowId]);
 
   if (!win) return null;
