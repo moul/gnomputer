@@ -6,6 +6,13 @@ banner links here.
 
 ## 2026-08-24
 
+- Each network remembers its own open realms. Tabs were shared across every
+  chain, so switching networks left the previous chain's realms on screen
+  while every query behind them went to the new one — a realm path names a
+  package on one chain and may be absent, or be something else, on another.
+  Switching now puts back what you had open there, or starts at Home if that
+  is your first visit to it, and the address bar follows.
+
 - The network name in the top bar switches network. It was the one piece of
   chrome that told you which chain you were reading and the one thing you
   had to open Settings to change. It also reads "Sapphire" now rather than
@@ -17,6 +24,13 @@ banner links here.
   menu. If you have ever picked a network, that choice still wins — this
   only changes where a first visit lands, or one whose storage was cleared.
   Topaz is unchanged and one menu entry away.
+
+- A shared realm link opens the realm it names. If you had ever opened a
+  realm before, restoring those tabs raced the link and usually won: you got
+  your own last-used realm, under the linked realm's title, with no error to
+  say so. Only a first-ever visit worked. Relatedly, a realm opened from a
+  link is now actually saved to your session — it was being applied before
+  the layout store had opened for writing, so it never reached storage.
 
 ## 2026-08-09
 
