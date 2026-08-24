@@ -26,6 +26,15 @@ describe("networkShortName", () => {
     expect(networkShortName({ name: "(unnamed)" })).toBe("(unnamed)");
   });
 
+  it("gives every built-in network its own colour", () => {
+    // The testnets are named after gemstones and take their stone's colour, so
+    // which chain you are on is answerable at a glance. Two networks sharing
+    // one would defeat the point.
+    const colors = DEFAULT_NETWORKS.map((n) => n.color);
+    expect(colors.every(Boolean)).toBe(true);
+    expect(new Set(colors).size).toBe(DEFAULT_NETWORKS.length);
+  });
+
   it("gives every built-in network a label with no qualifier", () => {
     for (const net of DEFAULT_NETWORKS) {
       expect(networkShortName(net)).not.toMatch(/[()]/);

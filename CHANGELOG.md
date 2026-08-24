@@ -6,6 +6,12 @@ banner links here.
 
 ## 2026-08-24
 
+- Each network has its own colour, taken from the stone it is named after —
+  Sapphire blue, Topaz gold — shown as a dot beside the name in the top bar
+  and in the switcher. The name is always next to it and the current network
+  is marked by a filled dot rather than by hue, so nothing depends on telling
+  two colours apart.
+
 - Switching network rebuilds the desktop instead of relabelling it. Each
   network now keeps its own windows, not just its own realm tabs, so a Block
   window on a height or an Address window on an account no longer follows you

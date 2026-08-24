@@ -108,6 +108,26 @@ test("switching shows a boot overlay rather than windows blinking out", async ({
   await expect(overlay).toBeHidden({ timeout: 15000 });
 });
 
+test("the overlay still shows on a switch that restores instantly", async ({ page }) => {
+  // The cold path is slow enough to be safe. The risk is the warm one: a
+  // layout already in the page cache can restore inside the same React batch
+  // that started the switch, so anything watching only the "switching"
+  // boolean sees it go true and back to false without rendering in between,
+  // and the overlay silently never appears.
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  await switchNetwork(page, "Betanet");
+  await expect(page.locator(".network-switch")).toBeHidden({ timeout: 15000 });
+
+  // Second switch: both layouts have now been read once.
+  await page.locator("button.island__status-item--network").click();
+  await page.locator(".island-menu button", { hasText: "Topaz" }).first().click();
+
+  await expect(page.locator(".network-switch")).toContainText("Switching to Topaz");
+});
+
 test("the network switcher is reachable from the island, and names the current chain", async ({
   page,
 }) => {

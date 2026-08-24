@@ -13,6 +13,20 @@ export const NetworkConfigSchema = z.object({
    * back to trimming the parenthetical off `name`.
    */
   shortName: z.string().optional(),
+  /**
+   * A colour to identify the network by, as a CSS colour.
+   *
+   * The testnets are named after gemstones, so each takes its stone's colour —
+   * which makes "am I on the right chain?" answerable at a glance, without
+   * reading. Used for a marker beside the name, never for text or as the only
+   * cue: a colour that has to carry meaning on its own fails anyone who cannot
+   * separate these two blues.
+   *
+   * Optional, like shortName: custom networks are stored as whole configs and
+   * re-validated on load, so requiring it would reject every one saved before
+   * it existed.
+   */
+  color: z.string().optional(),
   chainId: z.string(),
   rpcUrl: z.string().url(),
   websocketUrl: z.string().optional(),

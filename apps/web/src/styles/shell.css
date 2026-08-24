@@ -4689,3 +4689,28 @@ main {
   font-size: 12px;
   color: var(--text-dim);
 }
+
+/* Identifies a network by its gemstone's colour — Sapphire blue, Topaz gold —
+   so "which chain am I on" is answerable without reading. `color` is set
+   inline from the network config and inherited by both the fill and the ring,
+   which is why this uses currentColor rather than a variable.
+
+   Never the only cue: the name is always beside it, and active/inactive is
+   carried by the fill rather than by hue, so nothing here depends on telling
+   two blues apart. Falls back to the theme accent for a network with no
+   colour of its own, i.e. any custom one. */
+.network-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 1.5px solid currentColor;
+  vertical-align: baseline;
+}
+
+.network-dot[data-active="true"] {
+  background: currentColor;
+}
