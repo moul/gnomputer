@@ -34,7 +34,16 @@ export function IslandNetworkMenu() {
                 title={`${network.name} — ${network.rpcUrl}`}
                 onClick={() => activateNetwork(sdk, network)}
               >
-                <span aria-hidden="true">{active ? "●" : "○"}</span>
+                {/* Filled for the current network, hollow otherwise — the
+                    colour identifies which chain, the fill says whether it is
+                    the active one. Colour alone would carry neither meaning
+                    for anyone who cannot separate these hues. */}
+                <span
+                  className="network-dot"
+                  data-active={active}
+                  style={network.color ? { color: network.color } : undefined}
+                  aria-hidden="true"
+                />
                 {networkShortName(network)}
                 {active && <span className="visually-hidden"> (current)</span>}
               </button>

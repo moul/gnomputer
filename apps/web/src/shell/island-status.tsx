@@ -41,6 +41,12 @@ export function IslandStatus() {
             title={`${network.name} — ${network.rpcUrl}`}
           >
             <span className="visually-hidden">Network: </span>
+            <span
+              className="network-dot"
+              data-active="true"
+              style={network.color ? { color: network.color } : undefined}
+              aria-hidden="true"
+            />
             {networkShortName(network)}
           </button>
         }
