@@ -13,6 +13,8 @@ import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowViewportReclamp } from "../shell/use-window-viewport-reclamp";
 import { useWindowStore } from "../shell/window-store";
+import { NetworkSwitchOverlay } from "../shell/network-switch-overlay";
+import { useShellStore } from "../store";
 
 // Every one of these apps starts closed, and <Window> returns null before
 // rendering its children — so with static imports their code still shipped
@@ -60,6 +62,7 @@ export function Home() {
   useWindowViewportReclamp();
   const overviewOpen = useWindowStore((s) => s.overviewOpen);
   const toggleOverview = useWindowStore((s) => s.toggleOverview);
+  const networkSwitchSeq = useShellStore((s) => s.networkSwitchSeq);
   const search = useSearch({ strict: false }) as {
     pkg?: string;
     path?: string;
@@ -79,6 +82,16 @@ export function Home() {
     <div className="home-layout">
       <div className="desktop-shell">
         <div
+          // Remounts the whole desktop on a switch, so no component survives
+          // holding the previous chain's state: each window re-registers
+          // through ensureWindow and refetches on mount, which is what makes a
+          // switch read as a fresh desktop instead of the old one relabelled.
+          //
+          // Keyed on the switch counter rather than on activeNetworkId, which
+          // also moves once during boot as the stored network is adopted —
+          // keying on that remounted the desktop on every cold load and made
+          // the first realm fetch happen twice (AUD-026's guard catches it).
+          key={networkSwitchSeq}
           className="desktop"
           data-overview={overviewOpen}
           onPointerDown={(e) => {
@@ -280,6 +293,7 @@ export function Home() {
           <GnockpitEmbedWindow />
           <ExtraRealmWindows />
         </div>
+        <NetworkSwitchOverlay />
       </div>
     </div>
   );

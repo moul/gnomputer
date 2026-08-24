@@ -2,7 +2,25 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { GnomputerSDK, NetworkConfig } from "@gnomputer/app-sdk";
 import { useShellStore } from "../store";
 import { useCustomNetworksStore } from "./custom-networks-store";
+import { useWindowStore, type WindowRecord } from "./window-store";
+import { useAddressWindowStore } from "./address-window-store";
+import { usePendingRefsStore } from "./pending-refs-store";
 import { activateNetwork, listSelectableNetworks } from "./activate-network";
+
+function windowRecord(overrides: Partial<WindowRecord> = {}): WindowRecord {
+  return {
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 300,
+    title: "w",
+    zIndex: 1,
+    closed: false,
+    maximized: false,
+    preMaximizeGeometry: null,
+    ...overrides,
+  };
+}
 
 function net(id: string): NetworkConfig {
   return {
@@ -26,8 +44,16 @@ function fakeSdk(builtIns: NetworkConfig[]) {
 }
 
 beforeEach(() => {
-  useShellStore.setState({ activeNetworkId: "sapphire", networkSwitchSeq: 0 });
+  useShellStore.setState({
+    activeNetworkId: "sapphire",
+    networkSwitchSeq: 0,
+    networkSwitching: false,
+    carryWindowId: null,
+  });
   useCustomNetworksStore.setState({ networks: [] });
+  useWindowStore.setState({ windows: {} });
+  useAddressWindowStore.setState({ currentAddress: null });
+  usePendingRefsStore.setState({ pendingBlockHeight: null });
 });
 
 describe("listSelectableNetworks", () => {
@@ -73,6 +99,66 @@ describe("activateNetwork", () => {
 
     expect(setActiveConfig).not.toHaveBeenCalled();
     expect(useShellStore.getState().networkSwitchSeq).toBe(0);
+  });
+
+  it("carries the frontmost window, so a switch does not close what is in use", () => {
+    // The network picker lives in Settings: without this, switching from
+    // inside it closes the window at the moment it is being used.
+    useWindowStore.setState({
+      windows: {
+        realm: windowRecord({ zIndex: 2 }),
+        settings: windowRecord({ zIndex: 9 }),
+      },
+    });
+    const { sdk } = fakeSdk([net("sapphire"), net("topaz")]);
+
+    activateNetwork(sdk, net("topaz"));
+
+    expect(useShellStore.getState().carryWindowId).toBe("settings");
+  });
+
+  it("ignores closed windows when deciding what to carry", () => {
+    useWindowStore.setState({
+      windows: {
+        realm: windowRecord({ zIndex: 2 }),
+        settings: windowRecord({ zIndex: 9, closed: true }),
+      },
+    });
+    const { sdk } = fakeSdk([net("sapphire"), net("topaz")]);
+
+    activateNetwork(sdk, net("topaz"));
+
+    expect(useShellStore.getState().carryWindowId).toBe("realm");
+  });
+
+  it("carries nothing when the desktop is empty", () => {
+    useWindowStore.setState({ windows: {} });
+    const { sdk } = fakeSdk([net("sapphire"), net("topaz")]);
+
+    activateNetwork(sdk, net("topaz"));
+
+    expect(useShellStore.getState().carryWindowId).toBeNull();
+  });
+
+  it("clears content that only meant something on the previous chain", () => {
+    // An address and a block height are read from one chain; the windows that
+    // reopen onto them would otherwise show the old chain's subject.
+    useAddressWindowStore.setState({ currentAddress: "g1abc" });
+    usePendingRefsStore.setState({ pendingBlockHeight: 42 });
+    const { sdk } = fakeSdk([net("sapphire"), net("topaz")]);
+
+    activateNetwork(sdk, net("topaz"));
+
+    expect(useAddressWindowStore.getState().currentAddress).toBeNull();
+    expect(usePendingRefsStore.getState().pendingBlockHeight).toBeNull();
+  });
+
+  it("raises the switching flag the overlay is shown against", () => {
+    const { sdk } = fakeSdk([net("sapphire"), net("topaz")]);
+
+    activateNetwork(sdk, net("topaz"));
+
+    expect(useShellStore.getState().networkSwitching).toBe(true);
   });
 
   it("counts each distinct switch separately", () => {
