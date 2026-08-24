@@ -22,16 +22,26 @@ const MIN_VISIBLE_MS = 550;
 export function NetworkSwitchOverlay() {
   const sdk = useSdk();
   const switching = useShellStore((s) => s.networkSwitching);
+  const switchSeq = useShellStore((s) => s.networkSwitchSeq);
   const [visible, setVisible] = useState(false);
   const shownAt = useRef(0);
+  const seenSeq = useRef(switchSeq);
+
+  // Shown off the counter, not off `networkSwitching`. Restoring a layout that
+  // is already in the page cache can finish inside the same React batch that
+  // started the switch, so a component watching only the boolean sees it go
+  // true and back to false without ever rendering in between — and the overlay
+  // silently never appears. The counter only ever increments, so a switch
+  // cannot be missed that way.
+  useEffect(() => {
+    if (switchSeq === seenSeq.current) return;
+    seenSeq.current = switchSeq;
+    shownAt.current = Date.now();
+    setVisible(true);
+  }, [switchSeq]);
 
   useEffect(() => {
-    if (switching) {
-      shownAt.current = Date.now();
-      setVisible(true);
-      return;
-    }
-    if (!visible) return;
+    if (!visible || switching) return;
     const remaining = MIN_VISIBLE_MS - (Date.now() - shownAt.current);
     if (remaining <= 0) {
       setVisible(false);
