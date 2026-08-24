@@ -6,6 +6,13 @@ banner links here.
 
 ## 2026-08-24
 
+- The network name in the top bar switches network. It was the one piece of
+  chrome that told you which chain you were reading and the one thing you
+  had to open Settings to change. It also reads "Sapphire" now rather than
+  "Sapphire (official testnet)" — the qualifier is the same for most entries,
+  so it cost width without telling them apart. The full name and the RPC host
+  are still in the tooltip.
+
 - Sapphire is now the network Gnomputer opens on, and heads the network
   menu. If you have ever picked a network, that choice still wins — this
   only changes where a first visit lands, or one whose storage was cleared.

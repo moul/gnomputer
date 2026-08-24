@@ -4,6 +4,7 @@ import { useShellStore } from "../store";
 import { useNetworkStatus } from "./use-network-status";
 import { useCustomNetworksStore, buildCustomNetworkConfig } from "./custom-networks-store";
 import { probeNetwork, isLocalEndpoint } from "./probe-network";
+import { activateNetwork } from "./activate-network";
 import { NetworkMonitor } from "../routes/network-monitor";
 
 const STATE_LABEL: Record<string, string> = {
@@ -37,8 +38,7 @@ export function SettingsNetworkTab() {
   function activate(id: string) {
     const config = allNetworks.find((n) => n.id === id);
     if (!config) return;
-    sdk.networks.setActiveConfig(config);
-    setActiveNetwork(id);
+    activateNetwork(sdk, config);
   }
 
   async function addNetwork(e: React.FormEvent) {

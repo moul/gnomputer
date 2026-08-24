@@ -1,5 +1,37 @@
 import { describe, it, expect } from "vitest";
 import { DEFAULT_NETWORKS, DEFAULT_NETWORK_ID } from "./default-networks";
+import { networkShortName } from "./network-config";
+
+describe("networkShortName", () => {
+  it("prefers an explicit shortName", () => {
+    expect(networkShortName({ name: "Sapphire (official testnet)", shortName: "Sapphire" })).toBe(
+      "Sapphire"
+    );
+  });
+
+  it("falls back to the name without its trailing qualifier", () => {
+    // Custom networks are stored as whole configs and predate shortName, so
+    // the fallback is what most stored entries actually go through.
+    expect(networkShortName({ name: "Mock (e2e)" })).toBe("Mock");
+    expect(networkShortName({ name: "Topaz (official testnet)" })).toBe("Topaz");
+  });
+
+  it("leaves a name with no qualifier alone", () => {
+    expect(networkShortName({ name: "Betanet" })).toBe("Betanet");
+  });
+
+  it("keeps the name rather than rendering nothing", () => {
+    // A name that is only a parenthetical would otherwise trim to "" and the
+    // island would show a blank where the chain should be.
+    expect(networkShortName({ name: "(unnamed)" })).toBe("(unnamed)");
+  });
+
+  it("gives every built-in network a label with no qualifier", () => {
+    for (const net of DEFAULT_NETWORKS) {
+      expect(networkShortName(net)).not.toMatch(/[()]/);
+    }
+  });
+});
 
 describe("DEFAULT_NETWORKS", () => {
   it("defaults to the sapphire network with correct RPC, chain id, and indexer", () => {

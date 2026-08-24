@@ -23,6 +23,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
   {
     id: "sapphire",
     name: "Sapphire (official testnet)",
+    shortName: "Sapphire",
     chainId: "sapphire-1",
     rpcUrl: "https://rpc.sapphire.testnets.gno.land",
     websocketUrl: withWebsocket("https://rpc.sapphire.testnets.gno.land"),
@@ -52,6 +53,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
   {
     id: "topaz",
     name: "Topaz (official testnet)",
+    shortName: "Topaz",
     chainId: "topaz-1",
     // The user-facing URL (topaz.testnets.gno.land) is gnoweb, not the RPC —
     // confirmed live: it 303-redirects and its CSP header points at an
@@ -76,6 +78,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
   {
     id: "betanet",
     name: "Betanet",
+    shortName: "Betanet",
     chainId: "gnoland1",
     rpcUrl: "https://rpc.gno.land",
     websocketUrl: withWebsocket("https://rpc.gno.land"),
@@ -93,6 +96,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
   {
     id: "gnodev",
     name: "gnodev (local)",
+    shortName: "gnodev",
     chainId: "dev",
     // gnodev's documented defaults: a Tendermint2 RPC on 26657 and a bundled
     // gnoweb on 8888. Only reachable if the user has `gnodev` running on
