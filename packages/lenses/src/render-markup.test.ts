@@ -215,3 +215,82 @@ A graph of 2 structured claim(s) maintained by multiple agents.
     expect(nodes.every((n) => n.type !== "table")).toBe(true);
   });
 });
+
+describe("lists and inline emphasis", () => {
+  it("groups consecutive list lines into one list", () => {
+    // These fell through to the paragraph buffer and were joined with spaces:
+    // the GRC20 registry's 45 tokens arrived as a single unreadable line.
+    const nodes = parseRenderMarkup("- one\n- two\n- three", "gno.land/r/x");
+
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]!.type).toBe("list");
+    expect(nodes[0]!.children).toHaveLength(3);
+    expect(nodes[0]!.children![0]).toMatchObject({ type: "list-item", content: "one" });
+  });
+
+  it("accepts the other bullet markers and ordered items", () => {
+    expect(parseRenderMarkup("* a\n+ b", "gno.land/r/x")[0]!.children).toHaveLength(2);
+    expect(parseRenderMarkup("1. a\n2. b", "gno.land/r/x")[0]!.type).toBe("list");
+  });
+
+  it("ends the list at the first line that is not an item", () => {
+    const nodes = parseRenderMarkup("- one\n- two\nafter", "gno.land/r/x");
+
+    expect(nodes.map((n) => n.type)).toEqual(["list", "paragraph"]);
+    expect(nodes[1]).toMatchObject({ content: "after" });
+  });
+
+  it("keeps links inside a list item", () => {
+    // How the token registry renders every row: bold name, then a link.
+    const nodes = parseRenderMarkup("- **Test** - [gno.land/r/a](/r/a)", "gno.land/r/x");
+    const item = nodes[0]!.children![0]!;
+
+    expect(item.children!.some((c) => c.type === "strong")).toBe(true);
+    expect(item.children!.some((c) => c.type === "link")).toBe(true);
+  });
+
+  it("parses bold, italic and code spans", () => {
+    const nodes = parseRenderMarkup("a **b** c *d* e `f`", "gno.land/r/x");
+    const kinds = nodes[0]!.children!.map((c) => c.type);
+
+    expect(kinds).toContain("strong");
+    expect(kinds).toContain("emphasis");
+    expect(kinds).toContain("code-inline");
+  });
+
+  it("parses emphasis in a paragraph that has no link at all", () => {
+    // Inline parsing used to be gated on a link being present, so a line with
+    // only bold kept its asterisks — what r/sys/users showed.
+    const nodes = parseRenderMarkup("Total registered: **29**", "gno.land/r/x");
+
+    expect(nodes[0]!.children!.some((c) => c.type === "strong")).toBe(true);
+  });
+
+  it("parses emphasis in a heading", () => {
+    const nodes = parseRenderMarkup("# Hello **world**", "gno.land/r/x");
+
+    expect(nodes[0]!.type).toBe("heading");
+    expect(nodes[0]!.children!.some((c) => c.type === "strong")).toBe(true);
+  });
+
+  it("leaves an escaped asterisk as text rather than opening emphasis", () => {
+    // Render() escapes markdown that appears in literal content.
+    const nodes = parseRenderMarkup("a \\*not italic\\* b", "gno.land/r/x");
+
+    expect(nodes[0]!.content).toBe("a *not italic* b");
+  });
+
+  it("keeps a plain paragraph flat rather than wrapping it in children", () => {
+    const nodes = parseRenderMarkup("just text", "gno.land/r/x");
+
+    expect(nodes[0]).toMatchObject({ type: "paragraph", content: "just text" });
+    expect(nodes[0]!.children).toBeUndefined();
+  });
+
+  it("does not treat a code span's contents as markup", () => {
+    const nodes = parseRenderMarkup("use `**not bold**` here", "gno.land/r/x");
+    const code = nodes[0]!.children!.find((c) => c.type === "code-inline");
+
+    expect(code!.content).toBe("**not bold**");
+  });
+});
