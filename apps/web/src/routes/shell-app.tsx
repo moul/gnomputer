@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
+import { Combobox } from "../shell/combobox";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
 
 // A general-purpose vm/qeval REPL — not scoped to one realm/tab the way
@@ -172,7 +173,7 @@ export function ShellApp() {
     });
   }
 
-  // Autocomplete, native-<datalist>-based (same pattern the Browser's own
+  // Autocomplete through the shared Combobox (the same control the Browser's
   // realm-path field uses) — two distinct sources depending on what's
   // being typed:
   //  1. "cd <partial path>" reuses useRealmSuggestions, the exact same
@@ -240,25 +241,21 @@ export function ShellApp() {
           }}
         >
           <span className="shell-app__prompt">{pkg ? `${pkg}> ` : "$ "}</span>
-          <input
-            ref={inputRef}
-            type="text"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            className="shell-app__input"
-            // The visible prompt is a "$" glyph, which is not a name — axe
-            // flagged this as an unlabelled control, and a screen reader
-            // reached it with nothing to announce at all.
-            aria-label="Shell command"
-            list="shell-app-suggestions"
+          <Combobox
+            inputRef={inputRef}
+            className="shell-app__combobox"
             value={draft}
-            disabled={pending}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
+            onSelect={(option) => setDraft(option.value)}
+            listLabel="Command suggestions"
+            // No hint: a suggestion's label here is the realm path and its
+            // value is the whole command containing it, so showing both
+            // rendered the path twice on one line.
+            options={suggestions.map((s) => ({ value: s.value }))}
+            // Only reached when the suggestion list is closed, so history
+            // recall and option navigation share the Arrow keys without
+            // fighting: the list wins while it is open, the history when it
+            // is not.
             onKeyDown={(e) => {
               if (e.key === "ArrowUp") {
                 e.preventDefault();
@@ -268,13 +265,22 @@ export function ShellApp() {
                 recall(1);
               }
             }}
-            autoFocus
+            inputProps={{
+              className: "shell-app__input",
+              autoCorrect: "off",
+              autoCapitalize: "off",
+              spellCheck: false,
+              "data-1p-ignore": "true",
+              "data-lpignore": "true",
+              "data-bwignore": "true",
+              // The visible prompt is a "$" glyph, which is not a name — axe
+              // flagged this as an unlabelled control, and a screen reader
+              // reached it with nothing to announce at all.
+              "aria-label": "Shell command",
+              disabled: pending,
+              autoFocus: true,
+            }}
           />
-          <datalist id="shell-app-suggestions">
-            {suggestions.map((s) => (
-              <option key={s.value} value={s.value} label={s.label} />
-            ))}
-          </datalist>
         </form>
       </div>
     </div>

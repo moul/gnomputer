@@ -4714,3 +4714,67 @@ main {
 .network-dot[data-active="true"] {
   background: currentColor;
 }
+
+/* An ARIA combobox's listbox, replacing the four `<datalist>` popups. A
+   datalist's popup is drawn by the browser outside the page: its text cannot
+   be controlled or inspected, which is why a long realm path was cut off at
+   the right edge with no way to fix or verify a fix (#197). These are real
+   elements, so they can be elided and asserted. */
+.combobox {
+  position: relative;
+  display: contents;
+}
+
+.combobox__list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 60;
+  width: 100%;
+  max-height: 15rem;
+  overflow-y: auto;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+}
+
+.combobox__list[data-open="false"] {
+  display: none;
+}
+
+.combobox__list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  font-family: var(--mono-font);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.combobox__list li[data-active="true"] {
+  background: var(--accent-dim);
+}
+
+/* The label is the elided path and must not be the thing that shrinks; the
+   hint is supporting detail and gives up its space first. */
+.combobox__label {
+  flex: none;
+  white-space: nowrap;
+}
+
+.combobox__hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 11px;
+}
