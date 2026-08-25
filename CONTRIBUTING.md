@@ -144,12 +144,33 @@ Three gates are worth knowing about because they fail PRs:
 
 ## Working habits that this codebase has learned the hard way
 
+**Go looking for bugs by breaking things, not by reading code.** This is the
+habit that has found the most, and it keeps finding things a green suite says
+are fine. Point the app at a chain that does not answer. Open a realm that does
+not exist. Switch network with a window open. Reload with storage already
+populated, which is the state every returning visitor is actually in. The
+audit's own P0/P1 sweep found less than one afternoon of doing this did, and
+every serious bug in the network-switching work — a shared link opening the
+wrong realm, a realm opened from a link never being saved, a desktop remounting
+on every cold load — came out of driving the app, not inspecting it. Reading
+finds what you thought of; probing finds what you did not.
+
 **Verify in a real browser before committing.** Several things here look right
 in the diff and are wrong on screen. A green test suite is not the same as a
 working feature.
 
+**Verify on the deployed site too, not only locally.** Production differs in
+ways that hide bugs: a service worker serves the previous build until it
+updates, and a warm cache changes timing enough to expose races a cold local
+run never hits. The switch overlay never appeared in production for exactly
+that reason, while working every time locally.
+
 **Check that a regression test fails without the fix.** A test written after
 the fact often passes against the old code too, which means it guards nothing.
+Revert the fix, watch it fail, put it back. When a guard cannot be made to fail
+— a race whose ordering the test environment will not reproduce, say — say so
+in the PR rather than letting a passing test imply cover it does not give. Two
+real bugs shipped this way; both are noted where the tests live.
 
 **Resolve CSS conflicts by hand, then check the braces balance.** A scripted
 merge once left two unclosed braces in `shell.css`. CSS nesting makes that

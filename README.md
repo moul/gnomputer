@@ -100,6 +100,8 @@ you can capture a local dev server instead of the deployed site.</sub>
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — repo layout, the architecture rules CI
   enforces, and the habits this codebase learned the hard way.
+- **[AGENTS.md](AGENTS.md)** — for agents working here: probe the running app rather
+  than reading it, and be precise about what was actually verified.
 - **[SECURITY.md](SECURITY.md)** — threat model, the invariants around signing, and how
   to report a vulnerability.
 - **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first.
