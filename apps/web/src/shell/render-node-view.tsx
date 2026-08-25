@@ -41,6 +41,44 @@ export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId:
       return <GnoLink node={node} windowId={windowId} />;
     case "table":
       return <RenderTable node={node} windowId={windowId} />;
+    case "list":
+      return (
+        <ul className="render-list">
+          {node.children?.map((c, i) => (
+            <RenderNodeView key={i} node={c} windowId={windowId} />
+          ))}
+        </ul>
+      );
+    case "list-item":
+      return (
+        <li>
+          {node.content !== undefined ? (
+            <Linkified text={node.content} />
+          ) : (
+            node.children?.map((c, i) => <RenderNodeView key={i} node={c} windowId={windowId} />)
+          )}
+        </li>
+      );
+    case "strong":
+      return (
+        <strong>
+          {node.children?.map((c, i) => (
+            <RenderNodeView key={i} node={c} windowId={windowId} />
+          ))}
+        </strong>
+      );
+    case "emphasis":
+      return (
+        <em>
+          {node.children?.map((c, i) => (
+            <RenderNodeView key={i} node={c} windowId={windowId} />
+          ))}
+        </em>
+      );
+    case "code-inline":
+      // Not linkified: a code span is literal by definition, and turning a
+      // path inside one into a link would contradict the markup.
+      return <code className="render-code-inline">{node.content}</code>;
     case "paragraph":
       return (
         <p>

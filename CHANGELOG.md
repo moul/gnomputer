@@ -4,6 +4,17 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+## 2026-08-25
+
+- Realm output renders its lists and bold text instead of showing the markup.
+  Tokens was the worst of it: the registry lists 44 tokens as markdown list
+  items, and every one arrived joined into a single line with literal `**`
+  around each name — unreadable. Lists are now lists, `**bold**`, `*italic*`
+  and `` `code` `` render as themselves, and links inside a list item still
+  work. This affects every realm, not just Tokens: a line carrying bold but no
+  link was skipped by the inline parser entirely, which is why r/sys/users
+  showed its own asterisks too.
+
 ## 2026-08-24
 
 - Suggestion lists are readable. The realm path field, the command palette,

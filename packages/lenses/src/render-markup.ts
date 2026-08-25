@@ -7,6 +7,10 @@ export type RenderNodeType =
   | "paragraph"
   | "link"
   | "code"
+  | "code-inline"
+  | "strong"
+  | "emphasis"
+  | "list"
   | "list-item"
   | "table"
   | "table-row"
@@ -79,6 +83,50 @@ function unescapeMarkdown(text: string): string {
   return text.replace(/\\([\\`*_{}[\]()#+.!>-])/g, "$1");
 }
 
+/**
+ * `**bold**`, `*italic*` and `` `code` `` within a line.
+ *
+ * Realms lean on these constantly — the GRC20 registry renders every token as
+ * `- **Name** - [path](…)` — and without them the asterisks arrived on screen
+ * as literal text, which is what a reader saw instead of a bold name.
+ *
+ * Escapes are honoured: Render() output escapes markdown that appears in
+ * literal content, so `\*` must stay an asterisk rather than open emphasis.
+ */
+const EMPHASIS_RE =
+  /(?<!\\)(\*\*|__)([\s\S]+?)(?<!\\)\1|(?<!\\)([*_])([\s\S]+?)(?<!\\)\3|(?<!\\)`([^`]+?)`/g;
+
+function parseEmphasis(text: string): RenderNode[] {
+  const nodes: RenderNode[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(EMPHASIS_RE)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex, index)) });
+    }
+    if (match[1]) {
+      // Nested, so `**bold with *italic* inside**` keeps both.
+      nodes.push({ type: "strong", children: parseEmphasis(match[2]!) });
+    } else if (match[3]) {
+      nodes.push({ type: "emphasis", children: parseEmphasis(match[4]!) });
+    } else {
+      // Code spans are literal by definition — no unescaping, no nesting.
+      nodes.push({ type: "code-inline", content: match[5]! });
+    }
+    lastIndex = index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex)) });
+  }
+  return nodes;
+}
+
+/** Emphasis-aware plain text, for the stretches between links. */
+function inlineText(text: string): RenderNode[] {
+  const nodes = parseEmphasis(text);
+  return nodes.length > 0 ? nodes : [{ type: "text", content: unescapeMarkdown(text) }];
+}
+
 function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[] {
   const nodes: RenderNode[] = [];
   let lastIndex = 0;
@@ -86,7 +134,7 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
     const [full, label, href] = match;
     const index = match.index ?? 0;
     if (index > lastIndex) {
-      nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex, index)) });
+      nodes.push(...inlineText(text.slice(lastIndex, index)));
     }
     const resolved = resolveLink(href!, currentPackagePath);
     nodes.push({
@@ -106,12 +154,38 @@ function parseInlineLinks(text: string, currentPackagePath: string): RenderNode[
     lastIndex = index + full!.length;
   }
   if (lastIndex < text.length) {
-    nodes.push({ type: "text", content: unescapeMarkdown(text.slice(lastIndex)) });
+    nodes.push(...inlineText(text.slice(lastIndex)));
   }
-  return nodes.length > 0 ? nodes : [{ type: "text", content: unescapeMarkdown(text) }];
+  return nodes.length > 0 ? nodes : inlineText(text);
+}
+
+/**
+ * A block node holding inline content.
+ *
+ * Collapses to `content` when the inline parse produced nothing but text, so
+ * an ordinary paragraph stays a flat node rather than growing a one-element
+ * children array. Anything richer — a link, emphasis, a code span — keeps its
+ * children.
+ */
+function inlineBlock(
+  type: RenderNodeType,
+  text: string,
+  currentPackagePath: string,
+  extra?: Partial<RenderNode>
+): RenderNode {
+  const children = parseInlineLinks(text, currentPackagePath);
+  if (children.length === 1 && children[0]!.type === "text") {
+    return { type, content: children[0]!.content, ...extra };
+  }
+  return { type, children, ...extra };
 }
 
 const HEADING_RE = /^(#{1,6})\s+(.*)$/;
+
+// `- item`, `* item`, `+ item` and `1. item`. Indentation is allowed but not
+// interpreted: nesting would need a tree, and Gno Render() output is flat in
+// practice — a wrong-but-readable flat list beats one long joined line.
+const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+\.)\s+(.*)$/;
 
 // A GFM delimiter row: the second line of every table, and the only thing
 // that distinguishes a table from ordinary text that happens to contain
@@ -236,13 +310,11 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
     if (paragraphLines.length === 0) return;
     const text = paragraphLines.join(" ");
     paragraphLines = [];
-    LINK_RE.lastIndex = 0;
-    if (LINK_RE.test(text)) {
-      LINK_RE.lastIndex = 0;
-      nodes.push({ type: "paragraph", children: parseInlineLinks(text, currentPackagePath) });
-    } else {
-      nodes.push({ type: "paragraph", content: unescapeMarkdown(text) });
-    }
+    // Always through the inline parser, not only when a link is present.
+    // Gating on links meant a line with `**bold**` and no link skipped inline
+    // parsing altogether and arrived with its asterisks intact — which is
+    // what r/sys/users showed.
+    nodes.push(inlineBlock("paragraph", text, currentPackagePath));
   }
 
   for (let i = 0; i < lines.length; i++) {
@@ -261,6 +333,25 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
       }
     }
 
+    // A run of list lines becomes one list. Without this they fell through to
+    // the paragraph buffer and were joined with spaces — the GRC20 registry's
+    // 45 tokens arrived as a single unreadable line, each item's leading "-"
+    // stranded mid-sentence.
+    if (LIST_ITEM_RE.test(line)) {
+      flushParagraph();
+      const items: RenderNode[] = [];
+      while (i < lines.length) {
+        const itemMatch = LIST_ITEM_RE.exec(lines[i]!);
+        if (!itemMatch) break;
+        items.push(inlineBlock("list-item", itemMatch[1]!, currentPackagePath));
+        i++;
+      }
+      // The loop above consumed the first non-item line; hand it back.
+      i--;
+      nodes.push({ type: "list", children: items });
+      continue;
+    }
+
     const headingMatch = HEADING_RE.exec(line);
     if (!headingMatch) {
       paragraphLines.push(line);
@@ -269,17 +360,7 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
     flushParagraph();
     const headingText = headingMatch[2]!;
     const level = headingMatch[1]!.length;
-    LINK_RE.lastIndex = 0;
-    if (LINK_RE.test(headingText)) {
-      LINK_RE.lastIndex = 0;
-      nodes.push({
-        type: "heading",
-        level,
-        children: parseInlineLinks(headingText, currentPackagePath),
-      });
-    } else {
-      nodes.push({ type: "heading", level, content: unescapeMarkdown(headingText) });
-    }
+    nodes.push(inlineBlock("heading", headingText, currentPackagePath, { level }));
   }
   flushParagraph();
 }
