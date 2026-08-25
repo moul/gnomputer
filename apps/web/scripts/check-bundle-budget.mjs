@@ -24,9 +24,18 @@ const DIST = new URL("../dist/", import.meta.url).pathname;
 // the build on main. The gate runs on CI, so CI is the measurement that
 // counts. Read the number out of the build log, then add a small margin.
 const BUDGETS_KB = {
-  // Local 381.2KB; CI reads ~2KB higher, so ~383. 388 leaves real headroom
-  // this time rather than the 0.2KB that 402 turned out to be.
-  total: 388,
+  // Raised 388 -> 400 when the shared Combobox (#197) landed. That added
+  // ~1KB, taking a local 384.7 to 385.6 — which is ~387.7 on CI against a 388
+  // ceiling, i.e. a coin flip on a gate that is supposed to be a decision.
+  //
+  // Deliberately the stopgap #203 names rather than a fix. That issue has the
+  // measurements: chain-client alone is 45% of this payload, and the real
+  // answers are gating on a per-PR delta and splitting the client so a first
+  // visit does not carry transaction construction it cannot use. Set from the
+  // CI number (~387.7) plus a margin that survives a few features, not from a
+  // local build — the last time this was set locally, the next 0.5KB broke
+  // main.
+  total: 400,
   "index.html": 3,
   // Was 130. Settings is lazy now (it carried seven tab components in the main
   // chunk only because the island dropdown imported the tab list from the same

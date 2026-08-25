@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useShellStore } from "../store";
 import { useSdk } from "../sdk-context";
+import { Combobox } from "./combobox";
+import { smartTruncateRealmPath } from "./smart-truncate-realm-path";
 import { encodeGnoString } from "@gnomputer/lenses";
 import { matchWholeEntity } from "./entity-patterns";
 import { openEntityMatch, openRef } from "./open-ref";
@@ -113,18 +115,24 @@ export function CommandPalette() {
     setCommandPaletteOpen(false);
   }
 
-  async function submit() {
+  /**
+   * @param {string} [text] what to act on, defaulting to what is typed.
+   *   Taking a suggestion passes it explicitly, because `setQuery` has not
+   *   been applied yet at that point and reading state here would submit the
+   *   previous query.
+   */
+  async function submit(text: string = query) {
     // An app name beats entity resolution: typing "editor" means the
     // Editor, not a realm or a username that happens to be spelled that
     // way. Only an exact or prefix match wins, so a realm path containing
     // an app's name still resolves as a realm.
     const topApp = appMatches[0];
-    if (topApp && topApp.label.toLowerCase().startsWith(query.trim().toLowerCase())) {
+    if (topApp && topApp.label.toLowerCase().startsWith(text.trim().toLowerCase())) {
       openApp(topApp.id);
       return;
     }
 
-    const match = matchWholeEntity(query);
+    const match = matchWholeEntity(text);
     if (match && match.kind !== "username") {
       openEntityMatch(match.kind, match.text);
       setQuery("");
@@ -136,7 +144,7 @@ export function CommandPalette() {
     // Either "@moul" (matched as kind "username") or a bare word like
     // "moul" that matched nothing at all — both are worth trying as a
     // username before giving up.
-    const resolved = await resolveAndOpenUsername(match ? match.text : query);
+    const resolved = await resolveAndOpenUsername(match ? match.text : text);
     if (!resolved) {
       setNotFound(true);
       return;
@@ -164,30 +172,37 @@ export function CommandPalette() {
             void submit();
           }}
         >
-          <input
-            type="text"
-            name="command-palette-query"
-            autoFocus
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            list="command-palette-suggestions"
+          <Combobox
+            listLabel="Suggestions"
             value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
+            onChange={(next) => {
+              setQuery(next);
               setNotFound(false);
             }}
-            placeholder="Search or run a command — realm, @user, g1 address, #block, &quot;theme&quot;, &quot;zoom&quot;…"
+            // Taking a suggestion runs it, rather than only filling the box:
+            // the palette exists to get somewhere in one gesture.
+            onSelect={(option) => {
+              setQuery(option.value);
+              void submit(option.value);
+            }}
+            options={suggestions.map((s) => ({
+              value: s.packagePath,
+              label: smartTruncateRealmPath(s.packagePath, 40),
+              hint: s.label === s.packagePath ? undefined : s.label,
+            }))}
+            inputProps={{
+              name: "command-palette-query",
+              autoFocus: true,
+              autoCorrect: "off",
+              autoCapitalize: "off",
+              spellCheck: false,
+              "data-1p-ignore": "true",
+              "data-lpignore": "true",
+              "data-bwignore": "true",
+              placeholder:
+                'Search or run a command — realm, @user, g1 address, #block, "theme", "zoom"…',
+            }}
           />
-          <datalist id="command-palette-suggestions">
-            {suggestions.map((s) => (
-              <option key={s.packagePath} value={s.packagePath} label={s.label} />
-            ))}
-          </datalist>
         </form>
         {appMatches.length > 0 && (
           <ul className="command-palette__apps">

@@ -6,6 +6,14 @@ banner links here.
 
 ## 2026-08-24
 
+- Suggestion lists are readable. The realm path field, the command palette,
+  Shell and Users all used the browser's own autocomplete popup, which draws
+  itself outside the page — so a realm under a `g1…` address was cut off at
+  the right edge, hiding the name that identifies it, and there was no way to
+  fix it. They now share one control that the app draws: long paths are
+  shortened in the middle (`r/g…/agents/gnomem`) with the full path on hover
+  and committed on selection, and the list works with the arrow keys.
+
 - Each network has its own colour, taken from the stone it is named after —
   Sapphire blue, Topaz gold — shown as a dot beside the name in the top bar
   and in the switcher. The name is always next to it and the current network

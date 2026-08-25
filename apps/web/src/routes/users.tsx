@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
+import { Combobox } from "../shell/combobox";
 import { useShellStore } from "../store";
 import { openRef } from "../shell/open-ref";
 import { useResolveUser } from "../use-resolve-user";
@@ -293,24 +294,25 @@ export function Users() {
       >
         <label>
           Look up a user
-          <input
-            type="text"
-            autoComplete="off"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
+          <Combobox
+            listLabel="Address suggestions"
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            list="users-address-suggestions"
-            placeholder="@moul, moul, or g1…"
+            onChange={setDraft}
+            // Taking a suggestion is the search — the form's submit does the
+            // same thing with whatever was typed.
+            onSelect={(option) => setQuery(option.value)}
+            // Not elided: an address is the content here rather than a label
+            // for something else, and the list is as wide as the window.
+            options={addressSuggestions.map((address) => ({ value: address }))}
+            inputProps={{
+              "data-1p-ignore": "true",
+              "data-lpignore": "true",
+              "data-bwignore": "true",
+              onFocus: () => setFocused(true),
+              onBlur: () => setFocused(false),
+              placeholder: "@moul, moul, or g1…",
+            }}
           />
-          <datalist id="users-address-suggestions">
-            {addressSuggestions.map((address) => (
-              <option key={address} value={address} />
-            ))}
-          </datalist>
         </label>
         <button type="submit" disabled={!draft.trim()}>
           Search

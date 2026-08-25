@@ -24,6 +24,8 @@ import { RealmRaw } from "./realm-raw";
 import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
+import { Combobox } from "../shell/combobox";
+import { smartTruncateRealmPath } from "../shell/smart-truncate-realm-path";
 import { useBrowserHomeStore } from "../shell/browser-home-store";
 import { useRealmChangeWatch, type RealmChange } from "../use-realm-change-watch";
 import { ShareLinkButton } from "../shell/share-link-button";
@@ -252,7 +254,6 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   const [focused, setFocused] = useState(false);
   const hasPackage = tab.packagePath !== "";
   const suggestions = useRealmSuggestions(focused, draftPackagePath);
-  const suggestionsListId = `realm-suggestions-${windowId}`;
 
   // The SAME query the Render lens uses, not a parallel one. This only
   // needs to know whether the committed path resolves, and must know it
@@ -281,28 +282,35 @@ function RealmUrlBar({ windowId, tab }: { windowId: string; tab: RealmTab }) {
     >
       <label>
         Realm path
-        <input
-          type="text"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          data-1p-ignore="true"
-          data-lpignore="true"
-          data-bwignore="true"
-          data-status={status}
+        <Combobox
+          listLabel="Realm suggestions"
           value={draftPackagePath}
-          onChange={(e) => setDraftPackagePath(e.target.value)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          list={suggestionsListId}
-          placeholder="gno.land/r/sys/names"
+          onChange={setDraftPackagePath}
+          // Taking a suggestion is the whole intent — no reason to make
+          // someone press Open afterwards.
+          onSelect={(option) => openPackage(option.value)}
+          options={suggestions.map((s) => ({
+            value: s.packagePath,
+            // What #197 was about. The full path is committed and shown as
+            // the hint; the label middle-elides the `g1…` namespace, which is
+            // the part that pushed the package name — the part that actually
+            // identifies the realm — off the right edge.
+            label: smartTruncateRealmPath(s.packagePath, 34),
+            hint: s.label === s.packagePath ? undefined : s.label,
+          }))}
+          inputProps={{
+            autoCorrect: "off",
+            autoCapitalize: "off",
+            spellCheck: false,
+            "data-1p-ignore": "true",
+            "data-lpignore": "true",
+            "data-bwignore": "true",
+            "data-status": status,
+            onFocus: () => setFocused(true),
+            onBlur: () => setFocused(false),
+            placeholder: "gno.land/r/sys/names",
+          }}
         />
-        <datalist id={suggestionsListId}>
-          {suggestions.map((s) => (
-            <option key={s.packagePath} value={s.packagePath} label={s.label} />
-          ))}
-        </datalist>
       </label>
       <button type="submit">Open</button>
       <button
