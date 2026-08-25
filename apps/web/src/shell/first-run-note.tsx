@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useSdk } from "../sdk-context";
 import { focusOrReopen, openRef } from "./open-ref";
 
-const STORAGE_KEY = "first-run-note-dismissed";
+/** Exported because retiring orphaned state has to set it: the keys it drops
+ * are also what tells this note that someone has been here before. */
+export const FIRST_RUN_DISMISSED_KEY = "first-run-note-dismissed";
+const STORAGE_KEY = FIRST_RUN_DISMISSED_KEY;
 
 /** Three things worth doing, rather than three things worth reading.
  *
@@ -50,11 +53,17 @@ export function FirstRunNote() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [dismissed, layout] = await Promise.all([
+      // "Has this person used the app before" is asked by prefix, not by one
+      // key: the layout key carries a schema version and now a network id too,
+      // so naming a single one goes stale silently. It already had — this read
+      // `window-layout:home:v9` long after v10 shipped, so the check had been
+      // answering "first visit" for everyone, and only the dismissal below was
+      // still holding the note back.
+      const [dismissed, layouts] = await Promise.all([
         sdk.uiState.get(STORAGE_KEY),
-        sdk.uiState.get("window-layout:home:v9"),
+        sdk.uiState.keys("window-layout:"),
       ]);
-      if (!cancelled && !dismissed && !layout) setVisible(true);
+      if (!cancelled && !dismissed && layouts.length === 0) setVisible(true);
     })();
     return () => {
       cancelled = true;

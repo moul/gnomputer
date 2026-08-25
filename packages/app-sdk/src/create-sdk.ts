@@ -148,6 +148,12 @@ export interface GnomputerSDK {
   uiState: {
     get(key: string): Promise<string | null>;
     set(key: string, value: string): Promise<void>;
+    /** Stored keys, optionally narrowed by prefix. Needed because some state
+     * is keyed by something not known up front — the layout is stored per
+     * network — so "has anything been saved" cannot be asked with `get`. */
+    keys(prefix?: string): Promise<string[]>;
+    /** Drops one key. For retiring state a schema change has orphaned. */
+    remove(key: string): Promise<void>;
   };
   queryCache: {
     getAll(): Promise<{ queryKeyJson: string; data: unknown; updatedAt: number }[]>;
@@ -313,6 +319,20 @@ export function createGnomputerSDK(
       },
       set: async (key, value) => {
         await bestEffort(db.meta.put({ key: `uiState:${key}`, value }));
+      },
+      keys: async (prefix = "") => {
+        try {
+          const records = await db.meta.toArray();
+          return records
+            .map((record) => record.key)
+            .filter((key) => key.startsWith(`uiState:${prefix}`))
+            .map((key) => key.slice("uiState:".length));
+        } catch {
+          return [];
+        }
+      },
+      remove: async (key) => {
+        await bestEffort(db.meta.delete(`uiState:${key}`));
       },
     },
     queryCache: {

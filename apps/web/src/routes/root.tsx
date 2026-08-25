@@ -18,6 +18,7 @@ import { useThemePersistence } from "../shell/use-theme-persistence";
 import { useQueryCachePersistence } from "../shell/use-query-cache-persistence";
 import { useSettingsTabPersistence } from "../shell/use-settings-tab-persistence";
 import { useRealmTabsPersistence } from "../shell/use-realm-tabs-persistence";
+import { useRetireOrphanedState } from "../shell/use-retire-orphaned-state";
 import { useZoomPersistence } from "../shell/use-zoom-persistence";
 import { useBrowserHomePersistence } from "../shell/use-browser-home-persistence";
 import { useNetworkPersistence } from "../shell/use-network-persistence";
@@ -33,6 +34,7 @@ function RootLayout() {
   useQueryCachePersistence();
   useSettingsTabPersistence();
   useRealmTabsPersistence();
+  useRetireOrphanedState();
   useZoomPersistence();
   useLiveUpdatesPersistence();
   useBrowserHomePersistence();
