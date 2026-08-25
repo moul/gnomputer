@@ -6,6 +6,17 @@ banner links here.
 
 ## 2026-08-25
 
+- Themes are easier to look at for a long time. Every one of them paired a
+  near-white or near-black background with text at the opposite extreme —
+  13.6:1 up to 17:1, roughly double what WCAG asks for at its strictest — and
+  that maximum-contrast pairing is what makes a screen feel like it is glaring
+  at you. Backgrounds have come off the extremes and text has come in to meet
+  them, landing between 10.5:1 and 12.6:1: still above the AAA bar, with the
+  glare gone. Secondary text actually got *more* readable, since some of it
+  was sitting just over the accessibility minimum. Cypherpunk is untouched,
+  because that one is meant to look like a CRT.
+
+
 - Realm output renders its lists and bold text instead of showing the markup.
   Tokens was the worst of it: the registry lists 44 tokens as markdown list
   items, and every one arrived joined into a single line with literal `**`
