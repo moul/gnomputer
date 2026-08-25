@@ -38,6 +38,11 @@ test("a realm that does not exist is named, not reported as a network failure", 
 // realm instead, under the linked realm's title, with no error: the window
 // title said one thing and the tab bar, address bar and content said another.
 // Anyone who had ever opened a realm was affected; only a first-ever visit worked.
+//
+// This is the user-facing shape, not the guard: here restoration happens to
+// land before mount, so it passes with the fix reverted. The guard that fails
+// without it is use-realm-tabs-persistence.race.test.tsx, which controls when
+// the restore resolves.
 test("a shared link wins over the tab restored from a previous visit", async ({ page }) => {
   await page.setViewportSize({ width: 1500, height: 900 });
 

@@ -11,15 +11,20 @@ export function SdkProvider({
   children: ReactNode;
   overrideSdk?: GnomputerSDK;
 }) {
+  // Skipped entirely when a caller supplies its own SDK. Building one opens
+  // IndexedDB and wires the whole storage layer, so constructing it only to
+  // discard it is real work — and it pulls the entire SDK into any test that
+  // provides a fake.
   const createdSdk = useMemo(() => {
+    if (overrideSdk) return null;
     const sdk = createGnomputerSDK();
     // Point the whole app at a local mock RPC when VITE_RPC_URL is set
     // (e2e only — no-op in any normal build). See test-network-override.ts.
     const override = testNetworkOverride();
     if (override) sdk.networks.setActiveConfig(override);
     return sdk;
-  }, []);
-  const sdk = overrideSdk ?? createdSdk;
+  }, [overrideSdk]);
+  const sdk = overrideSdk ?? createdSdk!;
   return <SdkContext.Provider value={sdk}>{children}</SdkContext.Provider>;
 }
 
