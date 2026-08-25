@@ -114,6 +114,11 @@ test("the overlay still shows on a switch that restores instantly", async ({ pag
   // that started the switch, so anything watching only the "switching"
   // boolean sees it go true and back to false without rendering in between,
   // and the overlay silently never appears.
+  //
+  // Coverage, not the guard: Playwright's timing does not reproduce that
+  // batch, so this passes with the fix reverted. The guard that fails without
+  // it is network-switch-overlay.test.tsx, which performs both store writes
+  // inside one act().
   await page.setViewportSize({ width: 1500, height: 900 });
   await page.goto("/");
   await page.waitForSelector(".island__clock");
