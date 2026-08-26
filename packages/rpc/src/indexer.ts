@@ -418,8 +418,16 @@ export async function realmHistory(
 // double-counts gas across realms in a single tx, which is the same
 // tradeoff mygnoscan's own per-realm gas tally makes (confirmed via its
 // per-realm storage/gas tab attributing a shared tx to multiple realms).
-const CHAIN_ACTIVITY_QUERY = `{
-  getTransactions(where: { success: { eq: true } }, order: { heightAndIndex: DESC }) {
+/** Blocks of history the leaderboard is built from. Measured at 1,961
+ * transactions on Sapphire — comfortably under the indexer's ten-thousand
+ * element cap, which an unbounded scan hit every time. */
+const CHAIN_ACTIVITY_BLOCK_WINDOW = 2_000;
+
+const CHAIN_ACTIVITY_QUERY = `query ChainActivity($fromHeight: Int!) {
+  getTransactions(
+    where: { success: { eq: true }, block_height: { gt: $fromHeight } }
+    order: { heightAndIndex: DESC }
+  ) {
     block_height
     index
     gas_used
@@ -446,10 +454,17 @@ export async function chainActivityStats(
     throw new Error(`${network.id} has no indexer configured — chain activity stats need one.`);
   }
 
+  const { latestBlockHeight } = await queryIndexer(
+    network.indexerGraphqlUrl,
+    LATEST_HEIGHT_QUERY,
+    z.object({ latestBlockHeight: z.number() })
+  );
+
   const data = await queryIndexer(
     network.indexerGraphqlUrl,
     CHAIN_ACTIVITY_QUERY,
-    z.object({ getTransactions: z.array(ActivityTxSchema).nullable() })
+    z.object({ getTransactions: z.array(ActivityTxSchema).nullable() }),
+    { fromHeight: Math.max(0, latestBlockHeight - CHAIN_ACTIVITY_BLOCK_WINDOW) }
   );
   const txs = data.getTransactions ?? [];
 
@@ -673,8 +688,27 @@ const ListTransactionsTxSchema = z.object({
 // valid and returns BOTH successful and failed transactions — confirmed
 // live (863 real transactions on Topaz, including both) — unlike every
 // other query in this file, which filters by success/pkg_path/etc.
-const LIST_TRANSACTIONS_QUERY = `{
-  getTransactions(where: {}, order: { heightAndIndex: DESC }) {
+/**
+ * Recent transactions, newest first, bounded by block height.
+ *
+ * `where: {}` asked for every transaction the chain had ever produced. The
+ * indexer answers that with `max elements per query reached (10000)` in
+ * `errors` *and* ten thousand rows in `data` — and since an `errors` array is
+ * a failed query here, the Transactions app sat on "Loading transaction
+ * history…" forever on any chain past its first ten thousand transactions.
+ * Sapphire crossed that long ago.
+ *
+ * There is no `first`/`limit` argument on this field (confirmed by
+ * introspection: `where` and `order` are the only two), so the bound has to be
+ * a height window — the same shape dailyActivity already uses.
+ */
+/** Block windows to try, narrowest first. 2,000 blocks was measured at 1,961
+ * transactions on Sapphire — comfortably under the cap — and the last entry is
+ * wide enough to reach back through a quiet chain's history. */
+const LIST_TRANSACTIONS_WINDOWS = [2_000, 20_000, 200_000];
+
+const LIST_TRANSACTIONS_QUERY = `query ListTransactions($fromHeight: Int!) {
+  getTransactions(where: { block_height: { gt: $fromHeight } }, order: { heightAndIndex: DESC }) {
     block_height
     index
     success
@@ -700,13 +734,31 @@ export async function listTransactions(
     throw new Error(`${network.id} has no indexer configured — transaction history needs one.`);
   }
 
-  const data = await queryIndexer(
+  // Cheap (measured 0.3s) and the only way to know where the window starts.
+  const { latestBlockHeight } = await queryIndexer(
     network.indexerGraphqlUrl,
-    LIST_TRANSACTIONS_QUERY,
-    z.object({ getTransactions: z.array(ListTransactionsTxSchema).nullable() })
+    LATEST_HEIGHT_QUERY,
+    z.object({ latestBlockHeight: z.number() })
   );
 
-  const transactions: IndexerTransaction[] = (data.getTransactions ?? []).slice(0, limit).map((tx) => {
+  // Transaction density is a property of the chain, not something we can know
+  // ahead of time: the same window that returns two thousand rows on a busy
+  // testnet returns none on a quiet one. Start narrow enough to stay well
+  // under the indexer's ten-thousand cap, and widen only if there was not
+  // enough to fill the list.
+  let rows: z.infer<typeof ListTransactionsTxSchema>[] = [];
+  for (const window of LIST_TRANSACTIONS_WINDOWS) {
+    const data = await queryIndexer(
+      network.indexerGraphqlUrl,
+      LIST_TRANSACTIONS_QUERY,
+      z.object({ getTransactions: z.array(ListTransactionsTxSchema).nullable() }),
+      { fromHeight: Math.max(0, latestBlockHeight - window) }
+    );
+    rows = data.getTransactions ?? [];
+    if (rows.length >= limit || window >= latestBlockHeight) break;
+  }
+
+  const transactions: IndexerTransaction[] = rows.slice(0, limit).map((tx) => {
     const packagePaths = new Set<string>();
     for (const message of tx.messages) {
       const path = message.value?.pkg_path ?? message.value?.package?.path;

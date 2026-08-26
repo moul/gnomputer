@@ -323,6 +323,21 @@ describe("recentEvents", () => {
   });
 });
 
+/** chainActivityStats makes TWO requests now: latestBlockHeight, then the
+ * bounded transaction query. */
+function mockDailyActivityStyle(data: unknown, latestBlockHeight = 500_000) {
+  let first = true;
+  global.fetch = vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      ok: true,
+      json: async () => {
+        if (first) { first = false; return { data: { latestBlockHeight } }; }
+        return { data };
+      },
+    })
+  ) as unknown as typeof fetch;
+}
+
 describe("chainActivityStats", () => {
   const originalFetch = global.fetch;
   afterEach(() => {
@@ -330,7 +345,7 @@ describe("chainActivityStats", () => {
   });
 
   it("aggregates totals, per-realm gas, top gas transactions, and top callers/deployers", async () => {
-    mockIndexerResponse({
+    mockDailyActivityStyle({
       getTransactions: [
         {
           block_height: 100,
@@ -393,7 +408,7 @@ describe("chainActivityStats", () => {
   });
 
   it("returns zeroed stats when getTransactions is null", async () => {
-    mockIndexerResponse({ getTransactions: null });
+    mockDailyActivityStyle({ getTransactions: null });
     const result = await chainActivityStats(NETWORK, NOW);
     expect(result.data.totalTxs).toBe(0);
     expect(result.data.topRealmsByGas).toEqual([]);
@@ -470,6 +485,25 @@ describe("dailyActivity", () => {
   });
 });
 
+/** listTransactions makes TWO requests: latestBlockHeight, then the bounded
+ * transaction query — and widens the window when the first pass returns fewer
+ * rows than the limit, so the same payload answers every attempt. */
+function mockListTransactions(data: unknown, latestBlockHeight = 500_000) {
+  let first = true;
+  global.fetch = vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      ok: true,
+      json: async () => {
+        if (first) {
+          first = false;
+          return { data: { latestBlockHeight } };
+        }
+        return { data };
+      },
+    })
+  ) as unknown as typeof fetch;
+}
+
 describe("listTransactions", () => {
   const originalFetch = global.fetch;
   afterEach(() => {
@@ -477,7 +511,7 @@ describe("listTransactions", () => {
   });
 
   it("maps real fields and dedupes package paths across messages, including both success and failure", async () => {
-    mockIndexerResponse({
+    mockListTransactions({
       getTransactions: [
         {
           block_height: 200,
@@ -533,7 +567,7 @@ describe("listTransactions", () => {
   });
 
   it("respects the limit parameter", async () => {
-    mockIndexerResponse({
+    mockListTransactions({
       getTransactions: Array.from({ length: 5 }, (_, i) => ({
         block_height: i,
         index: 0,
@@ -552,7 +586,7 @@ describe("listTransactions", () => {
   });
 
   it("returns an empty list when getTransactions is null", async () => {
-    mockIndexerResponse({ getTransactions: null });
+    mockListTransactions({ getTransactions: null });
     const result = await listTransactions(NETWORK, NOW);
     expect(result.data).toEqual([]);
   });
