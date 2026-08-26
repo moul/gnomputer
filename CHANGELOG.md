@@ -4,6 +4,16 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Apps that opened empty now open with something in them. Transactions and
+  Chain Stats were not slow, they were broken: both asked the indexer for every
+  transaction the chain had ever produced, which fails outright past ten
+  thousand, so they sat on "Loading…" forever. Transactions lists real history
+  again and Chain Stats shows its totals and leaderboards. Users adds the
+  realms whitelisted to register names, read from the realm itself so it works
+  without an indexer. Explorer opens on the network's explorer instead of
+  "Nothing to show yet", and Accounts shows your own account when a wallet is
+  connected rather than an empty box.
+
 ## 2026-08-25
 
 - Themes are easier to look at for a long time. Every one of them paired a
