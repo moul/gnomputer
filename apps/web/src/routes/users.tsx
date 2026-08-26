@@ -263,6 +263,25 @@ export function Users() {
     },
   });
 
+  // Read straight off the realm rather than the indexer: `Controllers()` is an
+  // exported function, so this works on any network with an RPC — including
+  // ones with no indexer, where the rest of this app has nothing to show.
+  // It answers the question the stats line raises but does not: registration
+  // is whitelisted, so *who* is allowed to register a name here.
+  const { data: controllers } = useQuery({
+    queryKey: ["users-controllers", sdk.networks.getActive().id],
+    queryFn: async () => {
+      const env = await sdk.rpc.evalExpression(
+        USERS_PACKAGE,
+        "Controllers()",
+        new Date().toISOString()
+      );
+      // qeval renders Gno values, not JSON: a []address comes back as
+      // `(slice[("g1…" .uverse.address)] [].uverse.address)`.
+      return [...env.data.matchAll(/"(g1[a-z0-9]+)"/g)].map((m) => m[1]!);
+    },
+  });
+
   const {
     data: result,
     error: lookupError,
@@ -283,6 +302,28 @@ export function Users() {
             ? "Loading directory stats…"
             : `${stats?.addresses ?? "?"} addresses · ${stats?.names ?? "?"} names registered on ${USERS_PACKAGE}.`}
         </p>
+      )}
+      {controllers && controllers.length > 0 && (
+        <div className="users-app__controllers">
+          <p className="settings-section-label">
+            Whitelisted to register names ({controllers.length})
+          </p>
+          <ul className="users-app__recent-list">
+            {controllers.map((address) => (
+              <li key={address}>
+                <button
+                  type="button"
+                  className="users-app__address-link"
+                  onClick={(e) =>
+                    openRef(`gno://_/address/${address}`, { x: e.clientX, y: e.clientY })
+                  }
+                >
+                  {address}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {account && <RegisterUsernameSection address={account.address} />}
       <form
@@ -339,8 +380,8 @@ export function Users() {
           </div>
         ) : (
           <p className="state-line">
-            Search by username or address — there&rsquo;s no way to browse every registered user
-            without the indexer.
+            Search by username or address. A full listing would need an indexer that can enumerate
+            the realm&rsquo;s name store; the realm itself only exposes lookups and totals.
           </p>
         )
       ) : lookupPending ? (

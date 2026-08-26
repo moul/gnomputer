@@ -1,4 +1,5 @@
 import { Window } from "./window";
+import { useSdk } from "../sdk-context";
 import { useExplorerWindowStore } from "./explorer-window-store";
 import { EmbedFrame } from "./embed-frame";
 
@@ -9,7 +10,13 @@ import { EmbedFrame } from "./embed-frame";
 // identity beats a generic iframe box that happens to say "Explorer" today
 // and something else tomorrow.
 export function ExplorerWindow() {
-  const url = useExplorerWindowStore((s) => s.url);
+  const sdk = useSdk();
+  const requested = useExplorerWindowStore((s) => s.url);
+  // Opened from the palette or the Apps menu there is no URL yet, and the
+  // window said "Nothing to show yet" — a dead box for an app that has a
+  // perfectly good home page. Every caller that opens it *with* a URL still
+  // wins, since theirs is more specific than the fallback.
+  const url = requested ?? sdk.networks.getActive().explorerUrl ?? null;
 
   return (
     <Window

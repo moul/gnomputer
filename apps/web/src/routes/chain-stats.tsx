@@ -158,7 +158,10 @@ function DailyActivitySection() {
   );
 }
 
-// Aggregated from every successful transaction on the chain (indexer-backed
+// Aggregated from the successful transactions in a recent window of blocks,
+// not from all of history: an unbounded scan hits the indexer's
+// ten-thousand-element cap and fails outright, which is what left this app on
+// "Loading chain activity stats…" forever (indexer-backed
 // — see sdk.indexer.chainActivityStats / rpc/src/indexer.ts's
 // chainActivityStats for the exact attribution rules, e.g. a multi-message
 // tx's gas counts toward every realm it touched, same tradeoff mygnoscan's

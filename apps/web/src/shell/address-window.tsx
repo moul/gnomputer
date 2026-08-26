@@ -11,11 +11,13 @@ import { useStorePersistence } from "./use-store-persistence";
 import { gnowebAddressUrl, mygnoscanAddressUrl } from "./gnoweb-links";
 import { openExplorer } from "./open-explorer";
 import { formatUgnotString } from "../format-number";
+import { useWalletStore } from "./wallet-store";
 
 export function AddressWindow() {
   useStorePersistence("ui-state:address-window", useAddressWindowStore);
   const address = useAddressWindowStore((s) => s.currentAddress);
   const setCurrentAddress = useAddressWindowStore((s) => s.setCurrentAddress);
+  const account = useWalletStore((s) => s.account);
 
   return (
     <Window
@@ -29,6 +31,14 @@ export function AddressWindow() {
         <AddressLookupForm onResolved={setCurrentAddress} />
         {address ? (
           <AddressContent address={address} />
+        ) : account ? (
+          // Opening this with a wallet connected and showing an empty box was
+          // asking a question it already had the answer to. Your own account
+          // is the one you are most likely to want.
+          <div className="address-window__suggestion">
+            <p className="state-line">Showing your connected account.</p>
+            <AddressContent address={account.address} />
+          </div>
         ) : (
           <p className="state-line">No address selected yet — look one up above.</p>
         )}
