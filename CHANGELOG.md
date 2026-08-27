@@ -4,6 +4,14 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Two apps that read as broken on a young chain now explain themselves. Chain
+  Stats drew its day-by-day charts as a single full-width bar when the chain
+  had only one day of history, so it states the day's numbers instead until
+  there is a second day to compare against. The Block Explorer's live feed is
+  a wall of "0 transactions" on a quiet chain — Pearl had 150 in its first
+  8,000 blocks — so once every block it has seen is empty it points at the
+  "Only with txs" filter sitting above the list.
+
 - Pearl, the newest official testnet, is now what a first visit lands on;
   Sapphire moves one place down and stays a menu entry away. If you already
   picked a chain you stay on it — the default only decides where a session

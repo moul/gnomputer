@@ -23,6 +23,17 @@ import type { BlockTxResult, IndexerBlockTx } from "@gnomputer/app-sdk";
 // briefly 404 against getBlockSummary before it's fully indexed.
 const LATEST_SAFETY_MARGIN = 2;
 
+/** Empty blocks in a row before the live feed suggests the "Only with txs"
+ * filter. Below this it is just a lull; at this many it is the chain's normal
+ * state and the unfiltered feed has nothing left to tell you. */
+const QUIET_CHAIN_HINT_AFTER = 8;
+
+/** Whether the live feed has shown enough consecutive empty blocks to be worth
+ * pointing at the filter, rather than a lull that will pass on its own. */
+export function isQuietChain(blocks: { numTxs: number }[]): boolean {
+  return blocks.length >= QUIET_CHAIN_HINT_AFTER && blocks.every((b) => b.numTxs === 0);
+}
+
 /** One transaction in a block.
  *
  * Two sources, deliberately layered. `tx` is RPC `block_results` — always
@@ -269,6 +280,8 @@ export function BlockExplorer() {
       : blocks.filter((b) => b.numTxs > 0)
     : blocks;
 
+  const allSeenBlocksAreEmpty = isQuietChain(blocks);
+
   return (
     <div className="block-explorer">
       <div className="block-explorer__layout">
@@ -293,6 +306,17 @@ export function BlockExplorer() {
             <p className="state-line">
               Most recent blocks containing transactions, from the indexer — not the live feed, so
               these can sit well behind the current height.
+            </p>
+          )}
+          {/* A quiet chain fills this list with empty blocks and looks broken.
+              Pearl produces a block every few seconds but had 150 transactions
+              in its first 8,000, so every row read "0 transactions" — with the
+              answer sitting in a checkbox directly above, unnoticed. Point at
+              it rather than leaving the reader to conclude nothing works. */}
+          {!txsOnly && allSeenBlocksAreEmpty && (
+            <p className="state-line">
+              Every block seen so far is empty — normal on a quiet chain. Tick{" "}
+              <strong>Only with txs</strong> above to search history for blocks that did something.
             </p>
           )}
           {warnings.length > 0 && (
