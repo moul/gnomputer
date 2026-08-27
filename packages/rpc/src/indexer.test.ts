@@ -323,8 +323,9 @@ describe("recentEvents", () => {
   });
 });
 
-/** chainActivityStats makes TWO requests now: latestBlockHeight, then the
- * bounded transaction query. */
+/** chainActivityStats asks for latestBlockHeight first, then the bounded
+ * transaction query — which it may repeat at a wider window on a quiet chain,
+ * so every request after the first answers with the same `data`. */
 function mockDailyActivityStyle(data: unknown, latestBlockHeight = 500_000) {
   let first = true;
   global.fetch = vi.fn().mockImplementation(() =>
@@ -417,6 +418,67 @@ describe("chainActivityStats", () => {
 
   it("throws when the network has no indexer configured", async () => {
     await expect(chainActivityStats({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+
+  it("widens the window on a quiet chain instead of reporting a near-empty leaderboard", async () => {
+    // Pearl, measured live at height 7,600: 24 transactions in the last 2,000
+    // blocks but 142 in its whole history. Fixed at 2,000 the leaderboard
+    // showed a handful of rows on the network a first visit now lands on, and
+    // read as though the chain were dead.
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 7_600 } }) });
+      }
+      const { fromHeight } = JSON.parse(String(init.body)).variables;
+      const count = fromHeight === 0 ? 142 : 24;
+      const getTransactions = Array.from({ length: count }, (_, i) => ({
+        block_height: 7_000 + i,
+        index: 0,
+        gas_used: 10,
+        gas_wanted: 20,
+        gas_fee: { amount: 1 },
+        messages: [{ typeUrl: "exec", value: { pkg_path: "gno.land/r/demo/a", caller: "g1abc" } }],
+      }));
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    const result = await chainActivityStats(NETWORK, NOW);
+
+    expect(JSON.parse(bodies[1]!).variables).toEqual({ fromHeight: 5_600 });
+    // Second attempt clamps at zero rather than asking for a negative height.
+    expect(JSON.parse(bodies[2]!).variables).toEqual({ fromHeight: 0 });
+    // And stops there: 20,000 already covers a 7,600-block chain, so a third
+    // attempt would re-fetch the identical set.
+    expect(bodies).toHaveLength(3);
+    expect(result.data.totalTxs).toBe(142);
+  });
+
+  it("stops at the first window on a chain busy enough to fill it", async () => {
+    // The widening must not cost a second round trip on Sapphire, which
+    // already yields 1,961 transactions at the narrowest window.
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 500_000 } }) });
+      }
+      const getTransactions = Array.from({ length: 1_961 }, (_, i) => ({
+        block_height: 499_000 + i,
+        index: 0,
+        gas_used: 10,
+        gas_wanted: 20,
+        gas_fee: { amount: 1 },
+        messages: [{ typeUrl: "exec", value: { pkg_path: "gno.land/r/demo/a", caller: "g1abc" } }],
+      }));
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    const result = await chainActivityStats(NETWORK, NOW);
+
+    expect(bodies).toHaveLength(2);
+    expect(result.data.totalTxs).toBe(1_961);
   });
 });
 

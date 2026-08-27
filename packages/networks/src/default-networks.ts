@@ -3,23 +3,53 @@ import type { NetworkConfig } from "./network-config";
 /**
  * The network a session starts on when it has no stored choice.
  *
- * Sapphire, the newest official testnet. #199 added it but deliberately left
- * this on Topaz so that *gaining* a network would not move anyone's chain out
- * from under them; moving it is now the deliberate step. That safeguard still
- * applies either way — a stored `active-network` always wins (AUD-013), so
- * this only decides where a first visit, or one whose storage was cleared,
- * lands.
+ * Pearl, the newest official testnet; Sapphire is the one behind it and stays
+ * a menu entry away. A stored `active-network` always wins (AUD-013), so this
+ * only decides where a first visit — or one whose storage was cleared — lands,
+ * and nobody is moved off the chain they picked.
  *
  * DEFAULT_NETWORKS below is ordered to match: the default leads the list, and
  * that order is what the network picker renders.
  */
-export const DEFAULT_NETWORK_ID = "sapphire";
+export const DEFAULT_NETWORK_ID = "pearl";
 
 function withWebsocket(rpcUrl: string): string {
   return rpcUrl.replace(/^http/, "ws") + "/websocket";
 }
 
 export const DEFAULT_NETWORKS: NetworkConfig[] = [
+  {
+    id: "pearl",
+    name: "Pearl (official testnet)",
+    shortName: "Pearl",
+    // A pearl's lustre rather than its body colour: cream on white would be
+    // invisible on the light themes, and the dot has to read on both.
+    color: "#b8829e",
+    chainId: "pearl-1",
+    // Same `rpc.<name>.testnets.gno.land` convention as Topaz and Sapphire —
+    // not the `pearl.gno.land` the tx-exports CI change suggested, which does
+    // not resolve. Confirmed live: chain `pearl-1`, v1.0.0-rc.0.
+    rpcUrl: "https://rpc.pearl.testnets.gno.land",
+    websocketUrl: withWebsocket("https://rpc.pearl.testnets.gno.land"),
+    gnowebUrl: "https://pearl.testnets.gno.land",
+    // `/graphql/query`, not `/graphql` — the latter serves the GraphQL
+    // playground as HTML, exactly as it did on Sapphire, and pointing the app
+    // at it would feed markup to a JSON parser. Confirmed live: it answers
+    // `{ latestBlockHeight }` with real data, a cross-origin read from the
+    // deployed app succeeds (so ADR-018 holds here too), and the full
+    // getTransactions message union the Block Explorer needs resolves.
+    indexerGraphqlUrl: "https://indexer.pearl.testnets.gno.land/graphql/query",
+    gnockpitUrl: "https://gnockpit.pearl.testnets.gno.land",
+    explorerUrl: "https://explorer.pearl.testnets.gno.land",
+    statusUrl: "https://status.pearl.testnets.gno.land",
+    environment: "testnet",
+    // Same conservative claim as the other testnets: nothing states a
+    // retention policy, and "rolling" warns that history may not go back
+    // forever rather than promising it does.
+    persistence: "rolling",
+    trust: "official",
+    capabilities: ["network.read", "indexer.read"],
+  },
   {
     id: "sapphire",
     name: "Sapphire (official testnet)",

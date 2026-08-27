@@ -48,7 +48,7 @@ test("a network that no longer exists is reported, not silently swapped", async 
   const banner = page.locator(".network-recovery-banner");
   await expect(banner).toContainText("ghost-net", { timeout: 10000 });
   // Names whichever network it fell back to, which is the default.
-  await expect(banner).toContainText("Sapphire");
+  await expect(banner).toContainText("Pearl");
 
   await banner.getByRole("button", { name: "Dismiss" }).click();
   await expect(banner).toHaveCount(0);

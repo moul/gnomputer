@@ -43,17 +43,23 @@ describe("networkShortName", () => {
 });
 
 describe("DEFAULT_NETWORKS", () => {
-  it("defaults to the sapphire network with correct RPC, chain id, and indexer", () => {
-    expect(DEFAULT_NETWORK_ID).toBe("sapphire");
+  it("defaults to the pearl network with correct RPC, chain id, and indexer", () => {
+    expect(DEFAULT_NETWORK_ID).toBe("pearl");
     const active = DEFAULT_NETWORKS.find((n) => n.id === DEFAULT_NETWORK_ID);
     expect(active).toMatchObject({
-      chainId: "sapphire-1",
-      rpcUrl: "https://rpc.sapphire.testnets.gno.land",
-      indexerGraphqlUrl: "https://indexer.sapphire.testnets.gno.land/graphql/query",
+      chainId: "pearl-1",
+      rpcUrl: "https://rpc.pearl.testnets.gno.land",
+      indexerGraphqlUrl: "https://indexer.pearl.testnets.gno.land/graphql/query",
       environment: "testnet",
       trust: "official",
       persistence: "rolling",
     });
+  });
+
+  it("leads the list with the default so the picker opens on it", () => {
+    // The picker renders DEFAULT_NETWORKS in order. A default buried mid-list
+    // would put the chain you are actually on below ones you are not.
+    expect(DEFAULT_NETWORKS[0]?.id).toBe(DEFAULT_NETWORK_ID);
   });
 
   it("keeps topaz's endpoints intact now that it is no longer the default", () => {
@@ -72,7 +78,7 @@ describe("DEFAULT_NETWORKS", () => {
 
   it("still includes betanet and gnodev as selectable networks", () => {
     expect(DEFAULT_NETWORKS.map((n) => n.id)).toEqual(
-      expect.arrayContaining(["topaz", "sapphire", "betanet", "gnodev"])
+      expect.arrayContaining(["pearl", "topaz", "sapphire", "betanet", "gnodev"])
     );
   });
 
@@ -90,6 +96,16 @@ describe("DEFAULT_NETWORKS", () => {
       trust: "official",
     });
     expect(sapphire?.indexerGraphqlUrl).toMatch(/\/graphql\/query$/);
+  });
+
+  it("points every indexer-backed network at the query endpoint, not the playground", () => {
+    // Sapphire's `/graphql` serving HTML was not a one-off: Pearl's does the
+    // same, and Pearl is now what a first visit lands on, so the trap would
+    // hit by default rather than a menu entry away. Generalised so the next
+    // testnet added cannot reintroduce it.
+    for (const net of DEFAULT_NETWORKS) {
+      if (net.indexerGraphqlUrl) expect(net.indexerGraphqlUrl).toMatch(/\/graphql\/query$/);
+    }
   });
 
   it("defaults to a network that is both official and indexer-backed", () => {

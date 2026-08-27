@@ -418,10 +418,23 @@ export async function realmHistory(
 // double-counts gas across realms in a single tx, which is the same
 // tradeoff mygnoscan's own per-realm gas tally makes (confirmed via its
 // per-realm storage/gas tab attributing a shared tx to multiple realms).
-/** Blocks of history the leaderboard is built from. Measured at 1,961
- * transactions on Sapphire — comfortably under the indexer's ten-thousand
- * element cap, which an unbounded scan hit every time. */
-const CHAIN_ACTIVITY_BLOCK_WINDOW = 2_000;
+/** Block windows the leaderboard is built from, narrowest first. 2,000 blocks
+ * measured 1,961 transactions on Sapphire — comfortably under the indexer's
+ * ten-thousand element cap, which an unbounded scan hit every time.
+ *
+ * Fixed at 2,000 this was a leaderboard of nearly nothing on a young chain:
+ * Pearl, now the default a first visit lands on, had 24 transactions in its
+ * last 2,000 blocks, so "top realms by gas" would have listed a handful of
+ * rows and read as though the chain were dead. Density is a property of the
+ * chain, not something we can know ahead of time, so widen the same way
+ * listTransactions does — and for the same reason. */
+const CHAIN_ACTIVITY_BLOCK_WINDOWS = [2_000, 20_000, 200_000];
+
+/** Transactions below which the window is worth widening. Well under the
+ * 1,961 a busy chain already yields at the narrowest window, so a chain like
+ * Sapphire still stops at the first — only a quiet one pays for a second
+ * round trip. */
+const CHAIN_ACTIVITY_MIN_TXS = 200;
 
 const CHAIN_ACTIVITY_QUERY = `query ChainActivity($fromHeight: Int!) {
   getTransactions(
@@ -460,13 +473,18 @@ export async function chainActivityStats(
     z.object({ latestBlockHeight: z.number() })
   );
 
-  const data = await queryIndexer(
-    network.indexerGraphqlUrl,
-    CHAIN_ACTIVITY_QUERY,
-    z.object({ getTransactions: z.array(ActivityTxSchema).nullable() }),
-    { fromHeight: Math.max(0, latestBlockHeight - CHAIN_ACTIVITY_BLOCK_WINDOW) }
-  );
-  const txs = data.getTransactions ?? [];
+  let txs: z.infer<typeof ActivityTxSchema>[] = [];
+  for (const window of CHAIN_ACTIVITY_BLOCK_WINDOWS) {
+    const data = await queryIndexer(
+      network.indexerGraphqlUrl,
+      CHAIN_ACTIVITY_QUERY,
+      z.object({ getTransactions: z.array(ActivityTxSchema).nullable() }),
+      { fromHeight: Math.max(0, latestBlockHeight - window) }
+    );
+    txs = data.getTransactions ?? [];
+    // Widening past the chain's own height would re-fetch the identical set.
+    if (txs.length >= CHAIN_ACTIVITY_MIN_TXS || window >= latestBlockHeight) break;
+  }
 
   let totalCalls = 0;
   let totalDeploys = 0;

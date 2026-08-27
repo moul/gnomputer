@@ -1,10 +1,12 @@
 # @gnomputer/networks
 
 The network registry: a schema for what a Gno network configuration is, and
-the four built-in entries.
+the five built-in entries.
 
-- **sapphire** — the newest official testnet, and the default.
-- **topaz** — the previous default, still a first-class selectable network.
+- **pearl** — the newest official testnet, and the default.
+- **sapphire** — the one behind Pearl, and the fallback: still a first-class
+  selectable network, a menu entry away.
+- **topaz** — an earlier default, still selectable.
 - **betanet**
 - **gnodev** — a local development node. Never the default; a test asserts
   that, because it requires a `gnodev` you're running yourself.
@@ -16,7 +18,7 @@ wins, so nobody is moved off the chain they picked (AUD-013).
 ## Exports
 
 `NetworkConfigSchema`, `NetworkConfig`, `DEFAULT_NETWORKS`,
-`DEFAULT_NETWORK_ID` (`"sapphire"`).
+`DEFAULT_NETWORK_ID` (`"pearl"`).
 
 ## Adding a network
 
