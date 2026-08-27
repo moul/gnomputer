@@ -147,6 +147,26 @@ function DailyActivitySection() {
     return <p className="state-line">No historical block data found.</p>;
   }
 
+  // One day is not a trend, and drawing it as a chart draws a single bar
+  // filling the full width — which reads as a broken chart rather than as a
+  // chain that is a few hours old. Pearl looked exactly like that on the day
+  // it became the default. State the numbers instead; the chart comes back on
+  // its own as soon as there is a second day to compare against.
+  if (days.length === 1) {
+    const only = days[0]!;
+    return (
+      <section className="chain-stats__section">
+        <h3>Daily activity ({only.date})</h3>
+        <p className="state-line">
+          One day of history so far — {formatNumber(only.blockCount)}{" "}
+          {only.blockCount === 1 ? "block" : "blocks"} with activity and{" "}
+          {formatNumber(only.txCount)} {only.txCount === 1 ? "transaction" : "transactions"}. A
+          day-by-day chart appears once there is more than one day to compare.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="chain-stats__section">
       <h3>
