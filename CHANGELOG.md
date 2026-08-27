@@ -4,6 +4,21 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Pearl, the newest official testnet, is now what a first visit lands on;
+  Sapphire moves one place down and stays a menu entry away. If you already
+  picked a chain you stay on it — the default only decides where a session
+  with no stored choice starts. Chain Stats widens its window on a young chain
+  rather than reporting a near-empty leaderboard: Pearl has 24 transactions in
+  its last 2,000 blocks but 142 in total, and the fixed window showed the
+  former.
+
+- Opening a shared link no longer scribbles on another chain's desktop. The
+  active network is a placeholder for the first moments of a boot — the store
+  is built before the chain is known — and anything saved per-network was
+  being filed under that placeholder, so a realm opened from a link became
+  part of the *default* network's saved tabs even though it was never opened
+  there. Per-network state now waits until the real chain is known.
+
 - Apps that opened empty now open with something in them. Transactions and
   Chain Stats were not slow, they were broken: both asked the indexer for every
   transaction the chain had ever produced, which fails outright past ten

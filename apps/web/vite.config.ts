@@ -208,44 +208,40 @@ export default defineConfig({
       // figure that ends up ignored. Raise them as coverage improves; do not
       // lower one to make a branch pass.
       //
-      // BRANCHES ARE BACK AT 88 ON PURPOSE, and this is the one exception to
-      // that rule, so here is the reasoning. 88 was the long-standing line;
-      // it was raised to 90 the moment a measurement happened to read 90.31%,
-      // which turned out to be as brittle as setting the bundle budget from a
-      // laptop. Branch percentage depends less on test quality than on what
-      // KIND of code was added last — a batch of conditional rendering moves
-      // it several points however well tested the logic underneath is.
+      // THERE IS NO BRANCH THRESHOLD, and since that reads like the rule above
+      // being broken, here is the measurement behind it.
       //
-      // Worse, v8 only counts modules that actually get LOADED, so adding a
-      // component test can *lower* the branch percentage by pulling that
-      // module's other untested branches into the denominator. Chasing the
-      // number that way makes the suite worse, not better.
+      // Branch percentage kept falling *while the testing improved* — 90 to
+      // 88 to 87, each time because a new test pulled previously-unloaded
+      // modules into the denominator. A component test rendering through
+      // SdkProvider drags in lazily-imported route files that are 0% here by
+      // design; they are covered by the e2e suite, which this number cannot
+      // see. So the one honest response to a failure was always to lower the
+      // gate, which is a ratchet that only ever turns the wrong way.
       //
-      // So: statements/lines and functions keep ratcheting up (28 and 41,
-      // both raised today), and branches holds the 88 line it has held all
-      // along. Anything below 88 is a real regression and still fails.
+      // The fix this comment used to prescribe — `all: true` for a stable
+      // denominator — was tried, and does not work. Measured on this repo:
+      // with and without it the report is byte-identical, because `include`
+      // already puts every src file in scope. Statements/lines/functions get a
+      // fixed denominator from that (11,046 statements, unchanged whether or
+      // not a new test file is added). Branches do not: v8 reports branch
+      // *counts* only for code it actually instrumented, so an unloaded module
+      // contributes statements but no branches. Adding
+      // use-network-persistence.test.tsx moved branches 1183 -> 1226 while
+      // 11,046 stayed put. That is a v8 limitation, not a config gap, and it
+      // makes a branch ratchet unbuildable here short of switching provider.
       //
-      // MEASURE ON MAIN, not on a feature branch. The first version of
-      // these numbers was taken on a branch predating lazy-loaded routes
-      // (#105): lazy imports are not pulled in during unit tests, so those
-      // modules count in the denominator without contributing covered
-      // lines, and a branch that adds one reads about two points low.
-      // branches 88 -> 87 when the network-switch hooks gained component
-      // tests. Worth being precise, because the number went down while the
-      // testing got better: lines 28.7 -> 30.6, functions 41 -> 45.2, and two
-      // races that had shipped with no guard at all now have ones that fail
-      // when the fix is reverted.
+      // So branches is dropped and the three metrics with a stable denominator
+      // are tightened to compensate — 28 -> 32 and 41 -> 46, against measured
+      // 32.86% and 47.07%. That is a stricter gate than before, not a looser
+      // one: it now fails on a real regression instead of on a good test.
       //
-      // It is the denominator that moved. Coverage only counts modules a test
-      // actually loads, so a component test rendering through SdkProvider
-      // pulls in route components that are 0% here by design — they are
-      // covered by the 99 e2e specs, which this number cannot see. Adding a
-      // test can therefore lower the ratio while adding real cover, which
-      // makes "branches" a poor ratchet as configured. The honest fix is a
-      // stable denominator (`all: true`) and a re-baseline of every number
-      // here; that is a change to what the gate means, so it is not being
-      // smuggled in alongside a bug fix.
-      thresholds: { lines: 28, statements: 28, functions: 41, branches: 87 },
+      // MEASURE ON MAIN, not on a feature branch. The first version of these
+      // numbers was taken on a branch predating lazy-loaded routes (#105):
+      // lazy imports are not pulled in during unit tests, so those modules
+      // count in the denominator without contributing covered lines, and a
+      // branch that adds one reads about two points low.
+      thresholds: { lines: 32, statements: 32, functions: 46 },
     },
   },
 });

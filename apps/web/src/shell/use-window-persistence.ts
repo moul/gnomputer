@@ -76,6 +76,10 @@ export function useWindowPersistence(baseKey: string) {
   const networkId = useShellStore((s) => s.activeNetworkId);
   const switchSeq = useShellStore((s) => s.networkSwitchSeq);
   const seenSwitchSeq = useRef(switchSeq);
+  /** `activeNetworkId` is a placeholder until this flips — see the store. The
+   * layout must not be read from, or written to, the default network's key
+   * just because that is what the store says before the real one is known. */
+  const networkHydrated = useShellStore((s) => s.networkHydrated);
   const storageKey = `${baseKey}:${networkId}`;
   /** Which key writes belong to, so a change landing mid-switch cannot save
    * the outgoing chain's desktop under the incoming chain's key. */
@@ -83,6 +87,7 @@ export function useWindowPersistence(baseKey: string) {
   const hydrated = useRef(false);
 
   useEffect(() => {
+    if (!networkHydrated) return;
     let cancelled = false;
     const isSwitch = switchSeq !== seenSwitchSeq.current;
     seenSwitchSeq.current = switchSeq;
@@ -179,7 +184,7 @@ export function useWindowPersistence(baseKey: string) {
     return () => {
       cancelled = true;
     };
-  }, [sdk, storageKey, switchSeq]);
+  }, [sdk, storageKey, switchSeq, networkHydrated]);
 
   useEffect(() => {
     const unsubscribe = useWindowStore.subscribe((state) => {

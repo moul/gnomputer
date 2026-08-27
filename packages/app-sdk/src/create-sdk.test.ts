@@ -8,9 +8,9 @@ describe("createGnomputerSDK", () => {
     indexedDB.deleteDatabase("gnomputer-sdk-test");
   });
 
-  it("defaults to the sapphire network", () => {
+  it("defaults to the pearl network", () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
-    expect(sdk.networks.getActive().id).toBe("sapphire");
+    expect(sdk.networks.getActive().id).toBe("pearl");
   });
 
   it("switches active network", () => {

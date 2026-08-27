@@ -59,7 +59,14 @@ function Harness({ children }: { children?: ReactNode }) {
 }
 
 beforeEach(() => {
-  useShellStore.setState({ activeNetworkId: "sapphire", networkSwitchSeq: 0 });
+  // networkHydrated: these tests drive the hook directly, so they stand in for
+  // the point in a real boot where the active network has settled — the hook
+  // deliberately does nothing before then.
+  useShellStore.setState({
+    activeNetworkId: "sapphire",
+    networkSwitchSeq: 0,
+    networkHydrated: true,
+  });
   useRealmTabsStore.setState({
     windows: {},
     extraWindowIds: [],
@@ -119,5 +126,43 @@ describe("restoring tabs against a URL that already named a realm", () => {
 
     const win = useRealmTabsStore.getState().windows.realm!;
     expect(win.tabs[0]!.packagePath).toBe("gno.land/r/saved");
+  });
+});
+
+describe("tabs before the active network is known", () => {
+  it("touches no storage key while the network is still the boot placeholder", async () => {
+    // `activeNetworkId` starts at DEFAULT_NETWORK_ID because the store is
+    // built before the SDK — so at boot it names a chain that may be
+    // contradicted by a stored choice or by the e2e override. Acting on it
+    // flushed a shared link's tabs under the *default* network's key,
+    // overwriting that chain's saved tabs with a realm never opened on it.
+    // Confirmed against a real browser: opening `/?pkg=…` on the mock network
+    // wrote `uiState:realm-tabs:mock` *and* `uiState:realm-tabs:pearl`.
+    useShellStore.setState({ networkHydrated: false });
+    const { sdk, release, writes } = deferredSdk();
+
+    useRealmTabsStore.getState().ensureWindow("realm");
+    useRealmTabsStore.getState().updateActiveTab("realm", {
+      packagePath: "gno.land/r/linked",
+      renderPath: "",
+      lens: "render",
+    });
+    useRealmTabsStore.getState().markUrlSeeded("realm");
+
+    render(
+      <SdkProvider overrideSdk={sdk}>
+        <Harness />
+      </SdkProvider>
+    );
+    release();
+    // Nothing to wait *for* — the assertion is that no write happens — so give
+    // the hook the same turns of the event loop a real one would have had.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(writes).toEqual([]);
+
+    // And once it does settle, the tabs reach storage rather than being lost:
+    // the gate delays the flush, it does not cancel it.
+    useShellStore.setState({ networkHydrated: true });
+    await waitFor(() => expect(writes).toContain("realm-tabs:sapphire"));
   });
 });

@@ -95,8 +95,13 @@ export function useRealmTabsPersistence() {
   const hydratedKey = useRef<string | null>(null);
   const switchSeq = useShellStore((s) => s.networkSwitchSeq);
   const seenSwitchSeq = useRef(switchSeq);
+  /** `activeNetworkId` is a placeholder until this flips — see the store. Acting
+   * on the placeholder flushed a link's tabs under the *default* network's key,
+   * overwriting a chain's saved desktop with a realm never opened on it. */
+  const networkHydrated = useShellStore((s) => s.networkHydrated);
 
   useEffect(() => {
+    if (!networkHydrated) return;
     const key = storageKeyFor(networkId);
     // A switch is the deliberate act, not any change of id: `activeNetworkId`
     // also moves during boot, from the default to whatever was stored. Reading
@@ -174,7 +179,7 @@ export function useRealmTabsPersistence() {
     return () => {
       cancelled = true;
     };
-  }, [sdk, networkId, switchSeq]);
+  }, [sdk, networkId, switchSeq, networkHydrated]);
 
   useEffect(() => {
     const unsubscribe = useRealmTabsStore.subscribe((state) => {

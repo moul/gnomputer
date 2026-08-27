@@ -44,8 +44,8 @@ arrive. Each one proves the "this is live" claim faster than a paragraph asserti
 
 ## What's in it
 
-Real, live data from Gno testnets — Sapphire by default, also Topaz, betanet, a local
-`gnodev` option, and any custom RPC endpoint you add.
+Real, live data from Gno testnets — Pearl by default, with Sapphire, Topaz, betanet, a
+local `gnodev` option, and any custom RPC endpoint you add.
 
 | | |
 |---|---|
