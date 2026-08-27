@@ -51,57 +51,76 @@ export function useNetworkPersistence(urlNetworkId?: string): {
 
   const activeNetworkId = useShellStore((s) => s.activeNetworkId);
   const setActiveNetwork = useShellStore((s) => s.setActiveNetwork);
+  const markNetworkHydrated = useShellStore((s) => s.markNetworkHydrated);
   const customNetworks = useCustomNetworksStore((s) => s.networks);
   const [unresolvedNetworkId, setUnresolvedNetworkId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectionHydrated) return;
 
-    const active = sdk.networks.getActive();
+    reconcile();
 
-    // A network named in the URL wins over both the stored preference and
-    // the default. Someone opening a shared link is asking for that chain
-    // specifically; showing them a different one under the same URL is the
-    // failure this whole hook exists to avoid.
-    if (urlNetworkId && urlNetworkId !== activeNetworkId) {
-      const fromUrl =
-        sdk.networks.list().find((n) => n.id === urlNetworkId) ??
-        customNetworks.find((n) => n.id === urlNetworkId);
-      if (fromUrl) {
-        sdk.networks.setActiveConfig(fromUrl);
-        setActiveNetwork(urlNetworkId);
-        return;
-      }
-      if (customHydrated) {
+    // Settled means one thing: the SDK — which is what queries actually go
+    // to — and the store — which is what the UI and every per-network storage
+    // key read — name the same chain. Checked after `reconcile()` rather than
+    // inside its branches because both `setActiveNetwork` and
+    // `setActiveConfig` are synchronous, so this sees whatever that call just
+    // decided, and there is no branch left that can silently skip the mark.
+    if (sdk.networks.getActive().id === useShellStore.getState().activeNetworkId) {
+      markNetworkHydrated();
+    }
+
+    function reconcile() {
+      const active = sdk.networks.getActive();
+
+      // A network named in the URL wins over both the stored preference and
+      // the default. Someone opening a shared link is asking for that chain
+      // specifically; showing them a different one under the same URL is the
+      // failure this whole hook exists to avoid.
+      if (urlNetworkId && urlNetworkId !== activeNetworkId) {
+        const fromUrl =
+          sdk.networks.list().find((n) => n.id === urlNetworkId) ??
+          customNetworks.find((n) => n.id === urlNetworkId);
+        if (fromUrl) {
+          sdk.networks.setActiveConfig(fromUrl);
+          setActiveNetwork(urlNetworkId);
+          return;
+        }
+        // Not resolvable yet — the custom list may still be loading, and
+        // deciding it is missing before then would flash the notice on every
+        // reload onto a custom network.
+        if (!customHydrated) return;
+        // It really is missing. Say so, then carry on resolving the stored
+        // preference below rather than returning: bailing here left the SDK
+        // on one chain and the store naming another, so the UI reported a
+        // network that no query was going to.
         setUnresolvedNetworkId(urlNetworkId);
+      }
+
+      if (!restored.current) {
+        if (active.id !== activeNetworkId) setActiveNetwork(active.id);
         return;
       }
-      return;
+      if (active.id === activeNetworkId) return;
+
+      const config =
+        sdk.networks.list().find((n) => n.id === activeNetworkId) ??
+        customNetworks.find((n) => n.id === activeNetworkId);
+
+      if (config) {
+        sdk.networks.setActiveConfig(config);
+        return;
+      }
+
+      if (!customHydrated) return;
+
+      // Recorded once and never cleared here. Falling back below re-runs this
+      // effect with the default id, which then resolves — clearing the notice
+      // at that point would erase it before it was ever painted. It is a
+      // one-time fact about this boot, and the banner is dismissible.
+      setUnresolvedNetworkId(activeNetworkId);
+      setActiveNetwork(sdk.networks.getDefault().id);
     }
-
-    if (!restored.current) {
-      if (active.id !== activeNetworkId) setActiveNetwork(active.id);
-      return;
-    }
-    if (active.id === activeNetworkId) return;
-
-    const config =
-      sdk.networks.list().find((n) => n.id === activeNetworkId) ??
-      customNetworks.find((n) => n.id === activeNetworkId);
-
-    if (config) {
-      sdk.networks.setActiveConfig(config);
-      return;
-    }
-
-    if (!customHydrated) return;
-
-    // Recorded once and never cleared here. Falling back below re-runs this
-    // effect with the default id, which then resolves — clearing the notice
-    // at that point would erase it before it was ever painted. It is a
-    // one-time fact about this boot, and the banner is dismissible.
-    setUnresolvedNetworkId(activeNetworkId);
-    setActiveNetwork(sdk.networks.getDefault().id);
   }, [
     sdk,
     urlNetworkId,
@@ -110,6 +129,7 @@ export function useNetworkPersistence(urlNetworkId?: string): {
     customHydrated,
     selectionHydrated,
     setActiveNetwork,
+    markNetworkHydrated,
   ]);
 
   return { unresolvedNetworkId };

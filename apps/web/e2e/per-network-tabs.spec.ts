@@ -31,21 +31,73 @@ test("switching network does not carry the previous chain's realm over", async (
 
 test("each network keeps its own open realm", async ({ page }) => {
   await page.setViewportSize({ width: 1500, height: 900 });
-  await page.goto("/?pkg=gno.land/r/sys/users");
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
 
   const pathInput = page.locator("#window-realm input").first();
+
+  // The realm is opened on a network in the switcher, not on the one the e2e
+  // override boots into, because coming *back* is the whole assertion and the
+  // override's network is not in the menu.
+  //
+  // An earlier version opened it via `?pkg=` on the boot network and expected
+  // it back on Sapphire — which only passed because of a bug: the tabs were
+  // being flushed under DEFAULT_NETWORK_ID's key before the real active
+  // network was known, so "Sapphire's tabs" were the boot network's tabs
+  // filed under the wrong name. Fixing that (see the store's networkHydrated)
+  // is what exposed this test as testing the bug rather than the feature.
+  await switchNetwork(page, "Betanet");
+  await expect(pathInput).toHaveValue("", { timeout: 15000 });
+  await pathInput.fill("gno.land/r/sys/users");
+  await pathInput.press("Enter");
   await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
 
-  await switchNetwork(page, "Betanet");
+  // Another chain: a realm path names a package on one chain and may be absent
+  // on another, so Sapphire starts from its own (empty) set.
+  await switchNetwork(page, "Sapphire");
   await expect(pathInput).toHaveValue("", { timeout: 15000 });
 
   // Coming back restores what that chain had open — the point of keying the
   // stored tabs by network rather than sharing one set.
-  await switchNetwork(page, "Sapphire");
+  await switchNetwork(page, "Betanet");
   await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
   await expect.poll(() => new URL(page.url()).searchParams.get("pkg")).toBe(
     "gno.land/r/sys/users"
   );
+});
+
+test("a shared link's realm is not filed under the default network", async ({ page }) => {
+  // The store's activeNetworkId starts at DEFAULT_NETWORK_ID, since the store
+  // is built before the SDK. Anything keyed by network that acted on that
+  // placeholder wrote to the wrong chain: opening a link here wrote both
+  // `realm-tabs:mock` and `realm-tabs:pearl`, so a realm never opened on the
+  // default network became part of its saved desktop.
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await page.goto("/?pkg=gno.land/r/sys/users");
+  const pathInput = page.locator("#window-realm input").first();
+  await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
+
+  // Polled, not read once: the flush is asynchronous, so a single read can
+  // land before *any* key exists and pass for the wrong reason. Waiting for
+  // the right key to appear also gives the wrong one every chance to.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(async () => {
+          const db: IDBDatabase = await new Promise((resolve, reject) => {
+            const request = indexedDB.open("gnomputer");
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+          const all: string[] = await new Promise((resolve) => {
+            const request = db.transaction("meta").objectStore("meta").getAllKeys();
+            request.onsuccess = () => resolve(request.result.map(String));
+          });
+          return all.filter((key) => key.includes("realm-tabs")).sort();
+        }),
+      { timeout: 15000 }
+    )
+    .toEqual(["uiState:realm-tabs:mock"]);
 });
 
 test("each network keeps its own set of open windows", async ({ page }) => {
@@ -152,7 +204,7 @@ test("the network switcher is reachable from the island, and names the current c
   // Changing chain used to mean opening Settings and finding the Network tab.
   await trigger.click();
   const menu = page.locator(".island-menu");
-  for (const label of ["Sapphire", "Topaz", "Betanet", "gnodev"]) {
+  for (const label of ["Pearl", "Sapphire", "Topaz", "Betanet", "gnodev"]) {
     await expect(menu.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
 });

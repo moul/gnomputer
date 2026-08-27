@@ -21,6 +21,17 @@ interface ShellState {
    * the previous chain's tabs, for one — has to tell those two apart, or it
    * fires during boot and discards state the URL had just set. */
   networkSwitchSeq: number;
+  /** False until the active network is the *real* one rather than a guess.
+   *
+   * `activeNetworkId` starts at `DEFAULT_NETWORK_ID` because the store is
+   * built before the SDK is, so at boot it is a placeholder that may be
+   * contradicted twice over — by a stored choice, and by the e2e override.
+   * Anything that reads or writes storage under a per-network key has to wait
+   * for this, or it works against the placeholder: a shared link opened while
+   * a different chain was stored had its tabs flushed to the *default*
+   * network's key, quietly overwriting that chain's saved desktop with a realm
+   * that was never opened on it. */
+  networkHydrated: boolean;
   /** True from the moment a switch is asked for until the new chain's desktop
    * has been restored. The whole desktop is torn down and rebuilt in between,
    * so this is what the boot overlay is shown against — otherwise the rebuild
@@ -34,6 +45,7 @@ interface ShellState {
   setCommandPaletteOpen: (open: boolean) => void;
   setShortcutsHelpOpen: (open: boolean) => void;
   setActiveNetwork: (id: string) => void;
+  markNetworkHydrated: () => void;
   noteNetworkSwitch: () => void;
   setNetworkSwitching: (switching: boolean) => void;
   setCarryWindowId: (id: string | null) => void;
@@ -49,11 +61,13 @@ export const useShellStore = create<ShellState>((set) => ({
   trailVersion: 0,
   hoveredWindowIds: [],
   networkSwitchSeq: 0,
+  networkHydrated: false,
   networkSwitching: false,
   carryWindowId: null,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   setShortcutsHelpOpen: (open) => set({ shortcutsHelpOpen: open }),
   setActiveNetwork: (id) => set({ activeNetworkId: id }),
+  markNetworkHydrated: () => set({ networkHydrated: true }),
   noteNetworkSwitch: () => set((s) => ({ networkSwitchSeq: s.networkSwitchSeq + 1 })),
   setNetworkSwitching: (switching) => set({ networkSwitching: switching }),
   setCarryWindowId: (id) => set({ carryWindowId: id }),

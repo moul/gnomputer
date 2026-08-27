@@ -71,6 +71,9 @@ beforeEach(() => {
   useShellStore.setState({
     activeNetworkId: "sapphire",
     networkSwitchSeq: 0,
+    // Stands in for the point in a real boot where the active network has
+    // settled; the hook deliberately touches no storage before then.
+    networkHydrated: true,
     networkSwitching: false,
     carryWindowId: null,
   });
