@@ -55,7 +55,7 @@ function HistoricalEvents({ packagePath }: { packagePath: string }) {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const {
-    data: events,
+    data: history,
     error,
     isPending,
     refetch,
@@ -76,16 +76,32 @@ function HistoricalEvents({ packagePath }: { packagePath: string }) {
       </p>
     );
   }
-  if (events.length === 0) {
+  if (history.events.length === 0) {
+    // Two different empty states, because they mean opposite things. A realm
+    // nobody has called is idle; one called 86 times that emitted nothing of
+    // its own — r/gnops/valopers on Pearl, measured — is in active use and
+    // simply not an event emitter. Both used to say "nothing found", which
+    // read as "this realm is dead" for a realm that plainly is not.
     return (
       <p className="state-line">
-        No historical events found for this realm — either it hasn&rsquo;t been called directly, or
-        its calls didn&rsquo;t emit any of its own events (e.g. a shared library realm, or one whose
-        events came from a different realm calling into it).
+        {history.callCount > 0 ? (
+          <>
+            {formatNumber(history.callCount)}{" "}
+            {history.callCount === 1 ? "call" : "calls"} to this realm, none of which emitted
+            events of its own — common for a realm that stores state or delegates to another
+            realm rather than announcing what it did.
+          </>
+        ) : (
+          <>
+            No historical events found for this realm — either it hasn&rsquo;t been called
+            directly, or its calls didn&rsquo;t emit any of its own events (e.g. a shared library
+            realm, or one whose events came from a different realm calling into it).
+          </>
+        )}
       </p>
     );
   }
-  return <EventList events={events} />;
+  return <EventList events={history.events} />;
 }
 
 export function RealmHistory({ packagePath }: { packagePath: string }) {

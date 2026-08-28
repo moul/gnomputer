@@ -197,7 +197,7 @@ describe("realmHistory", () => {
 
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
 
-    expect(result.data).toEqual([
+    expect(result.data.events).toEqual([
       { height: 200, txIndex: 0, type: "Transfer", attrs: [{ key: "to", value: "g1abc" }] },
     ]);
     expect(result.source).toBe("indexer");
@@ -221,7 +221,7 @@ describe("realmHistory", () => {
 
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
 
-    expect(result.data).toEqual([{ height: 200, txIndex: 0, type: "Swap", attrs: [] }]);
+    expect(result.data.events).toEqual([{ height: 200, txIndex: 0, type: "Swap", attrs: [] }]);
   });
 
   it("skips non-GnoEvent union members that come back as an empty object", async () => {
@@ -237,13 +237,13 @@ describe("realmHistory", () => {
 
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
 
-    expect(result.data).toEqual([{ height: 200, txIndex: 0, type: "Transfer", attrs: [] }]);
+    expect(result.data.events).toEqual([{ height: 200, txIndex: 0, type: "Transfer", attrs: [] }]);
   });
 
   it("returns an empty list when getTransactions is null", async () => {
     mockEventScan({ getTransactions: null });
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
-    expect(result.data).toEqual([]);
+    expect(result.data.events).toEqual([]);
   });
 
   it("respects the limit parameter", async () => {
@@ -257,7 +257,7 @@ describe("realmHistory", () => {
 
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW, 2);
 
-    expect(result.data).toHaveLength(2);
+    expect(result.data.events).toHaveLength(2);
   });
 
   it("throws when the network has no indexer configured", async () => {
@@ -294,7 +294,36 @@ describe("realmHistory", () => {
     // One height lookup plus one window — no ladder walk.
     expect(bodies).toHaveLength(2);
     // And the events still belong to the realm asked about, so none survive.
-    expect(result.data).toEqual([]);
+    expect(result.data.events).toEqual([]);
+    // But the calls are reported, so the UI can say "in use, just not an event
+    // emitter" rather than "nothing found".
+    expect(result.data.callCount).toBe(107);
+  });
+
+  it("reports the calls it found even when none of them emitted the realm's own events", async () => {
+    // r/gnops/valopers on Pearl, checked against the indexer directly: 86
+    // direct calls, zero GnoEvents. Reporting only the events made a realm
+    // that is plainly in use look untouched.
+    mockEventScan({
+      getTransactions: Array.from({ length: 86 }, (_, i) => ({
+        block_height: 8_000 + i,
+        index: 0,
+        response: { events: [] },
+      })),
+    });
+
+    const result = await realmHistory(NETWORK, "gno.land/r/gnops/valopers", NOW);
+
+    expect(result.data.events).toEqual([]);
+    expect(result.data.callCount).toBe(86);
+  });
+
+  it("reports zero calls for a realm nothing has ever called", async () => {
+    // The opposite state, and it must stay distinguishable from the one above:
+    // idle, not "active but silent".
+    mockEventScan({ getTransactions: [] });
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/never", NOW);
+    expect(result.data).toEqual({ events: [], callCount: 0 });
   });
 
   it("keeps widening back to genesis for a realm that was last called long ago", async () => {
@@ -332,7 +361,7 @@ describe("realmHistory", () => {
     expect(JSON.parse(bodies[4]!).variables).toMatchObject({ fromHeight: 0 });
     // The realm path travels with every attempt, not just the first.
     expect(JSON.parse(bodies[4]!).variables.pkgPath).toBe("gno.land/r/demo/a");
-    expect(result.data).toEqual([{ height: 12, txIndex: 0, type: "Deployed", attrs: [] }]);
+    expect(result.data.events).toEqual([{ height: 12, txIndex: 0, type: "Deployed", attrs: [] }]);
   });
 });
 
