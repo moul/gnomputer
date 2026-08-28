@@ -4,6 +4,12 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- A realm's History tab distinguishes "never called" from "called, but quiet".
+  It reported "no historical events found" for both, which reads as a dead
+  realm — r/gnops/valopers on Pearl has been called 83 times and emits no
+  events of its own, and the tab made it look untouched. It now says how many
+  calls it found.
+
 - The Event Explorer works again on a chain with real history. It asked the
   indexer for every successful transaction the chain had ever produced, which
   past ten thousand comes back as an error rather than as data — so on Sapphire

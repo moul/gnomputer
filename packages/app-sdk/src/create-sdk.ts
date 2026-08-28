@@ -26,6 +26,7 @@ import {
   type ValidatorSet,
   type RealmSummary,
   type IndexerEvent,
+  type RealmHistory,
   type IndexerRecentEvent,
   type ChainActivityStats,
   type DailyActivity,
@@ -54,6 +55,7 @@ export type {
   ValidatorSet,
   RealmSummary,
   IndexerEvent,
+  RealmHistory,
   IndexerRecentEvent,
   ChainActivityStats,
   DailyActivity,
@@ -105,7 +107,7 @@ export interface GnomputerSDK {
   indexer: {
     listRealms(): Promise<DataEnvelope<RealmSummary[]>>;
     countPackagesByCreator(address: string): Promise<DataEnvelope<{ count: number }>>;
-    realmHistory(packagePath: string): Promise<DataEnvelope<IndexerEvent[]>>;
+    realmHistory(packagePath: string): Promise<DataEnvelope<RealmHistory>>;
     chainActivityStats(): Promise<DataEnvelope<ChainActivityStats>>;
     dailyActivity(): Promise<DataEnvelope<DailyActivity[]>>;
     listTransactions(): Promise<DataEnvelope<IndexerTransaction[]>>;

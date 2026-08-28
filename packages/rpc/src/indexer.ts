@@ -459,12 +459,26 @@ export async function recentEvents(
   });
 }
 
+/** A realm's own emitted events, plus how many transactions called it.
+ *
+ * The count matters on its own. These two numbers routinely disagree: r/gnops/
+ * valopers on Pearl had 86 direct calls and emitted zero events of its own, and
+ * reporting only the events made a realm that is plainly in use look untouched.
+ * "86 calls, none of which emitted events" is a fact; "nothing found" is a dead
+ * end. */
+export interface RealmHistory {
+  events: IndexerEvent[];
+  /** Transactions that called this realm directly within the window scanned —
+   * so a floor on its real usage, not necessarily its lifetime total. */
+  callCount: number;
+}
+
 export async function realmHistory(
   network: { id: string; indexerGraphqlUrl?: string },
   packagePath: string,
   fetchedAt: string,
   limit = 100
-): Promise<DataEnvelope<IndexerEvent[]>> {
+): Promise<DataEnvelope<RealmHistory>> {
   if (!network.indexerGraphqlUrl) {
     throw new Error(`${network.id} has no indexer configured — realm history needs one.`);
   }
@@ -508,13 +522,13 @@ export async function realmHistory(
       objectId: packagePath,
       networkId: network.id,
     },
-    data: events,
+    data: { events, callCount: data.getTransactions?.length ?? 0 },
     source: "indexer",
     consistency: "indexed",
     networkId: network.id,
     fetchedAt,
     freshness: "live",
-    schema: "gnomputer.indexer.realm-history.v1",
+    schema: "gnomputer.indexer.realm-history.v2",
   });
 }
 
