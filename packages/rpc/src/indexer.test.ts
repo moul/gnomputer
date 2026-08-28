@@ -32,6 +32,26 @@ function mockIndexerResponse(data: unknown, errors?: { message: string }[]) {
   }) as unknown as typeof fetch;
 }
 
+/** realmHistory and recentEvents ask for latestBlockHeight first, then run the
+ * height-bounded event query — which they may repeat at a wider window when the
+ * narrow one held too few events, so every request after the first answers with
+ * the same payload. */
+function mockEventScan(data: unknown, latestBlockHeight = 500_000) {
+  let first = true;
+  global.fetch = vi.fn().mockImplementation(() =>
+    Promise.resolve({
+      ok: true,
+      json: async () => {
+        if (first) {
+          first = false;
+          return { data: { latestBlockHeight } };
+        }
+        return { data };
+      },
+    })
+  ) as unknown as typeof fetch;
+}
+
 describe("countPackagesByCreator", () => {
   const originalFetch = global.fetch;
   afterEach(() => {
@@ -161,7 +181,7 @@ describe("realmHistory", () => {
   });
 
   it("extracts this realm's own GnoEvents, most recent first", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: [
         {
           block_height: 200,
@@ -184,7 +204,7 @@ describe("realmHistory", () => {
   });
 
   it("ignores events belonging to a different package (a nested call touching another realm)", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: [
         {
           block_height: 200,
@@ -205,7 +225,7 @@ describe("realmHistory", () => {
   });
 
   it("skips non-GnoEvent union members that come back as an empty object", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: [
         {
           block_height: 200,
@@ -221,13 +241,13 @@ describe("realmHistory", () => {
   });
 
   it("returns an empty list when getTransactions is null", async () => {
-    mockIndexerResponse({ getTransactions: null });
+    mockEventScan({ getTransactions: null });
     const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
     expect(result.data).toEqual([]);
   });
 
   it("respects the limit parameter", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: Array.from({ length: 5 }, (_, i) => ({
         block_height: i,
         index: 0,
@@ -245,6 +265,75 @@ describe("realmHistory", () => {
       "gnodev has no indexer configured"
     );
   });
+
+  it("stops at the first window for a busy realm whose events belong to another package", async () => {
+    // Caught in a browser, not by a fixture. A realm's own GnoEvents are often
+    // a small minority of what its calls emit: gnoswap/gns emits Transfer and
+    // Approval under `p/demo/tokens/grc20`, so 107 calls in 2,000 blocks
+    // produced almost nothing attributed to gns itself. Counting only
+    // own-events never reached the limit, so every view of an active realm
+    // walked the ladder to the genesis rung — the unbounded scan this whole
+    // change exists to avoid. Matching calls count too.
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 492_541 } }) });
+      }
+      const getTransactions = Array.from({ length: 107 }, (_, i) => ({
+        block_height: 492_400 + i,
+        index: 0,
+        // Emitted by the grc20 package, not by the realm being viewed.
+        response: { events: [{ type: "Transfer", pkg_path: "gno.land/p/demo/tokens/grc20", attrs: [] }] },
+      }));
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    const result = await realmHistory(NETWORK, "gno.land/r/gnoswap/gns", NOW);
+
+    // One height lookup plus one window — no ladder walk.
+    expect(bodies).toHaveLength(2);
+    // And the events still belong to the realm asked about, so none survive.
+    expect(result.data).toEqual([]);
+  });
+
+  it("keeps widening back to genesis for a realm that was last called long ago", async () => {
+    // Unlike the chain-wide scans, this one is filtered to a single realm, so
+    // the last rung may safely reach height 0: it is only used when the
+    // narrower windows found nothing, which means the realm is quiet, which
+    // means a full scan cannot approach the row cap. Without it, a realm last
+    // touched 400,000 blocks ago reported an empty history rather than an old
+    // one.
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 492_437 } }) });
+      }
+      const { fromHeight } = JSON.parse(String(init.body)).variables;
+      const getTransactions =
+        fromHeight === 0
+          ? [
+              {
+                block_height: 12,
+                index: 0,
+                response: { events: [{ type: "Deployed", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+              },
+            ]
+          : [];
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    const result = await realmHistory(NETWORK, "gno.land/r/demo/a", NOW);
+
+    expect(JSON.parse(bodies[1]!).variables).toMatchObject({ fromHeight: 490_437 });
+    expect(JSON.parse(bodies[2]!).variables).toMatchObject({ fromHeight: 472_437 });
+    expect(JSON.parse(bodies[3]!).variables).toMatchObject({ fromHeight: 292_437 });
+    expect(JSON.parse(bodies[4]!).variables).toMatchObject({ fromHeight: 0 });
+    // The realm path travels with every attempt, not just the first.
+    expect(JSON.parse(bodies[4]!).variables.pkgPath).toBe("gno.land/r/demo/a");
+    expect(result.data).toEqual([{ height: 12, txIndex: 0, type: "Deployed", attrs: [] }]);
+  });
 });
 
 describe("recentEvents", () => {
@@ -254,7 +343,7 @@ describe("recentEvents", () => {
   });
 
   it("extracts every successful transaction's GnoEvents, most recent first, with pkgPath attached", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: [
         {
           block_height: 200,
@@ -283,7 +372,7 @@ describe("recentEvents", () => {
   });
 
   it("skips non-GnoEvent union members that come back with no type/pkg_path", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: [
         {
           block_height: 200,
@@ -299,13 +388,13 @@ describe("recentEvents", () => {
   });
 
   it("returns an empty list when getTransactions is null", async () => {
-    mockIndexerResponse({ getTransactions: null });
+    mockEventScan({ getTransactions: null });
     const result = await recentEvents(NETWORK, NOW);
     expect(result.data).toEqual([]);
   });
 
   it("respects the limit parameter", async () => {
-    mockIndexerResponse({
+    mockEventScan({
       getTransactions: Array.from({ length: 5 }, (_, i) => ({
         block_height: i,
         index: 0,
@@ -320,6 +409,60 @@ describe("recentEvents", () => {
 
   it("throws when the network has no indexer configured", async () => {
     await expect(recentEvents({ id: "gnodev" }, NOW)).rejects.toThrow("gnodev has no indexer configured");
+  });
+
+  it("bounds the scan by height instead of asking for the chain's whole history", async () => {
+    // Unbounded, this matched every successful transaction ever. Past ten
+    // thousand the indexer answers `max elements per query reached (10000)` in
+    // `errors`, which is a failed query here — so the Event Explorer sat on
+    // "Loading recent events…" forever. Confirmed live on Sapphire, and Topaz
+    // did not answer an unbounded scan within two minutes at all.
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 492_437 } }) });
+      }
+      const getTransactions = Array.from({ length: 60 }, (_, i) => ({
+        block_height: 492_000 + i,
+        index: 0,
+        response: { events: [{ type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+      }));
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    await recentEvents(NETWORK, NOW);
+
+    expect(bodies[0]).toContain("latestBlockHeight");
+    // Relative to the tip, and narrow enough to stay well under the cap.
+    expect(JSON.parse(bodies[1]!).variables).toEqual({ fromHeight: 490_437 });
+    // 60 events already fills the 40-event default, so it stops at one window.
+    expect(bodies).toHaveLength(2);
+  });
+
+  it("widens the window when the narrow one held too few events", async () => {
+    const bodies: string[] = [];
+    global.fetch = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      bodies.push(String(init.body));
+      if (bodies.length === 1) {
+        return Promise.resolve({ ok: true, json: async () => ({ data: { latestBlockHeight: 100_000 } }) });
+      }
+      const { fromHeight } = JSON.parse(String(init.body)).variables;
+      const count = fromHeight === 98_000 ? 3 : 50;
+      const getTransactions = Array.from({ length: count }, (_, i) => ({
+        block_height: 90_000 + i,
+        index: 0,
+        response: { events: [{ type: "Transfer", pkg_path: "gno.land/r/demo/a", attrs: [] }] },
+      }));
+      return Promise.resolve({ ok: true, json: async () => ({ data: { getTransactions } }) });
+    }) as unknown as typeof fetch;
+
+    const result = await recentEvents(NETWORK, NOW);
+
+    expect(JSON.parse(bodies[1]!).variables).toEqual({ fromHeight: 98_000 });
+    expect(JSON.parse(bodies[2]!).variables).toEqual({ fromHeight: 80_000 });
+    expect(bodies).toHaveLength(3);
+    expect(result.data).toHaveLength(40);
   });
 });
 

@@ -4,6 +4,14 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- The Event Explorer works again on a chain with real history. It asked the
+  indexer for every successful transaction the chain had ever produced, which
+  past ten thousand comes back as an error rather than as data — so on Sapphire
+  it sat on "Loading recent events…" forever, and only the live feed worked.
+  It now reads a recent window of blocks and widens it only when that window
+  was too quiet. Same fix for a realm's History tab, which was one busy realm
+  away from breaking the same way and is now roughly a hundred times faster.
+
 - Two apps that read as broken on a young chain now explain themselves. Chain
   Stats drew its day-by-day charts as a single full-width bar when the chain
   had only one day of history, so it states the day's numbers instead until
