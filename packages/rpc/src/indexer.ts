@@ -181,6 +181,79 @@ async function queryIndexer<T extends z.ZodTypeAny>(
   return parsed.data;
 }
 
+/**
+ * Block windows to try, narrowest first, for queries whose results are DENSE —
+ * every transaction on the chain, unfiltered.
+ *
+ * 2,000 blocks measured 1,961 transactions on Sapphire, comfortably under the
+ * indexer's ten-thousand-element cap. The ladder stops at 200,000 rather than
+ * reaching back to genesis: these queries match so much that a full-history
+ * scan is exactly what hits the cap, and hitting it is a hard failure — the
+ * indexer puts `max elements per query reached (10000)` in `errors`, which is
+ * a failed query here, not a truncated one.
+ */
+const DENSE_HEIGHT_WINDOWS = [2_000, 20_000, 200_000];
+
+/**
+ * The same ladder for queries filtered down to ONE realm, which reach back to
+ * genesis on the last rung.
+ *
+ * Safe here precisely because it is only reached when the narrower windows came
+ * up short — which means the realm is quiet, which means a full scan returns
+ * few rows. The cap is hit by dense results, and a realm last called 400,000
+ * blocks ago is the opposite of that. Without this rung its history would read
+ * as empty rather than as old.
+ */
+const SPARSE_HEIGHT_WINDOWS = [2_000, 20_000, 200_000, Number.POSITIVE_INFINITY];
+
+/**
+ * Runs a height-bounded query, widening the window until there is enough to
+ * answer with — or until the window covers the whole chain.
+ *
+ * Every `getTransactions` caller needs this. The field has no `first`/`limit`
+ * argument (confirmed by introspection: `where` and `order` are the only two),
+ * so the only bound available is a height window, and an unbounded query is
+ * both slow (the indexer scans the range server-side, so cost tracks the range
+ * rather than the rows) and fatal past ten thousand matches. Transaction
+ * density is a property of the chain, though — the window that returns two
+ * thousand rows on a busy testnet returns none on a quiet one — so the window
+ * cannot be a constant either. Start narrow, widen only when short.
+ * @returns {Promise<object>} the first result that satisfied `enough`, or the widest one tried
+ */
+async function widenUntilEnough<T>(
+  graphqlUrl: string,
+  query: string,
+  schema: z.ZodType<T>,
+  enough: (value: T) => boolean,
+  options: {
+    windows?: number[];
+    variables?: Record<string, unknown>;
+    timeoutMs?: number;
+  } = {}
+): Promise<T> {
+  const windows = options.windows ?? DENSE_HEIGHT_WINDOWS;
+  // Cheap (measured 0.3s) and the only way to know where a window starts.
+  const { latestBlockHeight } = await queryIndexer(
+    graphqlUrl,
+    LATEST_HEIGHT_QUERY,
+    z.object({ latestBlockHeight: z.number() })
+  );
+
+  let value: T | undefined;
+  for (const window of windows) {
+    value = await queryIndexer(
+      graphqlUrl,
+      query,
+      schema,
+      { ...options.variables, fromHeight: Math.max(0, latestBlockHeight - window) },
+      options.timeoutMs
+    );
+    // Widening past the chain's own height would re-fetch the identical set.
+    if (enough(value) || window >= latestBlockHeight) break;
+  }
+  return value as T;
+}
+
 // `creator` is a real filter field on MsgAddPackage, confirmed via
 // introspection and a live query returning a known address's actual
 // deployed packages. (An earlier version of this comment said the call was
@@ -290,8 +363,8 @@ export async function listRealms(
 // deposit/unlock, unknown) come back as `{}` since only `... on GnoEvent`
 // is requested, so `!ev?.type` also filters those out.
 const REALM_HISTORY_QUERY = `
-  query RealmHistory($pkgPath: String!) {
-    getTransactions(where: { success: { eq: true }, messages: { value: { MsgCall: { pkg_path: { eq: $pkgPath } } } } }, order: { heightAndIndex: DESC }) {
+  query RealmHistory($pkgPath: String!, $fromHeight: Int!) {
+    getTransactions(where: { success: { eq: true }, block_height: { gt: $fromHeight }, messages: { value: { MsgCall: { pkg_path: { eq: $pkgPath } } } } }, order: { heightAndIndex: DESC }) {
       block_height
       index
       response { events { ... on GnoEvent { type pkg_path attrs { key value } } } }
@@ -308,15 +381,40 @@ export interface IndexerRecentEvent extends IndexerEvent {
 // Used to backfill the Event Explorer (chain-wide, no single realm) so it
 // shows real recent activity immediately instead of waiting for the next
 // live block to happen to carry an event.
+//
+// Height-bounded like every other getTransactions caller. Unbounded it matched
+// the chain's entire successful history, which past ten thousand transactions
+// comes back as `max elements per query reached (10000)` in `errors` — a failed
+// query here, so the Event Explorer sat on "Loading recent events…" forever.
+// Confirmed live: Sapphire returns exactly that, and Topaz did not answer an
+// unbounded scan within two minutes at all.
 const RECENT_EVENTS_QUERY = `
-  query RecentEvents {
-    getTransactions(where: { success: { eq: true } }, order: { heightAndIndex: DESC }) {
+  query RecentEvents($fromHeight: Int!) {
+    getTransactions(where: { success: { eq: true }, block_height: { gt: $fromHeight } }, order: { heightAndIndex: DESC }) {
       block_height
       index
       response { events { ... on GnoEvent { type pkg_path attrs { key value } } } }
     }
   }
 `;
+
+/** Counts the GnoEvents a scan produced, so widening can stop as soon as there
+ * are enough to fill the list. Mirrors the filtering the callers below do, and
+ * is cheap next to another round trip. */
+function countGnoEvents(
+  txs: z.infer<typeof RealmHistoryTxSchema>[] | null | undefined,
+  keepPkgPath?: string
+): number {
+  let total = 0;
+  for (const tx of txs ?? []) {
+    for (const ev of tx.response?.events ?? []) {
+      if (!ev?.type || !ev.pkg_path) continue;
+      if (keepPkgPath !== undefined && ev.pkg_path !== keepPkgPath) continue;
+      total++;
+    }
+  }
+  return total;
+}
 
 export async function recentEvents(
   network: { id: string; indexerGraphqlUrl?: string },
@@ -327,10 +425,11 @@ export async function recentEvents(
     throw new Error(`${network.id} has no indexer configured — event history needs one.`);
   }
 
-  const data = await queryIndexer(
+  const data = await widenUntilEnough(
     network.indexerGraphqlUrl,
     RECENT_EVENTS_QUERY,
-    z.object({ getTransactions: z.array(RealmHistoryTxSchema).nullable() })
+    z.object({ getTransactions: z.array(RealmHistoryTxSchema).nullable() }),
+    (value) => countGnoEvents(value.getTransactions) >= limit
   );
 
   const events: IndexerRecentEvent[] = [];
@@ -370,11 +469,27 @@ export async function realmHistory(
     throw new Error(`${network.id} has no indexer configured — realm history needs one.`);
   }
 
-  const data = await queryIndexer(
+  // SPARSE windows: filtered to one realm, so the last rung reaches genesis.
+  // A realm last called long ago would otherwise report an empty history
+  // rather than an old one, and a quiet realm cannot hit the row cap.
+  //
+  // "Enough" counts CALLS as well as own-events, and that second clause is not
+  // redundant: a realm's own GnoEvents are often a small minority of what its
+  // calls emit. Calling gnoswap/gns emits Transfer/Approval under
+  // `p/demo/tokens/grc20`, so 107 calls in 2,000 blocks yielded almost no
+  // events attributed to gns itself — counting only those never reached the
+  // limit and walked the ladder to the genesis rung on every single view of an
+  // active realm, which is the unbounded scan this all exists to avoid.
+  // Plenty of matching calls means we are looking at the right stretch of
+  // chain; widening further would mostly add more of the same.
+  const data = await widenUntilEnough(
     network.indexerGraphqlUrl,
     REALM_HISTORY_QUERY,
     z.object({ getTransactions: z.array(RealmHistoryTxSchema).nullable() }),
-    { pkgPath: packagePath }
+    (value) =>
+      countGnoEvents(value.getTransactions, packagePath) >= limit ||
+      (value.getTransactions?.length ?? 0) >= limit,
+    { windows: SPARSE_HEIGHT_WINDOWS, variables: { pkgPath: packagePath } }
   );
 
   const events: IndexerEvent[] = [];
@@ -418,19 +533,15 @@ export async function realmHistory(
 // double-counts gas across realms in a single tx, which is the same
 // tradeoff mygnoscan's own per-realm gas tally makes (confirmed via its
 // per-realm storage/gas tab attributing a shared tx to multiple realms).
-/** Block windows the leaderboard is built from, narrowest first. 2,000 blocks
- * measured 1,961 transactions on Sapphire — comfortably under the indexer's
- * ten-thousand element cap, which an unbounded scan hit every time.
+/** Transactions below which the window is worth widening — see
+ * widenUntilEnough and DENSE_HEIGHT_WINDOWS for the ladder itself.
  *
- * Fixed at 2,000 this was a leaderboard of nearly nothing on a young chain:
- * Pearl, now the default a first visit lands on, had 24 transactions in its
- * last 2,000 blocks, so "top realms by gas" would have listed a handful of
- * rows and read as though the chain were dead. Density is a property of the
- * chain, not something we can know ahead of time, so widen the same way
- * listTransactions does — and for the same reason. */
-const CHAIN_ACTIVITY_BLOCK_WINDOWS = [2_000, 20_000, 200_000];
-
-/** Transactions below which the window is worth widening. Well under the
+ * Fixed at one window this was a leaderboard of nearly nothing on a young
+ * chain: Pearl, the default a first visit lands on, had 24 transactions in its
+ * last 2,000 blocks, so "top realms by gas" listed a handful of rows and read
+ * as though the chain were dead.
+ *
+ * Well under the
  * 1,961 a busy chain already yields at the narrowest window, so a chain like
  * Sapphire still stops at the first — only a quiet one pays for a second
  * round trip. */
@@ -467,24 +578,13 @@ export async function chainActivityStats(
     throw new Error(`${network.id} has no indexer configured — chain activity stats need one.`);
   }
 
-  const { latestBlockHeight } = await queryIndexer(
+  const data = await widenUntilEnough(
     network.indexerGraphqlUrl,
-    LATEST_HEIGHT_QUERY,
-    z.object({ latestBlockHeight: z.number() })
+    CHAIN_ACTIVITY_QUERY,
+    z.object({ getTransactions: z.array(ActivityTxSchema).nullable() }),
+    (value) => (value.getTransactions ?? []).length >= CHAIN_ACTIVITY_MIN_TXS
   );
-
-  let txs: z.infer<typeof ActivityTxSchema>[] = [];
-  for (const window of CHAIN_ACTIVITY_BLOCK_WINDOWS) {
-    const data = await queryIndexer(
-      network.indexerGraphqlUrl,
-      CHAIN_ACTIVITY_QUERY,
-      z.object({ getTransactions: z.array(ActivityTxSchema).nullable() }),
-      { fromHeight: Math.max(0, latestBlockHeight - window) }
-    );
-    txs = data.getTransactions ?? [];
-    // Widening past the chain's own height would re-fetch the identical set.
-    if (txs.length >= CHAIN_ACTIVITY_MIN_TXS || window >= latestBlockHeight) break;
-  }
+  const txs = data.getTransactions ?? [];
 
   let totalCalls = 0;
   let totalDeploys = 0;
@@ -720,11 +820,6 @@ const ListTransactionsTxSchema = z.object({
  * introspection: `where` and `order` are the only two), so the bound has to be
  * a height window — the same shape dailyActivity already uses.
  */
-/** Block windows to try, narrowest first. 2,000 blocks was measured at 1,961
- * transactions on Sapphire — comfortably under the cap — and the last entry is
- * wide enough to reach back through a quiet chain's history. */
-const LIST_TRANSACTIONS_WINDOWS = [2_000, 20_000, 200_000];
-
 const LIST_TRANSACTIONS_QUERY = `query ListTransactions($fromHeight: Int!) {
   getTransactions(where: { block_height: { gt: $fromHeight } }, order: { heightAndIndex: DESC }) {
     block_height
@@ -752,29 +847,13 @@ export async function listTransactions(
     throw new Error(`${network.id} has no indexer configured — transaction history needs one.`);
   }
 
-  // Cheap (measured 0.3s) and the only way to know where the window starts.
-  const { latestBlockHeight } = await queryIndexer(
+  const data = await widenUntilEnough(
     network.indexerGraphqlUrl,
-    LATEST_HEIGHT_QUERY,
-    z.object({ latestBlockHeight: z.number() })
+    LIST_TRANSACTIONS_QUERY,
+    z.object({ getTransactions: z.array(ListTransactionsTxSchema).nullable() }),
+    (value) => (value.getTransactions ?? []).length >= limit
   );
-
-  // Transaction density is a property of the chain, not something we can know
-  // ahead of time: the same window that returns two thousand rows on a busy
-  // testnet returns none on a quiet one. Start narrow enough to stay well
-  // under the indexer's ten-thousand cap, and widen only if there was not
-  // enough to fill the list.
-  let rows: z.infer<typeof ListTransactionsTxSchema>[] = [];
-  for (const window of LIST_TRANSACTIONS_WINDOWS) {
-    const data = await queryIndexer(
-      network.indexerGraphqlUrl,
-      LIST_TRANSACTIONS_QUERY,
-      z.object({ getTransactions: z.array(ListTransactionsTxSchema).nullable() }),
-      { fromHeight: Math.max(0, latestBlockHeight - window) }
-    );
-    rows = data.getTransactions ?? [];
-    if (rows.length >= limit || window >= latestBlockHeight) break;
-  }
+  const rows = data.getTransactions ?? [];
 
   const transactions: IndexerTransaction[] = rows.slice(0, limit).map((tx) => {
     const packagePaths = new Set<string>();
