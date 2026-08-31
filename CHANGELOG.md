@@ -11,11 +11,13 @@ banner links here.
   with and are ignored when it no longer matches, so a release that changes a
   shape costs one cold load instead of a crash.
 
-- The home screen's "Recently active" is no longer blank when you arrive. It
-  ranked only what it had seen since the window opened — so it showed
-  "Watching the chain for activity…" and its own caption admitted a real
-  ranking "would need the indexer". It reads recent chain history now, and
-  still counts anything that streams in live.
+- "Recently active" actually tells you what is active. Both places that showed
+  it ranked only what they had seen since the window opened, so both were empty
+  on arrival: the home screen said "Watching the chain for activity…" — its own
+  caption admitting a real ranking "would need the indexer" — and Developer
+  libraries printed "—" in an Activity column that is also its default sort, so
+  its default ordering meant nothing at all. Both now read recent chain history,
+  and still count anything that streams in live.
 
 - A realm's History tab distinguishes "never called" from "called, but quiet".
   It reported "no historical events found" for both, which reads as a dead
