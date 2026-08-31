@@ -12,6 +12,7 @@ export type RenderNodeType =
   | "emphasis"
   | "list"
   | "list-item"
+  | "thematic-break"
   | "table"
   | "table-row"
   | "table-cell";
@@ -187,6 +188,15 @@ const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 // practice — a wrong-but-readable flat list beats one long joined line.
 const LIST_ITEM_RE = /^\s*(?:[-*+]|\d+\.)\s+(.*)$/;
 
+/** A horizontal rule: three or more `-`, `*` or `_`, optionally spaced, and
+ * nothing else on the line (CommonMark's thematic break).
+ *
+ * GovDAO separates every proposal with one, so the Governance app rendered a
+ * literal "---" between entries where the realm meant a divider. Checked
+ * before LIST_ITEM_RE because `- - -` matches that too, as a list item whose
+ * text is "- -". */
+const THEMATIC_BREAK_RE = /^ {0,3}(?:(?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/;
+
 // A GFM delimiter row: the second line of every table, and the only thing
 // that distinguishes a table from ordinary text that happens to contain
 // pipes. Each column is dashes with optional leading/trailing colons for
@@ -331,6 +341,12 @@ function parseLines(lines: string[], currentPackagePath: string, nodes: RenderNo
         i = table.nextIndex - 1;
         continue;
       }
+    }
+
+    if (THEMATIC_BREAK_RE.test(line)) {
+      flushParagraph();
+      nodes.push({ type: "thematic-break" });
+      continue;
     }
 
     // A run of list lines becomes one list. Without this they fell through to

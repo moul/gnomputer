@@ -294,3 +294,40 @@ describe("lists and inline emphasis", () => {
     expect(code!.content).toBe("**not bold**");
   });
 });
+
+describe("thematic breaks", () => {
+  it("turns a realm's --- separator into a break instead of literal text", () => {
+    // GovDAO separates every proposal with one, so the Governance app printed
+    // a literal "---" between entries where the realm meant a divider.
+    const nodes = parseRenderMarkup("Prop #39\n\n---\n\nProp #38", "gno.land/r/gov/dao");
+    expect(nodes.map((n) => n.type)).toEqual(["paragraph", "thematic-break", "paragraph"]);
+  });
+
+  it("accepts the other two spellings, and spaced forms", () => {
+    for (const rule of ["---", "***", "___", "- - -", "*  *  *", "  ---", "-----"]) {
+      expect(parseRenderMarkup(rule, "gno.land/r/demo/a").map((n) => n.type)).toEqual([
+        "thematic-break",
+      ]);
+    }
+  });
+
+  it("checks breaks before list items, which `- - -` also matches", () => {
+    // LIST_ITEM_RE reads "- - -" as an item whose text is "- -". Order decides
+    // which wins, so this is the whole reason the break test comes first.
+    expect(parseRenderMarkup("- - -", "gno.land/r/demo/a")[0]?.type).toBe("thematic-break");
+  });
+
+  it("leaves a real list, and text that merely starts with dashes, alone", () => {
+    expect(parseRenderMarkup("- one\n- two", "gno.land/r/demo/a")[0]?.type).toBe("list");
+    // Two dashes is not a break, and neither is a line with anything after one.
+    expect(parseRenderMarkup("--", "gno.land/r/demo/a")[0]?.type).toBe("paragraph");
+    expect(parseRenderMarkup("--- and more", "gno.land/r/demo/a")[0]?.type).toBe("paragraph");
+  });
+
+  it("does not swallow bold or italic text that happens to start a line", () => {
+    // `***bold***` shares its opening run with a break; only a line that is
+    // *nothing but* the marks is a rule.
+    const nodes = parseRenderMarkup("***emphatic***", "gno.land/r/demo/a");
+    expect(nodes[0]?.type).toBe("paragraph");
+  });
+});
