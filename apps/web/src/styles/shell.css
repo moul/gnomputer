@@ -4360,13 +4360,25 @@ main {
   border-radius: 3px;
 }
 
-/* The island already scrolls horizontally on a narrow viewport; dropping the
-   two static items keeps the live one (height) on screen instead of pushing
-   the clock off it. */
+/* The island scrolls horizontally on a narrow viewport, so nothing here is
+   unreachable — dropping an item only decides what you see without scrolling.
+   Identity ("Guest") is static and can wait for a scroll.
+   The network cannot: it stopped being a label when it became the switcher,
+   and hiding it left a phone with no way to see which chain it was reading,
+   let alone change it. Which shared computer you are on is the one thing this
+   bar exists to answer. */
 @media (max-width: 900px) {
-  .island__status-item--network,
   .island__status-item--identity {
     display: none;
+  }
+
+  /* Pulled to the front of the row rather than merely un-hidden. The bar is
+     wider than a phone and starts scrolled to the left, so an item left in
+     place is on screen only for someone who thinks to scroll a toolbar.
+     Ordered on the status GROUP, not the button: the button sits two levels
+     down inside a popover host, where `order` only sorts it against itself. */
+  .island__status {
+    order: -1;
   }
 }
 
@@ -4782,6 +4794,15 @@ main {
 /* Lists in realm Render() output. Realms use them heavily — the GRC20
    registry renders every token as one — and before the parser understood
    them the items were joined into a single line. */
+/* A realm's own "---" separator. Quiet on purpose: it divides sections of one
+   realm's output, and a full-strength rule competes with the window chrome
+   around it. */
+.render-hr {
+  margin: var(--space-3) 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
 .render-list {
   margin: var(--space-2) 0;
   padding-left: var(--space-4);

@@ -37,6 +37,8 @@ export function RenderNodeView({ node, windowId }: { node: RenderNode; windowId:
           />
         </div>
       );
+    case "thematic-break":
+      return <hr className="render-hr" />;
     case "link":
       return <GnoLink node={node} windowId={windowId} />;
     case "table":

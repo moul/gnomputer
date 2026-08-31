@@ -22,16 +22,39 @@ test("the island shows network, height and identity without opening anything", a
   await expect(page.locator(".island__wordmark")).toBeVisible();
 });
 
-test("the live value survives a narrow viewport; the static ones step aside", async ({ page }) => {
-  await page.setViewportSize({ width: 700, height: 800 });
+test("a narrow viewport keeps the chain and the height, and leads with them", async ({ page }) => {
+  // The network used to be hidden here alongside identity, back when it was a
+  // label. It became the switcher, so hiding it left a phone with no way to
+  // see which chain it was reading, let alone change it — the one question
+  // this bar exists to answer. Identity is still static, and still steps aside.
+  await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
   await page.waitForSelector(".island__clock");
 
   await expect(page.locator(".island__status-item--height")).toBeVisible();
-  await expect(page.locator(".island__status-item--network")).toBeHidden();
+  await expect(page.locator(".island__status-item--network")).toBeVisible();
   await expect(page.locator(".island__status-item--identity")).toBeHidden();
 
-  // The island must still fit, or it pushes the clock off screen.
-  const island = await page.locator(".island").boundingBox();
-  expect(island!.width).toBeLessThan(700);
+  // Visible is not enough: the bar is wider than the screen and scrolls, so
+  // an item left in place is on screen only for someone who thinks to scroll
+  // a toolbar. It has to be there without scrolling.
+  const network = await page.locator(".island__status-item--network").boundingBox();
+  expect(network!.x).toBeGreaterThanOrEqual(0);
+  expect(network!.x + network!.width).toBeLessThanOrEqual(375);
+
+  // And it must still work as the switcher, not just read as a label.
+  await page.locator("button.island__status-item--network").click();
+  await expect(page.locator(".island-menu")).toBeVisible();
+});
+
+test("the desktop island keeps status on the right, after the apps", async ({ page }) => {
+  // The narrow-viewport reordering is scoped to a media query; at full width
+  // the bar reads wordmark → apps → status as it always has.
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  await page.waitForSelector(".island__clock");
+
+  const wordmark = await page.locator(".island__wordmark").boundingBox();
+  const status = await page.locator(".island__status").boundingBox();
+  expect(status!.x).toBeGreaterThan(wordmark!.x);
 });

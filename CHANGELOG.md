@@ -11,6 +11,16 @@ banner links here.
   with and are ignored when it no longer matches, so a release that changes a
   shape costs one cold load instead of a crash.
 
+- On a phone you can see and change which chain you are reading. The network
+  chip was hidden below 900px — it had been a label when that rule was written,
+  and by the time it became the switcher, hiding it left a phone with no way to
+  tell Pearl from Sapphire, let alone move between them. It now leads the bar
+  on a narrow screen, ahead of the app icons.
+
+- A realm's `---` separator draws a line instead of printing three dashes.
+  GovDAO puts one between every proposal, so the Governance app was reading as
+  a wall of text with stray punctuation in it.
+
 - "Recently active" actually tells you what is active. Both places that showed
   it ranked only what they had seen since the window opened, so both were empty
   on arrival: the home screen said "Watching the chain for activity…" — its own
