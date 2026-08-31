@@ -4,6 +4,19 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Fixed a crash introduced by the previous release. Changing what a realm's
+  History returns meant returning visitors had the *old* shape sitting in their
+  cached chain data, and the Browser window crashed on open with "Something
+  went wrong!". Cached responses now carry the shape version they were written
+  with and are ignored when it no longer matches, so a release that changes a
+  shape costs one cold load instead of a crash.
+
+- The home screen's "Recently active" is no longer blank when you arrive. It
+  ranked only what it had seen since the window opened — so it showed
+  "Watching the chain for activity…" and its own caption admitted a real
+  ranking "would need the indexer". It reads recent chain history now, and
+  still counts anything that streams in live.
+
 - A realm's History tab distinguishes "never called" from "called, but quiet".
   It reported "no historical events found" for both, which reads as a dead
   realm — r/gnops/valopers on Pearl has been called 83 times and emits no

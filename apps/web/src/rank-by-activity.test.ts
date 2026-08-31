@@ -24,4 +24,19 @@ describe("rankByActivity", () => {
   it("returns an empty list for no events", () => {
     expect(rankByActivity([])).toEqual([]);
   });
+
+  it("sums a realm that appears in both the indexer backfill and the live feed", () => {
+    // The home screen's "Recently active" ranks two sources at once: the
+    // indexer's recent history (so the panel is populated on arrival rather
+    // than blank) and whatever has streamed in since the window opened. A
+    // realm active in both must rank by its combined count, not appear twice
+    // or count only once.
+    const backfill = [{ pkgPath: "gno.land/r/gov/dao" }, { pkgPath: "gno.land/r/gov/dao" }];
+    const live = [{ pkgPath: "gno.land/r/gov/dao" }, { pkgPath: "gno.land/r/gnoland/blog" }];
+
+    expect(rankByActivity([...live, ...backfill])).toEqual([
+      { packagePath: "gno.land/r/gov/dao", eventCount: 3 },
+      { packagePath: "gno.land/r/gnoland/blog", eventCount: 1 },
+    ]);
+  });
 });

@@ -691,11 +691,83 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
   );
 }
 
+/** "What is this chain busy with right now" — the first thing the home screen
+ * is asked, and for a long time the one it could not answer.
+ *
+ * It ranked only the events seen since the window opened, so it was empty on
+ * arrival and its own caption admitted a real ranking "would need the indexer".
+ * The indexer has one: recentEvents() is the same backfill the Event Explorer
+ * uses, and it shares this query key, so opening both costs one request.
+ *
+ * Live events are still merged in, and still count: they are the newest thing
+ * that happened, and the backfill is a snapshot from when the window opened.
+ */
+function RecentlyActiveSection({
+  onOpen,
+  liveEvents,
+}: {
+  onOpen: (packagePath: string) => void;
+  liveEvents: { pkgPath: string | null }[];
+}) {
+  const sdk = useSdk();
+  const network = sdk.networks.getActive();
+  const {
+    data: backfill,
+    error,
+    isPending,
+    refetch,
+  } = useQuery({
+    // Same key as the Event Explorer's, deliberately — one fetch serves both.
+    queryKey: ["recent-events", network.id],
+    queryFn: async () => (await sdk.indexer.recentEvents()).data,
+    enabled: !!network.indexerGraphqlUrl,
+  });
+
+  const activity = rankByActivity([...liveEvents, ...(backfill ?? [])]);
+  const loading = !!network.indexerGraphqlUrl && isPending;
+
+  return (
+    <CollapsibleSection id="recently-active" title="Recently active">
+      {error ? (
+        <ErrorState
+          message="Could not load recent activity"
+          error={error}
+          onRetry={() => void refetch()}
+        />
+      ) : activity.length === 0 ? (
+        <p className="state-line" aria-busy={loading}>
+          {loading ? "Loading recent activity…" : "Watching the chain for activity…"}
+        </p>
+      ) : (
+        <ul className="realm-browser-home__list">
+          {activity.map((row) => (
+            <li key={row.packagePath}>
+              <button type="button" onClick={() => onOpen(row.packagePath)}>
+                {row.packagePath}
+                <span className="realm-browser-home__path">
+                  {row.eventCount} recent {row.eventCount === 1 ? "event" : "events"}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {/* AUD-047: say where this came from. The two sources answer slightly
+          different questions — one is history, the other is what has happened
+          since you opened the window — and the ranking mixes them. */}
+      <p className="state-line">
+        {network.indexerGraphqlUrl
+          ? "Ranked from recent chain history, plus anything seen live since this window opened."
+          : `${network.name} has no indexer, so this ranks only the events seen live since this window opened.`}
+      </p>
+    </CollapsibleSection>
+  );
+}
+
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
   const sdk = useSdk();
   const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
   const { events } = useLiveEvents(false);
-  const activity = rankByActivity(events);
   const recentlyAddedPolled = useRecentlyAddedPackages(!indexerConfigured);
   const {
     data: indexerRealms,
@@ -713,30 +785,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
           chose, and it was useless sitting under two long feeds. */}
       <FavoritesSection onOpen={onOpen} />
 
-      <CollapsibleSection id="recently-active" title="Recently active">
-        {activity.length === 0 ? (
-          <p className="state-line" aria-busy="true">
-            Watching the chain for activity…
-          </p>
-        ) : (
-          <ul className="realm-browser-home__list">
-            {activity.map((row) => (
-              <li key={row.packagePath}>
-                <button type="button" onClick={() => onOpen(row.packagePath)}>
-                  {row.packagePath}
-                  <span className="realm-browser-home__path">
-                    {row.eventCount} recent {row.eventCount === 1 ? "event" : "events"}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="state-line">
-          Ranked from live events seen since this window opened — not a historical or complete
-          ranking, which would need the indexer.
-        </p>
-      </CollapsibleSection>
+      <RecentlyActiveSection onOpen={onOpen} liveEvents={events} />
 
       <CollapsibleSection id="recently-added" title="Recently deployed">
         {indexerConfigured ? (
