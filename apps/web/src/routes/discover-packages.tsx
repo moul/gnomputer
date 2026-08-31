@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
-import { useLiveEvents } from "../use-live-events";
-import { rankByActivity } from "../rank-by-activity";
+import { useRecentActivity } from "../use-recent-activity";
 import { ErrorState } from "../shell/error-state";
 import { openInRealmTab } from "../shell/open-in-realm-tab";
 import { focusOrReopen } from "../shell/open-ref";
@@ -58,18 +57,11 @@ export function DiscoverPackages({ kind = "realm" }: { kind?: Extract<PackageKin
     select: (all: string[]) => all.filter((p) => packageKind(p) === kind),
   });
 
-  // Live-observed activity since this window opened — the same
-  // indexer-free signal Browser's Home "Recently active" section already
-  // uses (there's no way to get a real historical activity ranking without
-  // the indexer, see rank-by-activity.ts).
-  const { events } = useLiveEvents(false);
-  // Memoized: without this the map was rebuilt, and the whole 2000-entry
-  // list re-filtered and re-sorted, on EVERY render — including every
-  // keystroke in the filter box and every 4s live-event tick.
-  const activityByPath = useMemo(
-    () => new Map(rankByActivity(events).map((a) => [a.packagePath, a.eventCount])),
-    [events]
-  );
+  // Recent chain history plus anything seen live, shared with Browser's Home
+  // "Recently active" — see use-recent-activity.ts. This column is the table's
+  // DEFAULT SORT, and from the live feed alone it was "—" on every one of 137
+  // rows, so the default ordering meant nothing at all.
+  const { countByPath: activityByPath } = useRecentActivity();
 
   // A new filter means a new result set — showing page 5 of the previous
   // one would be confusing.

@@ -2,9 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
-import { useLiveEvents } from "../use-live-events";
 import { useRecentlyAddedPackages } from "../use-recently-added-packages";
-import { rankByActivity } from "../rank-by-activity";
+import { useRecentActivity } from "../use-recent-activity";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
@@ -702,29 +701,10 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
  * Live events are still merged in, and still count: they are the newest thing
  * that happened, and the backfill is a snapshot from when the window opened.
  */
-function RecentlyActiveSection({
-  onOpen,
-  liveEvents,
-}: {
-  onOpen: (packagePath: string) => void;
-  liveEvents: { pkgPath: string | null }[];
-}) {
+function RecentlyActiveSection({ onOpen }: { onOpen: (packagePath: string) => void }) {
   const sdk = useSdk();
   const network = sdk.networks.getActive();
-  const {
-    data: backfill,
-    error,
-    isPending,
-    refetch,
-  } = useQuery({
-    // Same key as the Event Explorer's, deliberately — one fetch serves both.
-    queryKey: ["recent-events", network.id],
-    queryFn: async () => (await sdk.indexer.recentEvents()).data,
-    enabled: !!network.indexerGraphqlUrl,
-  });
-
-  const activity = rankByActivity([...liveEvents, ...(backfill ?? [])]);
-  const loading = !!network.indexerGraphqlUrl && isPending;
+  const { ranked: activity, isPending, error, refetch } = useRecentActivity();
 
   return (
     <CollapsibleSection id="recently-active" title="Recently active">
@@ -732,11 +712,11 @@ function RecentlyActiveSection({
         <ErrorState
           message="Could not load recent activity"
           error={error}
-          onRetry={() => void refetch()}
+          onRetry={refetch}
         />
       ) : activity.length === 0 ? (
-        <p className="state-line" aria-busy={loading}>
-          {loading ? "Loading recent activity…" : "Watching the chain for activity…"}
+        <p className="state-line" aria-busy={isPending}>
+          {isPending ? "Loading recent activity…" : "Watching the chain for activity…"}
         </p>
       ) : (
         <ul className="realm-browser-home__list">
@@ -767,7 +747,6 @@ function RecentlyActiveSection({
 function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath?: string) => void }) {
   const sdk = useSdk();
   const indexerConfigured = !!sdk.networks.getActive().indexerGraphqlUrl;
-  const { events } = useLiveEvents(false);
   const recentlyAddedPolled = useRecentlyAddedPackages(!indexerConfigured);
   const {
     data: indexerRealms,
@@ -785,7 +764,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
           chose, and it was useless sitting under two long feeds. */}
       <FavoritesSection onOpen={onOpen} />
 
-      <RecentlyActiveSection onOpen={onOpen} liveEvents={events} />
+      <RecentlyActiveSection onOpen={onOpen} />
 
       <CollapsibleSection id="recently-added" title="Recently deployed">
         {indexerConfigured ? (
