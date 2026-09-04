@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests", "schedule:weekly"],
+  "timezone": "UTC",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "@scure/base is pinned to 2.2.0 in package.json's pnpm.overrides — 2.3.0 broke bech32 decoding app-wide with no compile-time signal. See CONTRIBUTING.md.",
+      "matchPackageNames": ["@scure/base"],
+      "enabled": false
+    },
+    {
+      "description": "Group the Gno client stack together — these version in lockstep and a mixed-version bump is the kind of change CONTRIBUTING.md's ADR-019 note (upgrade one thing at a time, with a reason) wants reviewed as one PR, not three.",
+      "matchPackageNames": ["@gnolang/gno-js-client", "@gnolang/tm2-js-client", "@gnolang/tm2-rpc"],
+      "groupName": "gno client libraries"
+    },
+    {
+      "description": "Group the monorepo's own lint/format/build tooling separately from runtime dependencies, so a tooling bump never blocks on a runtime-dependency review and vice versa.",
+      "matchDepTypes": ["devDependencies"],
+      "groupName": "dev tooling"
+    },
+    {
+      "description": "Major-version bumps land as their own PR, never grouped — CONTRIBUTING.md's ADR-019 note applies most to majors.",
+      "matchUpdateTypes": ["major"],
+      "groupName": null
+    }
+  ]
+}
