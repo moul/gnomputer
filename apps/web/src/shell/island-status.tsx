@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { networkShortName } from "@gnomputer/app-sdk";
 import { useSdk } from "../sdk-context";
-import { useChainHeight } from "../use-chain-height";
+import { useChainHeight, CHAIN_HEIGHT_POLL_MS } from "../use-chain-height";
+import { formatTimeAgo } from "../format-time-ago";
 import { IslandPopover } from "./island-popover";
 import { IslandNetworkMenu } from "./island-network-menu";
 import { useWalletStore } from "./wallet-store";
@@ -22,10 +24,29 @@ import { useOnlineStatus } from "./use-online-status";
 export function IslandStatus() {
   const sdk = useSdk();
   const network = sdk.networks.getActive();
-  const { height } = useChainHeight();
+  const { height, dataUpdatedAt } = useChainHeight();
   const account = useWalletStore((s) => s.account);
   const lowData = useLiveUpdatesStore((s) => s.lowData);
   const online = useOnlineStatus();
+  const now = useNow(!online || lowData ? null : HEIGHT_STALE_TICK_MS);
+
+  // The height is the app's single load-bearing "is this live?" signal, and it
+  // used to lie. `useChainHeight` reports success for as long as it holds data,
+  // so a poll failing for twenty minutes still rendered a confident number
+  // while the Network Monitor next to it correctly warned "Updated 20m ago".
+  // Reproduced by getting rate-limited by a public RPC: every request failing,
+  // `navigator.onLine` still true (the browser is fine, the chain is not), the
+  // clock still saying "connected".
+  //
+  // Suppressed when offline or paused, because both of those already have a
+  // badge saying so — a second warning for a state the user chose, or is
+  // already told about, is noise.
+  const heightStale =
+    online &&
+    !lowData &&
+    height !== null &&
+    dataUpdatedAt > 0 &&
+    now - dataUpdatedAt > HEIGHT_STALE_MS;
 
   return (
     <div className="island__status">
@@ -53,9 +74,24 @@ export function IslandStatus() {
       >
         <IslandNetworkMenu />
       </IslandPopover>
-      <span className="island__status-item island__status-item--height">
+      <span
+        className="island__status-item island__status-item--height"
+        data-stale={heightStale || undefined}
+        title={
+          heightStale
+            ? `The chain has not answered since ${formatTimeAgo(new Date(dataUpdatedAt).toISOString())} — this height is the last one it gave, not the current one.`
+            : undefined
+        }
+      >
         <span className="visually-hidden">Block height: </span>
+        {heightStale && <span className="visually-hidden">last known, not current: </span>}
         {height === null ? "—" : `#${height.toLocaleString()}`}
+        {heightStale && (
+          <span className="island__status-item--height-stale" aria-hidden="true">
+            {" "}
+            ⚠
+          </span>
+        )}
       </span>
       {/* Offline wins over low-data in the badge: one of them the user chose
           and can undo, the other happened to them. Saying "Low data" to
@@ -76,6 +112,36 @@ export function IslandStatus() {
       </span>
     </div>
   );
+}
+
+/** How long the tip height may go unrefreshed before it is called out.
+ *
+ * The poll runs every 4s, so this is roughly seven missed attempts — long
+ * enough that a slow response or one dropped request says nothing, short
+ * enough that a dead endpoint is not reported as live for minutes. Deliberately
+ * far tighter than Freshness's five-minute rule: that one guards values which
+ * legitimately change rarely, while a chain tip that has not moved in half a
+ * minute is news. */
+const HEIGHT_STALE_MS = 30_000;
+
+/** Re-render cadence while watching for staleness. Half the poll interval, so
+ * the warning appears within one poll of becoming true rather than up to a
+ * whole extra period late. */
+const HEIGHT_STALE_TICK_MS = CHAIN_HEIGHT_POLL_MS / 2;
+
+/** A clock that ticks only while there is something to notice.
+ *
+ * `intervalMs` of null stops it entirely — offline and paused both suppress the
+ * warning, and a timer running to recompute a value that cannot change is the
+ * kind of thing that keeps a phone awake for nothing. */
+function useNow(intervalMs: number | null): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (intervalMs === null) return;
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
 }
 
 function shortAddress(address: string): string {

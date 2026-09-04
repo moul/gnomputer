@@ -4354,6 +4354,19 @@ main {
   color: var(--text);
 }
 
+/* The chain stopped answering, so this number is the last one it gave rather
+   than the current one. Dimmed to full-strength text's opposite: the height is
+   normally the most confident thing in the bar, and withdrawing that
+   confidence is the message. Not red — nothing is broken in the app, and the
+   value is still the best available. */
+.island__status-item--height[data-stale] {
+  color: var(--text-dim);
+}
+
+.island__status-item--height-stale {
+  color: var(--warning);
+}
+
 .island__status-item--identity {
   padding: 1px 5px;
   border: 1px solid var(--border);
