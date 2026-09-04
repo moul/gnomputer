@@ -231,8 +231,12 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async queryFile(path, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qfile", path);
+      // Routed through gno-js-client rather than abciQueryString, same
+      // reasoning as queryRender's earlier migration (#168): one less
+      // hand-rolled ABCI/base64 path to maintain, upstream tracks gno.land
+      // changes for us.
+      const provider = await getGnoProvider();
+      const value = await provider.getFileContent(path);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "source-file", filePath: path },
         data: value,
