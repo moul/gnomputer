@@ -122,6 +122,55 @@ describe("Help on a first visit", () => {
   });
 });
 
+describe("Help and a deep link", () => {
+  const setSearch = (search: string) => {
+    window.history.replaceState({}, "", `/${search}`);
+  };
+
+  it("stays out of the way when the URL names a realm", async () => {
+    // A shared link is somebody asking for THAT. Opening a welcome window
+    // over it answers a question they did not ask, and hides the thing the
+    // link was shared for.
+    setSearch("?pkg=gno.land/r/sys/users");
+    const { sdk, writes } = fakeSdk();
+    const reopen = vi.spyOn(useWindowStore.getState(), "reopen");
+
+    render(<HelpWindow />, { wrapper: wrap(sdk) });
+
+    await new Promise((r) => setTimeout(r, 30));
+    expect(reopen).not.toHaveBeenCalled();
+    // And the visit is NOT marked seen, so a later bare visit still gets the
+    // introduction rather than losing it to one shared link.
+    expect(writes).not.toContain(FIRST_RUN_DISMISSED_KEY);
+    setSearch("");
+  });
+
+  it("also defers to a link that only names a network", async () => {
+    setSearch("?net=betanet");
+    const { sdk } = fakeSdk();
+    const reopen = vi.spyOn(useWindowStore.getState(), "reopen");
+
+    render(<HelpWindow />, { wrapper: wrap(sdk) });
+
+    await new Promise((r) => setTimeout(r, 30));
+    expect(reopen).not.toHaveBeenCalled();
+    setSearch("");
+  });
+
+  it("still opens when a param is present but empty", async () => {
+    // "?pkg=" is the Home view, not a destination — the Browser writes it
+    // that way when you navigate back out of a realm.
+    setSearch("?pkg=");
+    const { sdk } = fakeSdk();
+    const reopen = vi.spyOn(useWindowStore.getState(), "reopen");
+
+    render(<HelpWindow />, { wrapper: wrap(sdk) });
+
+    await waitFor(() => expect(reopen).toHaveBeenCalledWith("help"));
+    setSearch("");
+  });
+});
+
 describe("Help's guide", () => {
   it("runs a step and ticks it off", async () => {
     const { sdk } = fakeSdk({ [FIRST_RUN_DISMISSED_KEY]: "1" });

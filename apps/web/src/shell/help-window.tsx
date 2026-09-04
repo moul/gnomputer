@@ -12,6 +12,22 @@ import { useIsFirstVisit, useMarkVisited } from "./use-first-visit";
 // split home.tsx uses for every other app.
 const HelpBody = lazy(() => import("./help-body").then((x) => ({ default: x.HelpBody })));
 
+/** Search params that make a URL a destination rather than a front door.
+ *
+ * A link naming a realm, a lens or a network is somebody asking for THAT.
+ * Opening a welcome window over it answers a question they did not ask, and
+ * hides the thing the link was shared for — so a deep link wins, even on a
+ * genuine first visit. The introduction is still one click away on the
+ * island, and the visit is not marked as seen, so a later bare visit still
+ * gets it.
+ */
+const DESTINATION_PARAMS = ["pkg", "path", "lens", "net"];
+
+function urlNamesADestination(search: string): boolean {
+  const params = new URLSearchParams(search);
+  return DESTINATION_PARAMS.some((key) => (params.get(key) ?? "") !== "");
+}
+
 /**
  * The app that introduces the app.
  *
@@ -39,6 +55,7 @@ export function HelpWindow() {
 
   useEffect(() => {
     if (isFirstVisit !== true || openedOnce.current) return;
+    if (urlNamesADestination(window.location.search)) return;
     openedOnce.current = true;
     // Recorded as soon as it is shown, not when it is dismissed: someone who
     // reloads instead of clicking has still been introduced, and greeting
@@ -53,7 +70,7 @@ export function HelpWindow() {
       title="Help"
       accent="green"
       startClosed
-      defaultGeometry={{ x: 140, y: 110, width: 470, height: 600 }}
+      defaultGeometry={{ x: 200, y: 130, width: 470, height: 560 }}
     >
       <Suspense fallback={<p className="state-line">Loading…</p>}>
         <HelpBody />
