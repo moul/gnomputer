@@ -690,6 +690,52 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
   );
 }
 
+/** How much of a package path the home lists can show before shortening it.
+ *
+ * Generous compared with the popover list smartTruncateRealmPath was written
+ * for — these rows have a whole window's width — but far from unlimited: a
+ * user-deployed realm carries its deployer's address as its namespace, so
+ * `gno.land/r/g12cs4cehujpffpjpywmkqj43m6u5ya53nj69sjz/pixelcanvas` spends 40
+ * characters saying nothing before the one word that identifies it. */
+const HOME_PATH_MAX = 44;
+
+/** One row in a home list: a shortened path, a detail line, and the full path
+ * still available on hover and to a screen reader.
+ *
+ * The lists used to print the raw path. On a chain where most realms are
+ * deployed by individuals rather than under `demo/` or `gnoland/`, that made
+ * the front page a column of near-identical `g1…` strings — the part that
+ * tells them apart pushed off the end. */
+function HomeListRow({
+  packagePath,
+  detail,
+  onOpen,
+}: {
+  packagePath: string;
+  /** Omitted by the no-indexer fallback list, which has no height to show. */
+  detail?: string;
+  onOpen: (packagePath: string) => void;
+}) {
+  const shortened = smartTruncateRealmPath(packagePath, HOME_PATH_MAX);
+  const abbreviated = shortened !== packagePath;
+
+  return (
+    <li>
+      {/* title for the pointer, and the full path in the accessible name for
+          everyone else — an ellipsis read aloud is worse than useless. */}
+      <button
+        type="button"
+        onClick={() => onOpen(packagePath)}
+        title={abbreviated ? packagePath : undefined}
+        aria-label={abbreviated ? [packagePath, detail].filter(Boolean).join(" — ") : undefined}
+      >
+        {shortened}
+        {detail && <span className="realm-browser-home__path">{detail}</span>}
+      </button>
+    </li>
+  );
+}
+
 /** "What is this chain busy with right now" — the first thing the home screen
  * is asked, and for a long time the one it could not answer.
  *
@@ -721,14 +767,12 @@ function RecentlyActiveSection({ onOpen }: { onOpen: (packagePath: string) => vo
       ) : (
         <ul className="realm-browser-home__list">
           {activity.map((row) => (
-            <li key={row.packagePath}>
-              <button type="button" onClick={() => onOpen(row.packagePath)}>
-                {row.packagePath}
-                <span className="realm-browser-home__path">
-                  {row.eventCount} recent {row.eventCount === 1 ? "event" : "events"}
-                </span>
-              </button>
-            </li>
+            <HomeListRow
+              key={row.packagePath}
+              packagePath={row.packagePath}
+              detail={`${row.eventCount} recent ${row.eventCount === 1 ? "event" : "events"}`}
+              onOpen={onOpen}
+            />
           ))}
         </ul>
       )}
@@ -780,12 +824,12 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
           ) : (
             <ul className="realm-browser-home__list">
               {indexerRealms!.map((realm) => (
-                <li key={realm.packagePath}>
-                  <button type="button" onClick={() => onOpen(realm.packagePath)}>
-                    {realm.packagePath}
-                    <span className="realm-browser-home__path">block #{formatNumber(realm.blockHeight)}</span>
-                  </button>
-                </li>
+                <HomeListRow
+                  key={realm.packagePath}
+                  packagePath={realm.packagePath}
+                  detail={`block #${formatNumber(realm.blockHeight)}`}
+                  onOpen={onOpen}
+                />
               ))}
             </ul>
           )
@@ -796,11 +840,7 @@ function RealmBrowserHome({ onOpen }: { onOpen: (packagePath: string, renderPath
         ) : (
           <ul className="realm-browser-home__list">
             {recentlyAddedPolled.map((path) => (
-              <li key={path}>
-                <button type="button" onClick={() => onOpen(path)}>
-                  {path}
-                </button>
-              </li>
+              <HomeListRow key={path} packagePath={path} onOpen={onOpen} />
             ))}
           </ul>
         )}

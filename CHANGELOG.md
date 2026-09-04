@@ -4,6 +4,15 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- The Browser home's lists are readable on a chain where people deploy their
+  own realms. Every row printed its full path, and a realm deployed by an
+  individual carries the deployer's address as its namespace — so three
+  different realms from the same person were identical for the first fifty
+  characters, with the word that tells them apart pushed off the end. Paths are
+  shortened the way the command palette already does it (`r/g…/votingbooth`),
+  with the full path on hover and read out in full to a screen reader. Measured
+  on Pearl: 44 of 110 rows were unreadable before.
+
 - The block height in the top bar admits when it has stopped moving. It is the
   app's main "is this live?" signal and it was lying: when the chain stopped
   answering, the height kept being shown at full confidence — and the clock
