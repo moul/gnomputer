@@ -4,6 +4,12 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- A shared link opens what it names, even on a first visit. Help would open
+  itself over the realm the link pointed at — answering a question nobody
+  asked and hiding the thing that was shared. A URL naming a realm, a lens or
+  a network now wins; the introduction stays one click away on the island, and
+  a later plain visit still gets it.
+
 - There is a Help app. It opens itself on a first visit, closes like any
   window, and comes back from the island or ⌘K whenever the question returns —
   unlike the welcome note it replaces, which appeared once and was gone for
