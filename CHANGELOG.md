@@ -4,6 +4,17 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- There is a Help app. It opens itself on a first visit, closes like any
+  window, and comes back from the island or ⌘K whenever the question returns —
+  unlike the welcome note it replaces, which appeared once and was gone for
+  good on the first stray click, taking anything it had not yet explained
+  with it.
+  Two halves. A four-step guide that teaches the interface by *using* it —
+  each step opens the real thing and ticks itself off — and then a list of
+  things to try: search for something, follow something, simulate a call,
+  write some Gno, watch the chain, change network. Every entry actually does
+  what it says, and the ones that need a wallet say so.
+
 - The Browser home's lists are readable on a chain where people deploy their
   own realms. Every row printed its full path, and a realm deployed by an
   individual carries the deployer's address as its namespace — so three

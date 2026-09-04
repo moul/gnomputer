@@ -7,6 +7,7 @@ import { Window } from "../shell/window";
 
 import { HistoryWindow } from "../shell/history-window";
 import { AddressWindow } from "../shell/address-window";
+import { HelpWindow } from "../shell/help-window";
 import { ExplorerWindow } from "../shell/explorer-window";
 import { GnockpitEmbedWindow } from "../shell/gnockpit-embed-window";
 import { ExtraRealmWindows } from "../shell/extra-realm-windows";
@@ -289,6 +290,7 @@ export function Home() {
           <SettingsWindow />
           <HistoryWindow />
           <AddressWindow />
+          <HelpWindow />
           <ExplorerWindow />
           <GnockpitEmbedWindow />
           <ExtraRealmWindows />

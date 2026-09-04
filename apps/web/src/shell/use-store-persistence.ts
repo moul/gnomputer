@@ -108,10 +108,25 @@ export function useStorePersistence<T extends object>(
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [stored, storedAt] = await Promise.all([
-        sdk.uiState.get(storageKey),
-        sdk.uiState.get(writtenAtKey(storageKey)),
-      ]);
+      // Reading may THROW, not merely return null: a browser that blocks
+      // IndexedDB outright, a quota error, private mode. Uncaught, that was
+      // an unhandled rejection *and* left `hydrated` false forever — which
+      // gates writing as well as restoring, so one failed read quietly
+      // disabled persistence for the rest of the session. Exactly the shape
+      // of AUD-006, which use-query-cache-persistence already guards with
+      // this same try/finally; this hook was the one that did not.
+      let stored: string | null | undefined = null;
+      let storedAt: string | null | undefined = null;
+      try {
+        [stored, storedAt] = await Promise.all([
+          sdk.uiState.get(storageKey),
+          sdk.uiState.get(writtenAtKey(storageKey)),
+        ]);
+      } catch {
+        // Starting from defaults is a fine outcome. The localStorage mirror
+        // below is still consulted — it is a different store and may well
+        // have survived whatever stopped IndexedDB.
+      }
       const mirror = readMirror(storageKey);
 
       // Whichever was written last wins, decided by comparing timestamps
