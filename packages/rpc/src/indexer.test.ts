@@ -9,6 +9,7 @@ import {
   listBlockHeightsWithTxs,
   recentEvents,
   blockTransactions,
+  IndexerRequestError,
 } from "./indexer";
 
 import FIXTURES from "./__fixtures__/indexer-block-transactions.json";
@@ -111,6 +112,13 @@ describe("countPackagesByCreator", () => {
   it("throws a transport error when the HTTP response isn't ok", async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: "Internal Server Error" });
     await expect(countPackagesByCreator(NETWORK, "g1abc", NOW)).rejects.toThrow("500");
+  });
+
+  it("throws a typed, status-carrying error on a 429", async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 429, statusText: "Too Many Requests" });
+    const promise = countPackagesByCreator(NETWORK, "g1abc", NOW);
+    await expect(promise).rejects.toBeInstanceOf(IndexerRequestError);
+    await expect(promise).rejects.toMatchObject({ status: 429 });
   });
 });
 
