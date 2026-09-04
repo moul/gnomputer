@@ -6,35 +6,39 @@ import { openApp } from "./open-app";
  *
  * This spec used to be named after that promise while only checking the
  * toolbar, the absence of wallet copy, and one Settings message — so the
- * promise itself could break without failing anything (AUD-010). */
+ * promise itself could break without failing anything (AUD-010).
+ *
+ * The explanation now lives in the Help app rather than in a note that
+ * appeared once and vanished for good. What is asserted below is the promise,
+ * not the surface: the lead line, a live workspace still visible behind it,
+ * starters that actually open what they name, and nothing asking for a
+ * wallet. */
 const TIME_TO_USEFUL_WORKSPACE_MS = 15_000;
 
 test("a guest lands in a live, explained workspace with no wallet prompt", async ({ page }) => {
   const startedAt = Date.now();
   await page.goto("/");
 
-  // 1. The workspace is there, and it is the Browser — not a splash screen,
-  //    a modal, or an empty desktop.
+  // 1. The workspace is there, and it is the Browser — not a splash screen
+  //    or an empty desktop.
   await expect(page.getByRole("toolbar", { name: "Apps" })).toBeVisible();
   const browser = page.locator("#window-realm");
   await expect(browser).toBeVisible();
 
   // 2. It says what this is. The exact lead line comes from the spec.
-  const note = page.locator(".first-run-note");
-  await expect(note).toContainText("You are browsing the shared computer.");
-  await expect(note).toContainText(/no wallet is needed/i);
+  const help = page.locator("#window-help");
+  await expect(help).toBeVisible();
+  await expect(help).toContainText("You are browsing the shared computer.");
+  await expect(help).toContainText(/no wallet is needed/i);
 
-  // 3. The launch state offers somewhere to go: realms to open, and a
-  //    recent-activity section. (These headings render uppercase via CSS,
-  //    so the DOM text is sentence case — asserting the painted form would
-  //    pass for the wrong reason.)
+  // 3. Help explains without hiding the thing it explains. A first visit has
+  //    to show a LIVE workspace, so the introduction must not cover it.
   await expect(browser).toContainText("System realms");
   await expect(browser).toContainText("Recently active");
   await expect(browser.getByText("gno.land/r/sys/users")).toBeVisible();
 
-  // 4. It is actually live. The realm lists above are curated, so they
-  //    prove the UI rendered, not that any chain data arrived — the height
-  //    does.
+  // 4. It is actually live. The realm lists above are curated, so they prove
+  //    the UI rendered, not that any chain data arrived — the height does.
   await expect(page.locator('.island__clock .status-dot[data-state="connected"]')).toBeVisible();
   await page.locator(".island__clock").hover();
   await expect(page.locator(".island-menu--clock")).toContainText(/#[\d,]+/);
@@ -49,7 +53,8 @@ test("a guest lands in a live, explained workspace with no wallet prompt", async
 test("the source of a realm is one step from the launch state", async ({ page }) => {
   await page.goto("/");
   await page.waitForSelector("#window-realm");
-  await page.locator(".first-run-note__dismiss").click();
+  // Out of the way, the way anyone would — it is an ordinary window now.
+  await page.getByRole("button", { name: "Close Help" }).click();
 
   await page.locator("#window-realm").getByText("gno.land/r/sys/users").first().click();
   await expect(page.getByRole("tab", { name: /Source/i })).toBeVisible({ timeout: 15000 });
@@ -84,28 +89,73 @@ test("the launch state is in the same place every time", async ({ page }) => {
   expect(await placement()).toEqual(first);
 });
 
-/** The first-run note now offers three things to DO, not only three things
- * to read (see first-run-note.tsx). Each has to actually open what it
- * names: a starter that quietly stops working is invisible, because the
- * note only ever appears on a visitor's very first load and never again on
- * the machine that would notice. */
-test("each first-run starter opens what it says, and clears the note", async ({ page }) => {
+/** The guide offers four things to DO, not four things to read. Each has to
+ * actually open what it names — and unlike the note this replaced, a broken
+ * step is now reachable forever rather than only on a visitor's very first
+ * load, so it matters more that they keep working. */
+test("each guide step opens what it says, and is ticked off", async ({ page }) => {
   await page.goto("/");
-  const starters = page.locator(".first-run-note__starters button");
-  await expect(starters).toHaveCount(3);
+  const help = page.locator("#window-help");
+  await expect(help).toBeVisible();
 
-  await starters.filter({ hasText: "On-chain source" }).click();
+  const steps = help.locator(".help-window__list button");
+  await expect(steps).toHaveCount(4);
+  await expect(help.locator(".help-window__progress")).toHaveText("0/4");
 
-  // The note steps aside rather than talking over the thing it just opened.
-  await expect(page.locator(".first-run-note")).toHaveCount(0);
-  // ...and the Source lens is the one showing, not merely the realm.
+  await steps.filter({ hasText: "Read its source" }).click();
+
+  // The Source lens is the one showing, not merely the realm.
   await expect(page.getByRole("tab", { name: /Source/i })).toBeVisible({ timeout: 20_000 });
   await expect(page.locator("#window-realm")).toContainText("r/sys/users", { timeout: 20_000 });
+  // ...and the step records that it ran.
+  await expect(help.locator(".help-window__progress")).toHaveText("1/4");
+  await expect(steps.filter({ hasText: "Read its source" })).toHaveAttribute("data-done", "true");
 });
 
-test("a first-run starter can open an app, not just a realm", async ({ page }) => {
+test("a guide step can open an app, not just a realm", async ({ page }) => {
   await page.goto("/");
-  await page.locator(".first-run-note__starters button").filter({ hasText: "Live events" }).click();
+  const help = page.locator("#window-help");
+  await help.locator(".help-window__list button").filter({ hasText: "Watch it change" }).click();
   await expect(page.locator("#window-event-explorer")).toBeVisible({ timeout: 20_000 });
-  await expect(page.locator(".first-run-note")).toHaveCount(0);
+});
+
+/** The reason Help is an app and not a note: the note vanished on the first
+ * stray click and never came back, so anything it had not yet explained
+ * stayed unexplained. */
+test("Help closes like any window and comes back from the island", async ({ page }) => {
+  await page.goto("/");
+  const help = page.locator("#window-help");
+  await expect(help).toBeVisible();
+
+  await page.getByRole("button", { name: "Close Help" }).click();
+  await expect(help).toBeHidden();
+
+  await openApp(page, "Help");
+  await expect(help).toBeVisible();
+  await expect(help).toContainText("You are browsing the shared computer.");
+});
+
+test("Help does not reopen itself for a returning visitor", async ({ page }) => {
+  // Opening an unasked-for window on every load is the failure mode that
+  // makes onboarding hated. One visit is one introduction.
+  await page.goto("/");
+  await expect(page.locator("#window-help")).toBeVisible();
+  await page.getByRole("button", { name: "Close Help" }).click();
+  await expect(page.locator("#window-help")).toBeHidden();
+
+  await page.reload();
+  await page.waitForSelector("#window-realm");
+  // Given time to have reopened, if it were going to.
+  await page.waitForTimeout(2000);
+  await expect(page.locator("#window-help")).toBeHidden();
+});
+
+test("the action list reaches the tools, and each one opens", async ({ page }) => {
+  await page.goto("/");
+  const help = page.locator("#window-help");
+  await help.getByRole("button", { name: /things to try/ }).click();
+  await expect(help.locator(".help-window__heading")).toHaveText("Try something");
+
+  await help.locator(".help-window__list button").filter({ hasText: "Simulate a call" }).click();
+  await expect(page.locator("#window-shell")).toBeVisible({ timeout: 20_000 });
 });

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSdk } from "../sdk-context";
-import { FIRST_RUN_DISMISSED_KEY } from "./first-run-note";
+import { FIRST_RUN_DISMISSED_KEY } from "./help-store";
 
 /**
  * Keys nothing reads any more, dropped once on load.
@@ -31,9 +31,10 @@ export function useRetireOrphanedState() {
       const orphaned = RETIRED_KEYS.filter((key) => present.includes(key));
       if (orphaned.length === 0) return;
 
-      // These keys are also what tells the first-run note that someone has been
-      // here before. Deleting them without recording that would greet a
-      // returning user as new — and which of the two effects runs first is not
+      // These keys are also what tells the Help app that someone has been here
+      // before (use-first-visit.ts scans this very prefix). Deleting them
+      // without recording that would open an unasked-for window at a
+      // returning user — and which of the two effects runs first is not
       // something to depend on, so the fact is written down before the
       // evidence goes.
       if (orphaned.some((key) => key.startsWith("window-layout:"))) {

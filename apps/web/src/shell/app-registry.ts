@@ -53,6 +53,10 @@ export const APP_REGISTRY: AppDescriptor[] = [
   { id: "chain-stats", label: "Chain Stats", icon: "⛽", supportsMultiWindow: false, group: "chain", aliases: ["gas", "leaderboard", "activity", "stats"] },
   { id: "gnockpit", label: "Gnockpit", icon: "📊", supportsMultiWindow: false, group: "chain" },
   { id: "settings", label: "Settings", icon: "⚙️", supportsMultiWindow: false, aliases: ["preferences", "config", "options"] },
+  // Its own island icon on purpose. Help replaced a note that showed up once
+  // on a first load and was then gone for good — the whole point of making it
+  // an app is that "how do I simulate a call again" is a day-ten question.
+  { id: "help", label: "Help", icon: "❓", supportsMultiWindow: false, aliases: ["onboarding", "guide", "tour", "start", "welcome", "intro", "?"] },
   // Reachable via the clock's History menu (island-clock.tsx) instead of its
   // own icon — see AppDescriptor.hiddenFromIsland.
   { id: "history", label: "History", icon: "🕘", supportsMultiWindow: false, hiddenFromIsland: true, aliases: ["trail", "trails", "visited", "recent"] },

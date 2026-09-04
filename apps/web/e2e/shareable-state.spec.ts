@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { dismissHelp } from "./dismiss-help";
 import { openApp } from "./open-app";
 
 // The URL carried only pkg and path, so a link to a realm's SOURCE opened on
@@ -19,6 +20,8 @@ test("switching lens updates the URL, and the default lens leaves it out", async
   await page.setViewportSize({ width: 1500, height: 900 });
   await page.goto("/?pkg=gno.land/r/sys/users&lens=source");
   await page.waitForSelector("#window-realm");
+  // Not an onboarding test: Help would sit over the lens tabs clicked below.
+  await dismissHelp(page);
 
   const tabs = page.locator(".lens-tab-bar button, .realm-browser__lens-tabs button");
 
@@ -60,6 +63,8 @@ test("the network survives navigating around inside the app", async ({ page }) =
   await page.setViewportSize({ width: 1500, height: 900 });
   await page.goto("/?net=betanet&pkg=gno.land/r/sys/users");
   await page.waitForSelector("#window-realm");
+  // Not an onboarding test: Help would sit over the lens tabs clicked below.
+  await dismissHelp(page);
   expect(new URL(page.url()).searchParams.get("net")).toBe("betanet");
 
   const tabs = page.locator(".lens-tab-bar button, .realm-browser__lens-tabs button");

@@ -4243,63 +4243,63 @@ main {
   color: var(--text-faint);
 }
 
-/* The spec's opening text (§7.1). Anchored to the BOTTOM: the first window
-   fills most of the viewport, so there is no empty area to sit in, and the
-   top-centre position this first had covered the realm path input — the one
-   control a new visitor is most likely to reach for. */
-.first-run-note {
-  position: fixed;
-  bottom: var(--space-3);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 180;
-  max-width: min(560px, calc(100vw - var(--space-4) * 2));
-  padding: var(--space-3) var(--space-4);
-  background: var(--bg-elevated);
-  border: 1px solid var(--accent-dim);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-modal);
+/* Help: the app that introduces the app. Ordinary window content — the note
+   this replaced was a fixed overlay with pointer-events:none tricks so it
+   could not swallow a click on the workspace underneath. As a real window
+   none of that applies, and the whole class of "the intro ate my click" bug
+   goes with it. */
+.help-window {
+  padding: var(--space-3);
   font-family: var(--ui-font);
-  text-align: center;
-  /* Never swallows a click meant for the workspace underneath. Only the
-     dismiss button takes pointer events; everything else passes straight
-     through, and the note clears itself on the first outside press. */
-  pointer-events: none;
 }
 
-.first-run-note__lead {
+.help-window__lead {
   font-weight: 700;
   color: var(--text);
   font-size: 14px;
 }
 
-.first-run-note__body {
+.help-window__body {
   margin-top: var(--space-1);
   color: var(--text-dim);
   font-size: 12px;
   line-height: 1.6;
 }
 
-/* pointer-events:auto on every interactive child, because the note itself
-   is pointer-events:none so it can never swallow a click meant for the
-   workspace underneath. A starter that cannot be clicked is worse than no
-   starter at all. */
-.first-run-note__starters {
+.help-window__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.help-window__progress {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.help-window__list {
   list-style: none;
-  margin: var(--space-3) 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-direction: column;
   gap: var(--space-2);
 }
 
-.first-run-note__starters button {
-  pointer-events: auto;
+.help-window__list button {
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--space-3);
+  width: 100%;
   text-align: left;
   padding: var(--space-2) var(--space-3);
   background: var(--bg-inset);
@@ -4308,32 +4308,65 @@ main {
   font-family: var(--ui-font);
 }
 
-.first-run-note__starters button:hover,
-.first-run-note__starters button:focus-visible {
+.help-window__list button:hover,
+.help-window__list button:focus-visible {
   border-color: var(--accent);
   background: var(--bg-elevated);
 }
 
-.first-run-note__starter-label {
+/* A step already run stays clickable — re-opening the Event Explorer is a
+   reasonable thing to want twice — so this reads as "you did this", not as
+   "this is disabled". */
+.help-window__list button[data-done] .help-window__label {
+  color: var(--text-dim);
+}
+
+.help-window__icon {
+  flex: 0 0 auto;
+  width: 1.4em;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+}
+
+/* The numbered guide gets a boxed step number; the action list's emoji do
+   not want a border round them. */
+.help-window__list[data-numbered] .help-window__icon {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  line-height: 1.4em;
+}
+
+.help-window__list button[data-done] .help-window__icon {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+.help-window__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.help-window__label {
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
 }
 
-.first-run-note__starter-hint {
+.help-window__hint {
   font-size: 11px;
   color: var(--text-dim);
+  line-height: 1.5;
 }
 
-.first-run-note__dismiss {
-  margin-top: var(--space-2);
-  pointer-events: auto;
+.help-window__footer {
+  margin-top: var(--space-3);
 }
 
-@media (max-width: 640px) {
-  .first-run-note {
-    padding: var(--space-2) var(--space-3);
-  }
+.help-window__switch {
+  font-size: 11px;
 }
 
 /* Network / height / identity, inline in the island. Monospace and

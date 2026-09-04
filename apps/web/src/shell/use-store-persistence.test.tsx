@@ -250,3 +250,46 @@ describe("durability against a reload that aborts the IndexedDB write", () => {
     expect(JSON.parse(raw!).value).toContain("7");
   });
 });
+
+describe("useStorePersistence when storage throws", () => {
+  /** Not "returns null" — actually throws. A browser that blocks IndexedDB
+   * outright, a quota error, private mode. Surfaced by a Help app test whose
+   * fake SDK was harsher than the real one, and it found a real hole: the
+   * read was unguarded, so the rejection went unhandled AND `hydrated` stayed
+   * false forever — which gates writing as well as restoring, so one failed
+   * read quietly disabled persistence for the whole session (AUD-006). */
+  function throwingSdk() {
+    return {
+      uiState: {
+        get: async () => {
+          throw new Error("storage unavailable");
+        },
+        set: async () => {
+          throw new Error("storage unavailable");
+        },
+        keys: async () => {
+          throw new Error("storage unavailable");
+        },
+        remove: async () => {},
+      },
+    } as unknown as ReturnType<typeof createGnomputerSDK>;
+  }
+
+  it("still reports hydrated, so writing is not disabled for the session", async () => {
+    const store = makeCounterStore();
+    const { result } = renderHook(() => useStorePersistence("counter", store), {
+      wrapper: wrapperFor(throwingSdk()),
+    });
+
+    await waitFor(() => expect(result.current).toBe(true));
+  });
+
+  it("leaves the store at its defaults rather than crashing", async () => {
+    const store = makeCounterStore();
+    renderHook(() => useStorePersistence("counter", store), {
+      wrapper: wrapperFor(throwingSdk()),
+    });
+
+    await waitFor(() => expect(store.getState().count).toBe(0));
+  });
+});

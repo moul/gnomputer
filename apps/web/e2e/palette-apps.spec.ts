@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { dismissHelp } from "./dismiss-help";
 
 // The README says "unopened apps live behind the island bar's icons and a
 // command palette (⌘K)". The island half was true; the palette only ever
@@ -117,6 +118,9 @@ test("a command that could not act is not offered at all", async ({ page }) => {
   // clicked, which is indistinguishable from a broken command.
   await page.goto("/");
   await page.waitForSelector(".island__clock");
+  // The premise below is "one open window". Help opens itself on a first
+  // visit, and every Playwright context is one, which made it two.
+  await dismissHelp(page);
 
   let input = await openPalette(page);
   await input.fill("show all windows");
