@@ -23,13 +23,20 @@ describe("describeError", () => {
     );
   });
 
-  it("replaces the browser's opaque fetch failure with something actionable", () => {
-    // The same message covers a dropped connection, a DNS failure, a CORS
-    // rejection and a blocked mixed-content request. Script cannot tell
-    // them apart, so echoing it explains nothing.
-    expect(describeError(new TypeError("Failed to fetch")).message).toMatch(
-      /Check your connection/
-    );
+  it("names rate limiting as a real possibility instead of only 'check your connection'", () => {
+    // The same opaque message covers a dropped connection, a DNS failure, a
+    // CORS rejection AND a rate-limited response the browser wasn't allowed
+    // to read the status of. Telling someone in the last case to check their
+    // connection sends them looking in the wrong place (issue #218).
+    const described = describeError(new TypeError("Failed to fetch"));
+    expect(described.message).toMatch(/rate.?limit/i);
+    expect(described.message).not.toMatch(/check your connection/i);
+  });
+
+  it("names a confirmed 429 as rate-limited, distinctly from a generic HTTP error", () => {
+    const described = describeError(new Error("Bad status on response: 429"));
+    expect(described.message).toMatch(/rate.?limit/i);
+    expect(described.message).not.toMatch(/HTTP 429/);
   });
 
   it("bounds the length rather than printing a wall of text", () => {
