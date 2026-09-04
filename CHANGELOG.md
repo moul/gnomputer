@@ -4,6 +4,14 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- The block height in the top bar admits when it has stopped moving. It is the
+  app's main "is this live?" signal and it was lying: when the chain stopped
+  answering, the height kept being shown at full confidence — and the clock
+  beside it still read "connected", because the browser was online even though
+  the chain was not. It now dims, adds a warning mark, and says in its tooltip
+  how long it has been since the chain last answered. Being offline or having
+  paused updates still shows the existing badge instead.
+
 - Gnomputer installs its two Gno client libraries from npm again, instead of
   from pinned forks. The fork carried a fix for typed chain errors that has now
   shipped upstream; everything else it carried only mattered for installing

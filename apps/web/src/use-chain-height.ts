@@ -39,12 +39,24 @@ export const CHAIN_HEIGHT_POLL_MS = 4000;
  * The last known height is still returned while paused. Blanking it would
  * make every view that reads it look broken rather than frozen, and the
  * height is exactly the number that tells you how stale the rest is. */
-export function useChainHeight(enabled = true): { height: number | null; isError: boolean } {
+export function useChainHeight(enabled = true): {
+  height: number | null;
+  isError: boolean;
+  /** When the height currently being returned was actually fetched, as an
+   * epoch ms (0 before the first success).
+   *
+   * `isError` is not enough to tell a live height from a frozen one. React
+   * Query keeps reporting success while it holds data, so a poll that has been
+   * failing for twenty minutes still looks fine to a consumer that only reads
+   * `height` — and the island showed a confident, completely stale number the
+   * whole time. The age of the last success is the honest signal. */
+  dataUpdatedAt: number;
+} {
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const paused = useLiveUpdatesPaused();
 
-  const { data, isError } = useQuery({
+  const { data, isError, dataUpdatedAt } = useQuery({
     queryKey: ["chain-height", networkId],
     queryFn: async () => (await sdk.rpc.getStatus()).data.latestHeight,
     enabled: enabled && !paused,
@@ -57,5 +69,5 @@ export function useChainHeight(enabled = true): { height: number | null; isError
     retry: 1,
   });
 
-  return { height: data ?? null, isError };
+  return { height: data ?? null, isError, dataUpdatedAt };
 }
