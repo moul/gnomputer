@@ -238,6 +238,15 @@ describe("createRpcClient", () => {
     });
   });
 
+  // This test and getStatus above are the only things standing between a
+  // routine `pnpm update` and two broken apps. Both decode bech32 addresses
+  // through tm2-rpc, and `@scure/base@2.3.0` began rejecting the
+  // `limit = Infinity` that `@cosmjs/encoding`'s fromBech32 passes — so every
+  // address decode throws `RangeError: limit: expected safe integer`, taking
+  // out the Network Monitor and the Validator Monitor with no compile-time
+  // signal at all. If you are reading this because one of them just failed
+  // that way, the fix is the "@scure/base@^2": "2.2.0" override in the root
+  // package.json, not a change here. See CONTRIBUTING.md.
   it("wraps getValidatorSet with real bech32 addresses, not raw bytes", async () => {
     const client = createRpcClient(topaz);
     const env = await client.getValidatorSet("2026-07-22T00:00:00.000Z");
