@@ -250,8 +250,12 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async evalExpression(packagePath, expression, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qeval", `${packagePath}.${expression}`);
+      // gno-js-client's encodeVMQueryData([packagePath, expression], ".")
+      // joins with the same "." this hand-rolled call built by template
+      // string, so the wire payload — and therefore every fixture response
+      // keyed on it — is unchanged.
+      const provider = await getGnoProvider();
+      const value = await provider.evaluateExpression(packagePath, expression);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "realm", packagePath },
         data: value,
