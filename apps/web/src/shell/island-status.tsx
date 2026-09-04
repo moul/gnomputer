@@ -24,7 +24,7 @@ import { useOnlineStatus } from "./use-online-status";
 export function IslandStatus() {
   const sdk = useSdk();
   const network = sdk.networks.getActive();
-  const { height, dataUpdatedAt } = useChainHeight();
+  const { height, dataUpdatedAt, errorKind } = useChainHeight();
   const account = useWalletStore((s) => s.account);
   const lowData = useLiveUpdatesStore((s) => s.lowData);
   const online = useOnlineStatus();
@@ -104,6 +104,14 @@ export function IslandStatus() {
       ) : lowData ? (
         <span className="island__status-item island__status-badge" data-kind="low-data" title="Live updates paused to save data. Nothing is polling the chain.">
           Paused
+        </span>
+      ) : errorKind === "rate-limited" ? (
+        <span className="island__status-item island__status-badge" data-kind="rate-limited" title="The chain endpoint is rate-limiting requests. Live updates will resume automatically.">
+          Rate limited
+        </span>
+      ) : errorKind === "unreachable" ? (
+        <span className="island__status-item island__status-badge" data-kind="unreachable" title="The chain endpoint has stopped answering. This can mean it's down, or rate-limiting requests.">
+          Unreachable
         </span>
       ) : null}
       <span className="island__status-item island__status-item--identity">
