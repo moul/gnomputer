@@ -4,6 +4,11 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Gnomputer installs its two Gno client libraries from npm again, instead of
+  from pinned forks. The fork carried a fix for typed chain errors that has now
+  shipped upstream; everything else it carried only mattered for installing
+  from git. Nothing changes in the app — same behaviour, same bundle size.
+
 - Fixed a crash introduced by the previous release. Changing what a realm's
   History returns meant returning visitors had the *old* shape sitting in their
   cached chain data, and the Browser window crashed on open with "Something
