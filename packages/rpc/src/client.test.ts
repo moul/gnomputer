@@ -285,14 +285,13 @@ describe("createRpcClient", () => {
   it("wraps queryFuncs in a DataEnvelope with real function signatures, including a crossing function's realm-typed first param", async () => {
     const client = createRpcClient(topaz);
     const env = await client.queryFuncs("gno.land/r/gnoland/blog", "2026-07-22T00:00:00.000Z");
-    const parsed = JSON.parse(env.data);
-    expect(parsed).toHaveLength(2);
-    expect(parsed[0].FuncName).toBe("ModAddPost");
-    expect(parsed[0].Params[0].Name).toBe(".arg_0");
-    expect(parsed[0].Params[0].Type).toContain(".uverse.realm");
-    expect(parsed[0].Params[1].Name).toBe("slug");
-    expect(parsed[1].FuncName).toBe("Render");
-    expect(parsed[1].Results[0].Type).toBe("string");
+    expect(env.data).toHaveLength(2);
+    expect(env.data[0]!.FuncName).toBe("ModAddPost");
+    expect(env.data[0]!.Params[0]!.Name).toBe(".arg_0");
+    expect(env.data[0]!.Params[0]!.Type).toContain(".uverse.realm");
+    expect(env.data[0]!.Params[1]!.Name).toBe("slug");
+    expect(env.data[1]!.FuncName).toBe("Render");
+    expect(env.data[1]!.Results[0]!.Type).toBe("string");
   });
 });
 
