@@ -1,3 +1,5 @@
+import { classifyChainError } from "./chain-error";
+
 /** Longest message worth putting in front of someone. Past this the text
  * stops being an explanation and becomes a wall. */
 const MAX_LENGTH = 240;
@@ -41,11 +43,21 @@ export function describeError(error: unknown): DescribedError {
   if (raw.trim() === "") return { message: "Something went wrong.", detail };
 
   // Browsers give the same opaque message for a dropped connection, a DNS
-  // failure, a CORS rejection and a blocked mixed-content request. Saying
-  // which is impossible from script; saying what to try is not.
-  if (/failed to fetch|networkerror|load failed/i.test(raw)) {
+  // failure, a CORS rejection and a blocked mixed-content request — and
+  // (unmeasured, but plausible: issue #218) a rate-limited response whose
+  // status the browser wasn't allowed to read. Naming rate limiting as a
+  // possibility beats sending someone to check a connection that is fine.
+  const chainErrorKind = classifyChainError(error);
+  if (chainErrorKind === "rate-limited") {
     return {
-      message: "Could not reach the network. Check your connection and try again.",
+      message: "The endpoint is rate-limiting requests. Wait a moment and try again.",
+      detail,
+    };
+  }
+  if (chainErrorKind === "unreachable") {
+    return {
+      message:
+        "The endpoint stopped answering. This can mean your connection is down, or that it's rate-limiting requests — wait a moment and try again.",
       detail,
     };
   }

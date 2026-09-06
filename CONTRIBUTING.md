@@ -89,6 +89,9 @@ Lift the pin when `@cosmjs/encoding` stops passing `Infinity`, not before. Until
 then a `pnpm update` that floats this dependency breaks two apps with no
 compile-time signal at all — the rpc package's tests are what catch it.
 
+Renovate (`renovate.json`) is configured to leave `@scure/base` alone entirely —
+if you don't see a Renovate PR bumping it, that is deliberate, not an oversight.
+
 ADR-019 covers dependencies: upgrade one thing at a time with a reason, and
 assess whether an advisory can actually reach a user before acting on it.
 `pnpm audit` currently reports two high-severity findings that are dev-only

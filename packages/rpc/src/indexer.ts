@@ -2,6 +2,16 @@ import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 import { z } from "zod";
 import { fetchWithDeadline } from "./fetch-with-deadline";
 
+/** A non-2xx response from the indexer, with the status kept as data instead
+ * of only as text — so a 429 can be told apart from a 500 by callers (the
+ * error banner, the live-status badge) without regexing the message. */
+export class IndexerRequestError extends Error {
+  constructor(readonly status: number, statusText: string, host: string) {
+    super(`Indexer at ${host} answered ${status} ${statusText}.`);
+    this.name = "IndexerRequestError";
+  }
+}
+
 // As of 2026-07-25, Topaz's indexer (indexer.topaz.testnets.gno.land) sends
 // `access-control-allow-origin: *` and these queries work directly from the
 // browser — confirmed live via a real cross-origin browser fetch (not just
@@ -134,7 +144,7 @@ async function queryIndexer<T extends z.ZodTypeAny>(
     timeoutMs
   );
   if (!res.ok) {
-    throw new Error(`Indexer request failed: ${res.status} ${res.statusText}`);
+    throw new IndexerRequestError(res.status, res.statusText, new URL(graphqlUrl).host);
   }
   // Everything below treats the response as untrusted until proven
   // otherwise. Previously this did `return json.data as T` — a bare cast,

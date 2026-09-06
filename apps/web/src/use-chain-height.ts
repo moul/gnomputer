@@ -1,12 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "./sdk-context";
 import { useLiveUpdatesPaused } from "./shell/live-updates-store";
+import { classifyChainError, type ChainErrorKind } from "./shell/chain-error";
 
 /** How often the tip height is re-checked. Matches what the hand-rolled
  * polling loops used, so perceived liveness is unchanged — the win here is
  * that there is now exactly ONE of these per network instead of one per
  * live-data hook per mounted window. */
 export const CHAIN_HEIGHT_POLL_MS = 4000;
+
+/** Ceiling on the backed-off interval — long enough to stop knocking on a
+ * limited endpoint, short enough that recovery is still noticed within a
+ * minute rather than needing a manual refresh. */
+const MAX_BACKOFF_MS = 60_000;
 
 /** The chain's current tip height, as a single shared subscription.
  *
@@ -42,6 +48,11 @@ export const CHAIN_HEIGHT_POLL_MS = 4000;
 export function useChainHeight(enabled = true): {
   height: number | null;
   isError: boolean;
+  /** Why the last poll failed, if it did — shared with the error banner via
+   * `classifyChainError` so the island's badge and any thrown-error text
+   * agree on what a 429 means. `null` while healthy or for an error this
+   * classifier doesn't recognize. */
+  errorKind: ChainErrorKind;
   /** When the height currently being returned was actually fetched, as an
    * epoch ms (0 before the first success).
    *
@@ -56,11 +67,18 @@ export function useChainHeight(enabled = true): {
   const networkId = sdk.networks.getActive().id;
   const paused = useLiveUpdatesPaused();
 
-  const { data, isError, dataUpdatedAt } = useQuery({
+  const { data, isError, error, dataUpdatedAt } = useQuery({
     queryKey: ["chain-height", networkId],
     queryFn: async () => (await sdk.rpc.getStatus()).data.latestHeight,
     enabled: enabled && !paused,
-    refetchInterval: CHAIN_HEIGHT_POLL_MS,
+    refetchInterval: (query) => {
+      // A rate-limited (or otherwise failing) endpoint knocked every 4s at
+      // full speed only prolongs its own limit (issue #218): back off
+      // exponentially per consecutive failure, capped at a minute, instead
+      // of polling at a fixed cadence into a wall.
+      if (classifyChainError(query.state.error) === null) return CHAIN_HEIGHT_POLL_MS;
+      return Math.min(CHAIN_HEIGHT_POLL_MS * 2 ** query.state.errorUpdateCount, MAX_BACKOFF_MS);
+    },
     refetchIntervalInBackground: false,
     // The tip height is the definition of volatile — never serve it stale.
     staleTime: 0,
@@ -69,5 +87,5 @@ export function useChainHeight(enabled = true): {
     retry: 1,
   });
 
-  return { height: data ?? null, isError, dataUpdatedAt };
+  return { height: data ?? null, isError, errorKind: classifyChainError(error), dataUpdatedAt };
 }

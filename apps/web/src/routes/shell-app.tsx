@@ -149,9 +149,8 @@ export function ShellApp() {
 
   async function listFuncs(packagePath: string): Promise<string> {
     const env = await sdk.rpc.queryFuncs(packagePath, new Date().toISOString());
-    const signatures: FuncSignature[] = JSON.parse(env.data);
-    if (signatures.length === 0) return "(no exported functions found)";
-    return signatures.map(formatFuncSignature).join("\n");
+    if (env.data.length === 0) return "(no exported functions found)";
+    return env.data.map(formatFuncSignature).join("\n");
   }
 
   async function listFiles(packagePath: string): Promise<string> {
@@ -192,7 +191,7 @@ export function ShellApp() {
     queryKey: ["shell-funcs", networkId, pkg],
     queryFn: async () => {
       const env = await sdk.rpc.queryFuncs(pkg, new Date().toISOString());
-      return JSON.parse(env.data) as FuncSignature[];
+      return env.data;
     },
     enabled: pkg !== "",
   });

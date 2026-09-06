@@ -9,7 +9,10 @@ test("a network failure reads as something a person can act on", async ({ page }
   await page.waitForSelector("#window-realm");
 
   const error = page.locator(".state-line--error").first();
-  await expect(error).toContainText(/Check your connection/, { timeout: 20000 });
+  // Also names rate limiting as a possibility rather than only "check your
+  // connection" — a CORS-blocked rate limit looks identical to a dropped
+  // connection from script, so the honest wording covers both (issue #218).
+  await expect(error).toContainText(/stopped answering/, { timeout: 20000 });
   await expect(error).not.toContainText("Failed to fetch");
 
   // The raw text is separated, not discarded — it stays available for a bug

@@ -7,7 +7,12 @@ import { SdkProvider } from "../sdk-context";
 const online = vi.hoisted(() => ({ current: true }));
 vi.mock("./use-online-status", () => ({ useOnlineStatus: () => online.current }));
 const chainHeight = vi.hoisted(() => ({
-  current: { height: 425330 as number | null, isError: false, dataUpdatedAt: 0 },
+  current: {
+    height: 425330 as number | null,
+    isError: false,
+    errorKind: null as "rate-limited" | "unreachable" | null,
+    dataUpdatedAt: 0,
+  },
 }));
 vi.mock("../use-chain-height", () => ({
   useChainHeight: () => chainHeight.current,
@@ -29,7 +34,7 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => {
   online.current = true;
   // Fetched just now: the default is a healthy, live height.
-  chainHeight.current = { height: 425330, isError: false, dataUpdatedAt: Date.now() };
+  chainHeight.current = { height: 425330, isError: false, errorKind: null, dataUpdatedAt: Date.now() };
   useLiveUpdatesStore.setState({ lowData: false });
   useWalletStore.setState({ account: null, connecting: false, error: null });
 });
@@ -65,6 +70,31 @@ describe("IslandStatus", () => {
     // question they did not ask — and two badges would be worse still.
     online.current = false;
     useLiveUpdatesStore.setState({ lowData: true });
+    const { container } = render(<IslandStatus />, { wrapper });
+    const badges = container.querySelectorAll(".island__status-badge");
+    expect(badges).toHaveLength(1);
+    expect(badges[0]!.getAttribute("data-kind")).toBe("offline");
+  });
+
+  it("shows Rate limited when the chain endpoint is throttling", () => {
+    chainHeight.current = { height: 425330, isError: true, errorKind: "rate-limited", dataUpdatedAt: Date.now() };
+    const { container } = render(<IslandStatus />, { wrapper });
+    const badge = container.querySelector(".island__status-badge");
+    expect(badge?.getAttribute("data-kind")).toBe("rate-limited");
+    expect(badge?.textContent).toBe("Rate limited");
+  });
+
+  it("shows Unreachable when the chain endpoint stops answering for an unclassified reason", () => {
+    chainHeight.current = { height: 425330, isError: true, errorKind: "unreachable", dataUpdatedAt: Date.now() };
+    const { container } = render(<IslandStatus />, { wrapper });
+    const badge = container.querySelector(".island__status-badge");
+    expect(badge?.getAttribute("data-kind")).toBe("unreachable");
+    expect(badge?.textContent).toBe("Unreachable");
+  });
+
+  it("prefers Offline over Rate limited when both are true", () => {
+    online.current = false;
+    chainHeight.current = { height: 425330, isError: true, errorKind: "rate-limited", dataUpdatedAt: Date.now() };
     const { container } = render(<IslandStatus />, { wrapper });
     const badges = container.querySelectorAll(".island__status-badge");
     expect(badges).toHaveLength(1);
@@ -110,7 +140,7 @@ describe("IslandStatus height staleness", () => {
     // while the Network Monitor beside it correctly warned "Updated 20m ago".
     // Reproduced by getting rate-limited by a public RPC — every request
     // failing, navigator.onLine still true, the clock still "connected".
-    chainHeight.current = { height: 425330, isError: false, dataUpdatedAt: Date.now() - STALE_AGO };
+    chainHeight.current = { height: 425330, isError: false, errorKind: null, dataUpdatedAt: Date.now() - STALE_AGO };
     const { container } = render(<IslandStatus />, { wrapper });
 
     const item = container.querySelector(".island__status-item--height")!;
@@ -133,7 +163,7 @@ describe("IslandStatus height staleness", () => {
     // The height is deliberately frozen and the Paused badge already says so.
     // Warning about a state someone chose is noise.
     useLiveUpdatesStore.setState({ lowData: true });
-    chainHeight.current = { height: 425330, isError: false, dataUpdatedAt: Date.now() - STALE_AGO };
+    chainHeight.current = { height: 425330, isError: false, errorKind: null, dataUpdatedAt: Date.now() - STALE_AGO };
     const { container } = render(<IslandStatus />, { wrapper });
     expect(container.querySelector(".island__status-item--height")!.getAttribute("data-stale")).toBeNull();
   });
@@ -141,14 +171,14 @@ describe("IslandStatus height staleness", () => {
   it("stays quiet when the browser itself is offline", () => {
     // Same reasoning: the Offline badge covers it, and the cause is different.
     online.current = false;
-    chainHeight.current = { height: 425330, isError: false, dataUpdatedAt: Date.now() - STALE_AGO };
+    chainHeight.current = { height: 425330, isError: false, errorKind: null, dataUpdatedAt: Date.now() - STALE_AGO };
     const { container } = render(<IslandStatus />, { wrapper });
     expect(container.querySelector(".island__status-item--height")!.getAttribute("data-stale")).toBeNull();
   });
 
   it("says nothing before the first successful fetch", () => {
     // dataUpdatedAt is 0 then, and epoch-zero must not read as "very stale".
-    chainHeight.current = { height: null, isError: false, dataUpdatedAt: 0 };
+    chainHeight.current = { height: null, isError: false, errorKind: null, dataUpdatedAt: 0 };
     const { container } = render(<IslandStatus />, { wrapper });
     const item = container.querySelector(".island__status-item--height")!;
     expect(item.getAttribute("data-stale")).toBeNull();

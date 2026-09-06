@@ -3,7 +3,7 @@ import type { JSONRPCProvider } from "@gnolang/tm2-js-client";
 import type { NetworkConfig } from "@gnomputer/networks";
 import { wrapEnvelope, type DataEnvelope } from "@gnomputer/core";
 import { withDeadline, withDeadlines } from "./with-deadlines";
-import { GnoJSONRPCProvider } from "@gnolang/gno-js-client";
+import { GnoJSONRPCProvider, type FunctionSignature } from "@gnolang/gno-js-client";
 import {
   connectTm2Client,
   connectProvider,
@@ -101,7 +101,7 @@ export interface RpcClient {
    * fingerprint gnolang/gno's own gnopie CLI tool (PR #5444) uses to detect
    * `cur realm` params, confirmed by reading its real, live response
    * shape rather than gnopie's (draft, unmerged) source directly. */
-  queryFuncs(packagePath: string, fetchedAt: string): Promise<DataEnvelope<string>>;
+  queryFuncs(packagePath: string, fetchedAt: string): Promise<DataEnvelope<FunctionSignature[]>>;
   /** Real, live package-path enumeration via vm/qpaths — a genuine prefix
    * scan over deployed packages (store.FindPathsByPrefix on the node side).
    * Kept over the indexer even now that the indexer is reachable from the
@@ -231,8 +231,12 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async queryFile(path, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qfile", path);
+      // Routed through gno-js-client rather than abciQueryString, same
+      // reasoning as queryRender's earlier migration (#168): one less
+      // hand-rolled ABCI/base64 path to maintain, upstream tracks gno.land
+      // changes for us.
+      const provider = await getGnoProvider();
+      const value = await provider.getFileContent(path);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "source-file", filePath: path },
         data: value,
@@ -246,8 +250,12 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async evalExpression(packagePath, expression, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qeval", `${packagePath}.${expression}`);
+      // gno-js-client's encodeVMQueryData([packagePath, expression], ".")
+      // joins with the same "." this hand-rolled call built by template
+      // string, so the wire payload — and therefore every fixture response
+      // keyed on it — is unchanged.
+      const provider = await getGnoProvider();
+      const value = await provider.evaluateExpression(packagePath, expression);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "realm", packagePath },
         data: value,
@@ -306,11 +314,17 @@ export function createRpcClient(network: NetworkConfig): RpcClient {
     },
 
     async queryFuncs(packagePath, fetchedAt) {
-      const client = await getClient();
-      const value = await abciQueryString(client, "vm/qfuncs", packagePath);
+      // gno-js-client's getFunctionSignatures JSON.parses the vm/qfuncs
+      // response for us and returns it typed — callers used to have to
+      // JSON.parse(env.data) themselves against a bare string. The crossing-
+      // param ".arg_0"/".uverse.realm" shape this app already reverse-
+      // engineered passes through unchanged: gno-js-client parses, it does
+      // not reinterpret, the JSON.
+      const provider = await getGnoProvider();
+      const signatures = await provider.getFunctionSignatures(packagePath);
       return wrapEnvelope({
         ref: { ...baseRef, kind: "realm", packagePath },
-        data: value,
+        data: signatures,
         source: "rpc",
         consistency: "authoritative",
         networkId: network.id,
