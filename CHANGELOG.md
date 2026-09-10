@@ -4,6 +4,19 @@ Notable user-facing changes to Gnomputer, most recent first. Dated by when
 they landed on `main`, not by PR number. The in-app "new version available"
 banner links here.
 
+- Favourites tell you which of them moved. A starred realm now shows when it
+  was last touched and how many recent calls it saw — so the list answers
+  "what should I look at today?" instead of just being bookmarks. It counts
+  calls *and* events, because either alone lies: a realm can be called
+  constantly and emit nothing (r/gnops/valopers), and a library can be busy
+  entirely through events fired on another realm's behalf (p/demo/tokens/grc20).
+  A quiet favourite says so, with the block it looked back to, because
+  "nothing recent" only ever means "not in the window scanned" — never "never".
+
+- The app loads noticeably less code up front. A realm's eight non-default
+  lenses were all in the first-paint bundle even though only one is ever on
+  screen and the default needs none of them. First visit is 14KB smaller.
+
 - A shared link opens what it names, even on a first visit. Help would open
   itself over the realm the link pointed at — answering a question nobody
   asked and hiding the thing that was shared. A URL naming a realm, a lens or

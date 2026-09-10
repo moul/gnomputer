@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSdk } from "../sdk-context";
 import { useTrailRecorder } from "../use-trail-recorder";
 import { useRecentlyAddedPackages } from "../use-recently-added-packages";
 import { useRecentActivity } from "../use-recent-activity";
+import { useFavoriteActivity } from "../use-favorite-activity";
 import { Freshness } from "../shell/freshness";
 import { ErrorState } from "../shell/error-state";
 import { useRealmTabsStore, type RealmLens, type RealmTab } from "../shell/realm-tabs-store";
@@ -12,14 +13,30 @@ import { NoRenderDeclError } from "@gnomputer/app-sdk";
 import { applyUrlToActiveTab, openInRealmTab } from "../shell/open-in-realm-tab";
 import { gnowebRealmUrl } from "../shell/gnoweb-links";
 import { router } from "../routes/root";
-import { SourceExplorer } from "./source-explorer";
-import { RealmDocs } from "./realm-docs";
-import { RealmState } from "./realm-state";
-import { RealmStateExplorer } from "./realm-state-explorer";
-import { RealmHistory } from "./realm-history";
-import { RealmActions } from "./realm-actions";
-import { RealmGraph } from "./realm-graph";
-import { RealmRaw } from "./realm-raw";
+// Eight of the nine lenses are lazy. Only one renders at a time and Render is
+// the default, so importing the other eight eagerly put every lens's code in
+// the first-paint chunk for a view that shows none of them. That chunk sits
+// 0.7KB under its budget on main (#203), which is how this got noticed.
+//
+// Render stays eager on purpose: it is what a realm opens on, and making the
+// default wait for a chunk would trade first paint for a saving that only
+// matters to the other eight.
+const SourceExplorer = lazy(() =>
+  import("./source-explorer").then((x) => ({ default: x.SourceExplorer }))
+);
+const RealmDocs = lazy(() => import("./realm-docs").then((x) => ({ default: x.RealmDocs })));
+const RealmState = lazy(() => import("./realm-state").then((x) => ({ default: x.RealmState })));
+const RealmStateExplorer = lazy(() =>
+  import("./realm-state-explorer").then((x) => ({ default: x.RealmStateExplorer }))
+);
+const RealmHistory = lazy(() =>
+  import("./realm-history").then((x) => ({ default: x.RealmHistory }))
+);
+const RealmActions = lazy(() =>
+  import("./realm-actions").then((x) => ({ default: x.RealmActions }))
+);
+const RealmGraph = lazy(() => import("./realm-graph").then((x) => ({ default: x.RealmGraph })));
+const RealmRaw = lazy(() => import("./realm-raw").then((x) => ({ default: x.RealmRaw })));
 import { KNOWN_REALMS } from "../known-realms";
 import { formatRealmLabel } from "../shell/format-realm-label";
 import { useRealmSuggestions } from "../shell/use-realm-suggestions";
@@ -372,6 +389,10 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
   return (
     <>
       <div className="realm-browser__lens-body">
+        {/* One boundary around the whole dispatch: only one lens is mounted at
+            a time, so a per-lens boundary would be eight copies of the same
+            fallback. */}
+        <Suspense fallback={<p className="state-line">Loading…</p>}>
         {tab.lens === "render" ? (
           <RealmRenderView
             windowId={windowId}
@@ -396,6 +417,7 @@ function RealmTabBody({ windowId, tab }: { windowId: string; tab: RealmTab }) {
         ) : (
           <RealmRaw packagePath={tab.packagePath} renderPath={tab.renderPath} />
         )}
+        </Suspense>
       </div>
       <RealmStatusBar windowId={windowId} tab={tab} renderStats={renderStats} />
     </>
@@ -661,6 +683,9 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
   const sdk = useSdk();
   const networkId = sdk.networks.getActive().id;
   const favorites = useFavoriteRealms();
+  // Called unconditionally: hooks cannot sit behind the early return below,
+  // and both queries are shared with apps that may already have run them.
+  const { byPath, oldestScanned, isPending, indexerConfigured } = useFavoriteActivity();
   if (favorites.length === 0) return null;
 
   return (
@@ -670,7 +695,13 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
           <li key={favorite.packagePath}>
             <button type="button" onClick={() => onOpen(favorite.packagePath)}>
               {favorite.label}
-              <span className="realm-browser-home__path">{favorite.packagePath}</span>
+              <span className="realm-browser-home__path">
+                {favorite.packagePath}
+                <FavoriteActivityNote
+                  activity={byPath.get(favorite.packagePath)}
+                  scanned={indexerConfigured && !isPending}
+                />
+              </span>
             </button>
             <button
               type="button"
@@ -686,7 +717,58 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
           </li>
         ))}
       </ul>
+      {/* AUD-047 again: both sources are windowed, so "nothing recent" means
+          "not in the blocks we looked at", never "never". Saying how far back
+          that reached is the difference between an honest blank and an
+          implied claim the data cannot support. */}
+      {indexerConfigured ? (
+        oldestScanned !== null && (
+          <p className="state-line">
+            Activity seen since block #{formatNumber(oldestScanned)}. Anything older is outside
+            the window scanned here — open a realm for its full history.
+          </p>
+        )
+      ) : (
+        <p className="state-line">
+          {sdk.networks.getActive().name} has no indexer, so there is nothing to report about
+          recent activity on these.
+        </p>
+      )}
     </CollapsibleSection>
+  );
+}
+
+/** The one line that turns a bookmark list into a watchlist.
+ *
+ * Deliberately says the HEIGHT rather than "2 hours ago": a block height is
+ * the only honest timestamp for a chain mutation, and the same rule the
+ * change badge already follows.
+ *
+ * Absent, not zeroed, when there is nothing to say. A row reading "0 calls"
+ * for a realm whose activity is simply older than the window would be
+ * asserting something the scan cannot know. */
+function FavoriteActivityNote({
+  activity,
+  scanned,
+}: {
+  activity?: { lastHeight: number; callCount: number };
+  scanned: boolean;
+}) {
+  if (!scanned) return null;
+  if (!activity) {
+    return <span className="realm-browser-home__quiet"> · quiet</span>;
+  }
+  const calls =
+    activity.callCount > 0
+      ? `${formatNumber(activity.callCount)} ${activity.callCount === 1 ? "call" : "calls"}`
+      : // Reached only via its own events: it was not called directly in the
+        // window, which is normal for a library other realms lean on.
+        "events";
+  return (
+    <span className="realm-browser-home__active">
+      {" "}
+      · active #{formatNumber(activity.lastHeight)} · {calls}
+    </span>
   );
 }
 
