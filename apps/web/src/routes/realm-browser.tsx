@@ -685,7 +685,10 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
   const favorites = useFavoriteRealms();
   // Called unconditionally: hooks cannot sit behind the early return below,
   // and both queries are shared with apps that may already have run them.
-  const { byPath, oldestScanned, isPending, indexerConfigured } = useFavoriteActivity();
+  // `scanned` comes from the hook rather than being derived here: the rows and
+  // the caption below both need it, and deriving it twice is exactly how they
+  // came to contradict each other in production.
+  const { byPath, oldestScanned, scanned, indexerConfigured } = useFavoriteActivity();
   if (favorites.length === 0) return null;
 
   return (
@@ -699,7 +702,7 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
                 {favorite.packagePath}
                 <FavoriteActivityNote
                   activity={byPath.get(favorite.packagePath)}
-                  scanned={indexerConfigured && !isPending}
+                  scanned={scanned}
                 />
               </span>
             </button>
@@ -722,6 +725,7 @@ function FavoritesSection({ onOpen }: { onOpen: (packagePath: string) => void })
           that reached is the difference between an honest blank and an
           implied claim the data cannot support. */}
       {indexerConfigured ? (
+        scanned &&
         oldestScanned !== null && (
           <p className="state-line">
             Activity seen since block #{formatNumber(oldestScanned)}. Anything older is outside
