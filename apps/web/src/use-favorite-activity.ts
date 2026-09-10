@@ -17,7 +17,17 @@ import { scanActivity, type ActivityScan } from "./favorite-activity";
  * @returns {object} the scan, plus enough state to say why it is empty
  */
 export function useFavoriteActivity(): ActivityScan & {
-  isPending: boolean;
+  /** Whether there is a COMPLETE scan to report.
+   *
+   * Returned from here rather than left to each call site to derive, because
+   * the two consumers derived it differently and contradicted each other: the
+   * rows waited for both queries while the caption only checked that some data
+   * had arrived, so on a busy chain (events resolve first) the caption
+   * announced a scan window above rows showing nothing. One flag, one answer.
+   *
+   * Both sources are needed before anything is said: a partial scan would
+   * show "quiet" for a realm the pending query is about to report as active. */
+  scanned: boolean;
   indexerConfigured: boolean;
 } {
   const sdk = useSdk();
@@ -46,7 +56,7 @@ export function useFavoriteActivity(): ActivityScan & {
 
   return {
     ...scan,
-    isPending: indexerConfigured && (transactions.isPending || events.isPending),
+    scanned: indexerConfigured && !transactions.isPending && !events.isPending,
     indexerConfigured,
   };
 }
