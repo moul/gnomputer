@@ -1291,6 +1291,21 @@ main {
   text-overflow: ellipsis;
 }
 
+/* A favourite that moved recently. Brighter than the path it sits after,
+   because it is the thing you opened the list to find out — but still quieter
+   than the label, since the realm's name is what you are scanning for. */
+.realm-browser-home__active {
+  color: var(--text-dim);
+}
+
+/* A favourite with nothing in the scanned window. Deliberately the faintest
+   thing in the row: "quiet" is the absence of news, and news is what the
+   annotation exists to carry. Not an error colour — nothing is wrong. */
+.realm-browser-home__quiet {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
 /* Wraps rather than clips. At 320px this row ran the "Home" button off the
    edge mid-word with nothing to scroll — the button was there, styled, and
    half of it unreachable. The star made a tight row tighter, so the fix is
