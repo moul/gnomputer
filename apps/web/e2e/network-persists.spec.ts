@@ -20,13 +20,13 @@ test("the chosen network survives a reload", async ({ page }) => {
   // as an option — so the control falls back to rendering whichever entry is
   // first in DEFAULT_NETWORKS. Pinning that would be pinning the array order,
   // not the default. What this test is about is that a choice survives.
-  await expect(select).not.toHaveValue("betanet");
-  await select.selectOption("betanet");
-  await expect(select).toHaveValue("betanet");
+  await expect(select).not.toHaveValue("pearl");
+  await select.selectOption("pearl");
+  await expect(select).toHaveValue("pearl");
 
   await page.reload();
   await page.waitForSelector(".island__clock");
-  await expect(await openNetworkSettings(page)).toHaveValue("betanet");
+  await expect(await openNetworkSettings(page)).toHaveValue("pearl");
 
   // Restoring a network that exists must not trip the recovery notice.
   await expect(page.locator(".network-recovery-banner")).toHaveCount(0);
@@ -48,7 +48,7 @@ test("a network that no longer exists is reported, not silently swapped", async 
   const banner = page.locator(".network-recovery-banner");
   await expect(banner).toContainText("ghost-net", { timeout: 10000 });
   // Names whichever network it fell back to, which is the default.
-  await expect(banner).toContainText("Pearl");
+  await expect(banner).toContainText("Mainnet");
 
   await banner.getByRole("button", { name: "Dismiss" }).click();
   await expect(banner).toHaveCount(0);

@@ -19,9 +19,9 @@ test("switching network does not carry the previous chain's realm over", async (
   const pathInput = page.locator("#window-realm input").first();
   await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
 
-  await switchNetwork(page, "Betanet");
+  await switchNetwork(page, "Pearl");
 
-  // Betanet has nothing saved, so it opens at Home rather than inheriting a
+  // Pearl has nothing saved, so it opens at Home rather than inheriting a
   // realm that was only ever resolved against the other chain.
   await expect(pathInput).toHaveValue("", { timeout: 15000 });
   // The address bar follows the tabs, rather than still naming the realm from
@@ -41,25 +41,25 @@ test("each network keeps its own open realm", async ({ page }) => {
   // override's network is not in the menu.
   //
   // An earlier version opened it via `?pkg=` on the boot network and expected
-  // it back on Sapphire — which only passed because of a bug: the tabs were
-  // being flushed under DEFAULT_NETWORK_ID's key before the real active
-  // network was known, so "Sapphire's tabs" were the boot network's tabs
+  // it back on the second network — which only passed because of a bug: the
+  // tabs were being flushed under DEFAULT_NETWORK_ID's key before the real
+  // active network was known, so "its tabs" were the boot network's tabs
   // filed under the wrong name. Fixing that (see the store's networkHydrated)
   // is what exposed this test as testing the bug rather than the feature.
-  await switchNetwork(page, "Betanet");
+  await switchNetwork(page, "Pearl");
   await expect(pathInput).toHaveValue("", { timeout: 15000 });
   await pathInput.fill("gno.land/r/sys/users");
   await pathInput.press("Enter");
   await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
 
   // Another chain: a realm path names a package on one chain and may be absent
-  // on another, so Sapphire starts from its own (empty) set.
-  await switchNetwork(page, "Sapphire");
+  // on another, so Staging starts from its own (empty) set.
+  await switchNetwork(page, "Staging");
   await expect(pathInput).toHaveValue("", { timeout: 15000 });
 
   // Coming back restores what that chain had open — the point of keying the
   // stored tabs by network rather than sharing one set.
-  await switchNetwork(page, "Betanet");
+  await switchNetwork(page, "Pearl");
   await expect(pathInput).toHaveValue("gno.land/r/sys/users", { timeout: 15000 });
   await expect.poll(() => new URL(page.url()).searchParams.get("pkg")).toBe(
     "gno.land/r/sys/users"
@@ -70,7 +70,7 @@ test("a shared link's realm is not filed under the default network", async ({ pa
   // The store's activeNetworkId starts at DEFAULT_NETWORK_ID, since the store
   // is built before the SDK. Anything keyed by network that acted on that
   // placeholder wrote to the wrong chain: opening a link here wrote both
-  // `realm-tabs:mock` and `realm-tabs:pearl`, so a realm never opened on the
+  // `realm-tabs:mock` and `realm-tabs:mainnet`, so a realm never opened on the
   // default network became part of its saved desktop.
   await page.setViewportSize({ width: 1500, height: 900 });
   await page.goto("/?pkg=gno.land/r/sys/users");
@@ -110,7 +110,7 @@ test("each network keeps its own set of open windows", async ({ page }) => {
 
   // Both of these are in the switcher, unlike the network the e2e override
   // starts on — so each one has a desktop of its own to save and restore.
-  await switchNetwork(page, "Topaz");
+  await switchNetwork(page, "Staging");
 
   const settings = page.locator("#window-settings");
   await page.locator("button.island__icon[aria-label='Settings']").click();
@@ -120,12 +120,12 @@ test("each network keeps its own set of open windows", async ({ page }) => {
   // switch is carrying — otherwise this would only be testing the carry.
   await page.locator("#window-realm").click({ position: { x: 10, y: 10 } });
 
-  await switchNetwork(page, "Betanet");
-  // Betanet has its own desktop, and Settings was never opened on it.
+  await switchNetwork(page, "Pearl");
+  // Pearl has its own desktop, and Settings was never opened on it.
   await expect(settings).toBeHidden({ timeout: 15000 });
 
-  await switchNetwork(page, "Topaz");
-  // Topaz still has it, because the desktop was saved against that chain.
+  await switchNetwork(page, "Staging");
+  // Staging still has it, because the desktop was saved against that chain.
   await expect(settings).toBeVisible({ timeout: 15000 });
 });
 
@@ -140,7 +140,7 @@ test("the window you are in survives the switch", async ({ page }) => {
   await page.locator("button.island__icon[aria-label='Settings']").click();
   await expect(settings).toBeVisible();
 
-  await switchNetwork(page, "Betanet");
+  await switchNetwork(page, "Pearl");
 
   await expect(settings).toBeVisible({ timeout: 15000 });
 });
@@ -151,12 +151,12 @@ test("switching shows a boot overlay rather than windows blinking out", async ({
   await page.waitForSelector(".island__clock");
 
   await page.locator("button.island__status-item--network").click();
-  await page.locator(".island-menu button", { hasText: "Betanet" }).first().click();
+  await page.locator(".island-menu button", { hasText: "Pearl" }).first().click();
 
   // The desktop is genuinely torn down and rebuilt, which without cover reads
   // as the app glitching at the moment the user is least sure what happened.
   const overlay = page.locator(".network-switch");
-  await expect(overlay).toContainText("Switching to Betanet");
+  await expect(overlay).toContainText("Switching to Pearl");
   await expect(overlay).toBeHidden({ timeout: 15000 });
 });
 
@@ -175,14 +175,14 @@ test("the overlay still shows on a switch that restores instantly", async ({ pag
   await page.goto("/");
   await page.waitForSelector(".island__clock");
 
-  await switchNetwork(page, "Betanet");
+  await switchNetwork(page, "Pearl");
   await expect(page.locator(".network-switch")).toBeHidden({ timeout: 15000 });
 
   // Second switch: both layouts have now been read once.
   await page.locator("button.island__status-item--network").click();
-  await page.locator(".island-menu button", { hasText: "Topaz" }).first().click();
+  await page.locator(".island-menu button", { hasText: "Staging" }).first().click();
 
-  await expect(page.locator(".network-switch")).toContainText("Switching to Topaz");
+  await expect(page.locator(".network-switch")).toContainText("Switching to Staging");
 });
 
 test("the network switcher is reachable from the island, and names the current chain", async ({
@@ -204,7 +204,7 @@ test("the network switcher is reachable from the island, and names the current c
   // Changing chain used to mean opening Settings and finding the Network tab.
   await trigger.click();
   const menu = page.locator(".island-menu");
-  for (const label of ["Pearl", "Sapphire", "Topaz", "Betanet", "gnodev"]) {
+  for (const label of ["Mainnet", "Pearl", "Staging", "gnodev"]) {
     await expect(menu.getByRole("button", { name: label, exact: true })).toBeVisible();
   }
 });

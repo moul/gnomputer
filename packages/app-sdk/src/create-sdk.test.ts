@@ -8,15 +8,15 @@ describe("createGnomputerSDK", () => {
     indexedDB.deleteDatabase("gnomputer-sdk-test");
   });
 
-  it("defaults to the pearl network", () => {
+  it("defaults to the mainnet network", () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
-    expect(sdk.networks.getActive().id).toBe("pearl");
+    expect(sdk.networks.getActive().id).toBe("mainnet");
   });
 
   it("switches active network", () => {
     const sdk = createGnomputerSDK({ dbName: "gnomputer-sdk-test" });
-    sdk.networks.setActive("betanet");
-    expect(sdk.networks.getActive().id).toBe("betanet");
+    sdk.networks.setActive("pearl");
+    expect(sdk.networks.getActive().id).toBe("pearl");
   });
 
   it("switches to a full network config directly, for a custom network not in list()", () => {
