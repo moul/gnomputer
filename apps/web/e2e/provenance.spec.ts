@@ -7,7 +7,7 @@ test("indexer-backed data says so next to its timestamp @live", async ({ page })
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1500, height: 950 });
   // The mock chain has no indexer configured, so this needs the real one.
-  await page.goto("/?net=topaz");
+  await page.goto("/?net=pearl");
   await page.waitForSelector(".island");
 
   await page.getByRole("button", { name: "Discover", exact: true }).hover();

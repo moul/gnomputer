@@ -20,7 +20,7 @@ import qobjectJsonFixture from "./__fixtures__/qobject-json.json";
 import qtypeJsonFixture from "./__fixtures__/qtype-json.json";
 import qfuncsFixture from "./__fixtures__/qfuncs.json";
 
-const topaz = DEFAULT_NETWORKS.find((n) => n.id === "topaz")!;
+const pearl = DEFAULT_NETWORKS.find((n) => n.id === "pearl")!;
 const FUNDED_ADDRESS = "g1jg8mtutu9khhfwc4nxmuhcpftf0pajdhfvsqf5";
 const UNFUNDED_ADDRESS = "g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzp0nh0";
 
@@ -48,7 +48,7 @@ const UNFUNDED_ADDRESS = "g1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzp0nh0";
 // there — so it isn't exposed to this resolution-scope problem.
 function mockRpcWithFixtures() {
   nock.disableNetConnect();
-  nock(topaz.rpcUrl)
+  nock(pearl.rpcUrl)
     .persist()
     .post(/.*/)
     .reply(200, (_uri, requestBody) => {
@@ -111,7 +111,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps getStatus in a DataEnvelope with source=rpc", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getStatus();
     expect(env.source).toBe("rpc");
     expect(env.consistency).toBe("authoritative");
@@ -120,28 +120,28 @@ describe("createRpcClient", () => {
   });
 
   it("wraps queryRender in a DataEnvelope with the decoded render output", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryRender("gno.land/r/sys/users", "", "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data).toContain("r/sys/users");
   });
 
   it("queryRender rejects with a readable message for a package that doesn't exist", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     await expect(
       client.queryRender("gno.land/r/does/not/exist", "", "2026-07-22T00:00:00.000Z")
     ).rejects.toThrow("package not found: gno.land/r/does/not/exist");
   });
 
   it("wraps queryFile in a DataEnvelope with the decoded source", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryFile("gno.land/r/sys/users/render.gno", "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data).toContain("package users");
   });
 
   it("wraps getBlockSummary in a DataEnvelope with real header fields", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getBlockSummary(985592);
     expect(env.source).toBe("rpc");
     expect(env.data.height).toBe(985592);
@@ -156,7 +156,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps getAccountInfo for a funded, initialized account", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getAccountInfo(FUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data.initialized).toBe(true);
@@ -166,26 +166,26 @@ describe("createRpcClient", () => {
   });
 
   it("wraps getAccountInfo for an uninitialized account without throwing", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getAccountInfo(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.data.initialized).toBe(false);
   });
 
   it("resolves a registered username via vm/qeval", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.resolveUsername(FUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data.username).toBe("test1");
   });
 
   it("resolves to a null username for an address with no registration", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.resolveUsername(UNFUNDED_ADDRESS, "2026-07-22T00:00:00.000Z");
     expect(env.data.username).toBeNull();
   });
 
   it("evalExpression returns the raw vm/qeval result for the given packagePath and expression", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.evalExpression(
       "gno.land/r/sys/users",
       `ResolveAddress("${FUNDED_ADDRESS}")`,
@@ -197,7 +197,7 @@ describe("createRpcClient", () => {
   });
 
   it("evalExpression reflects a different expression argument in its result", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.evalExpression(
       "gno.land/r/sys/users",
       `ResolveAddress("${UNFUNDED_ADDRESS}")`,
@@ -207,7 +207,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps listPackagesByPrefix in a DataEnvelope with the decoded, newline-split paths", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.listPackagesByPrefix("gno.land/r/", 50, "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.schema).toBe("gnomputer.rpc.package-paths.v1");
@@ -215,7 +215,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps getBlockEvents with real per-tx ABCI events (no indexer, no CORS wall)", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getBlockEvents(985592, "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data.height).toBe(985592);
@@ -248,7 +248,7 @@ describe("createRpcClient", () => {
   // that way, the fix is the "@scure/base@^2": "2.2.0" override in the root
   // package.json, not a change here. See CONTRIBUTING.md.
   it("wraps getValidatorSet with real bech32 addresses, not raw bytes", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.getValidatorSet("2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     expect(env.data.validators.length).toBeGreaterThan(0);
@@ -257,7 +257,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps queryPkgJson in a DataEnvelope with the package's declarations as Amino JSON", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryPkgJson("gno.land/r/gnoland/blog", "2026-07-22T00:00:00.000Z");
     expect(env.source).toBe("rpc");
     const parsed = JSON.parse(env.data);
@@ -266,7 +266,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps queryObjectJson in a DataEnvelope with a persisted object's full value", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryObjectJson("abc123:5", "2026-07-22T00:00:00.000Z");
     const parsed = JSON.parse(env.data);
     expect(parsed.objectid).toBe("abc123:5");
@@ -275,7 +275,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps queryTypeJson in a DataEnvelope with the declared type's struct field names", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryTypeJson("errors.errorString", "2026-07-22T00:00:00.000Z");
     const parsed = JSON.parse(env.data);
     expect(parsed.typeid).toBe("errors.errorString");
@@ -283,7 +283,7 @@ describe("createRpcClient", () => {
   });
 
   it("wraps queryFuncs in a DataEnvelope with real function signatures, including a crossing function's realm-typed first param", async () => {
-    const client = createRpcClient(topaz);
+    const client = createRpcClient(pearl);
     const env = await client.queryFuncs("gno.land/r/gnoland/blog", "2026-07-22T00:00:00.000Z");
     expect(env.data).toHaveLength(2);
     expect(env.data[0]!.FuncName).toBe("ModAddPost");
@@ -301,7 +301,7 @@ describe("connection failure does not poison the client", () => {
     // made every later call fail instantly without touching the network —
     // an app that stays dead until reload.
     nock("http://unreachable.test").post("/").replyWithError("boom");
-    const client = createRpcClient({ ...topaz, rpcUrl: "http://unreachable.test" });
+    const client = createRpcClient({ ...pearl, rpcUrl: "http://unreachable.test" });
 
     await expect(client.getStatus()).rejects.toThrow();
 
@@ -322,11 +322,11 @@ describe("typed ABCI errors from the render query", () => {
    * mock has to answer that too — routing by method rather than replying
    * the same shape to every POST. */
   function mockAbciError(type: string, log: string) {
-    nock(topaz.rpcUrl)
+    nock(pearl.rpcUrl)
       .post("/", (body: { method?: string }) => body.method === "status")
       .reply(200, statusFixture)
       .persist();
-    nock(topaz.rpcUrl)
+    nock(pearl.rpcUrl)
       .post("/", (body: { method?: string }) => body.method === "abci_query")
       .reply(200, {
         jsonrpc: "2.0",
@@ -343,14 +343,14 @@ describe("typed ABCI errors from the render query", () => {
     // disabled the behaviour.
     mockAbciError("/vm.NoRenderDeclError", "render function not declared\n--- stack trace ---\n…");
     await expect(
-      createRpcClient(topaz).queryRender("gno.land/p/demo/lib", "", new Date().toISOString())
+      createRpcClient(pearl).queryRender("gno.land/p/demo/lib", "", new Date().toISOString())
     ).rejects.toBeInstanceOf(NoRenderDeclError);
   });
 
   it("rejects with InvalidPkgPathError for a realm that does not exist", async () => {
     mockAbciError("/vm.InvalidPkgPathError", "package not found: gno.land/r/nope\n--- stack trace ---\n…");
     await expect(
-      createRpcClient(topaz).queryRender("gno.land/r/nope", "", new Date().toISOString())
+      createRpcClient(pearl).queryRender("gno.land/r/nope", "", new Date().toISOString())
     ).rejects.toBeInstanceOf(InvalidPkgPathError);
   });
 });
