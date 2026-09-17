@@ -10,6 +10,7 @@ import { AddressWindow } from "../shell/address-window";
 import { HelpWindow } from "../shell/help-window";
 import { ExplorerWindow } from "../shell/explorer-window";
 import { GnockpitEmbedWindow } from "../shell/gnockpit-embed-window";
+import { DedicatedAppWindows } from "../shell/dedicated-app-windows";
 import { ExtraRealmWindows } from "../shell/extra-realm-windows";
 import { useWindowPersistence } from "../shell/use-window-persistence";
 import { useWindowViewportReclamp } from "../shell/use-window-viewport-reclamp";
@@ -293,6 +294,7 @@ export function Home() {
           <HelpWindow />
           <ExplorerWindow />
           <GnockpitEmbedWindow />
+          <DedicatedAppWindows />
           <ExtraRealmWindows />
         </div>
         <NetworkSwitchOverlay />
