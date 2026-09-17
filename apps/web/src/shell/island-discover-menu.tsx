@@ -1,5 +1,7 @@
 import { focusOrReopen } from "./open-ref";
 import { openExplorer } from "./open-explorer";
+import { openDedicatedApp } from "./open-dedicated-app";
+import { useAvailableDedicatedApps } from "./use-available-dedicated-apps";
 import { useSdk } from "../sdk-context";
 
 // Discover isn't a real app of its own — each of these is a genuinely
@@ -40,6 +42,7 @@ export function IslandDiscoverMenu() {
   const sdk = useSdk();
   const network = sdk.networks.getActive();
   const explorerUrl = network.explorerUrl;
+  const dedicatedApps = useAvailableDedicatedApps();
 
   return (
     <div className="island-menu">
@@ -77,6 +80,16 @@ export function IslandDiscoverMenu() {
       >
         🔎 gnoscan ↗
       </button>
+      {dedicatedApps.map((app) => (
+        <button
+          key={app.id}
+          type="button"
+          className="island-menu__action"
+          onClick={() => openDedicatedApp(app.id)}
+        >
+          {app.icon} {app.label} →
+        </button>
+      ))}
     </div>
   );
 }

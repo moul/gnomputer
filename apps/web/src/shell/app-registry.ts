@@ -1,3 +1,5 @@
+import { DEDICATED_APPS } from "./dedicated-apps";
+
 export interface AppDescriptor {
   /** The fixed window id for single-instance apps, or the primary/template
    * id for multi-window ones (e.g. "realm" — pop-outs get "realm-1", "realm-2"). */
@@ -90,6 +92,19 @@ export const APP_REGISTRY: AppDescriptor[] = [
     supportsMultiWindow: false,
     hiddenFromIsland: true,
   },
+  // Real external apps whose realm is confirmed live on the active network
+  // (island-discover-menu.tsx, use-available-dedicated-apps.ts) — one entry
+  // per DEDICATED_APPS member so ⌘K and window bookkeeping know about them,
+  // same hidden-from-island shape as Explorer/Gnockpit above.
+  ...DEDICATED_APPS.map(
+    (app): AppDescriptor => ({
+      id: app.id,
+      label: app.label,
+      icon: app.icon,
+      supportsMultiWindow: false,
+      hiddenFromIsland: true,
+    })
+  ),
 ];
 
 const ICON_BY_ID = new Map(APP_REGISTRY.map((app) => [app.id, app.icon]));
