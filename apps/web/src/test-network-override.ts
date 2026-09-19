@@ -19,7 +19,12 @@ export function testNetworkOverride(): NetworkConfig | null {
   return {
     id: "mock",
     name: "Mock (e2e)",
-    chainId: "mock-1",
+    // What apps/mock-server's status fixture actually reports as its
+    // network. It used to say "mock-1" here, which nothing read and nothing
+    // checked, so the override quietly described a different chain than the
+    // one it points at. useNetworkStatus now compares the two and would have
+    // flagged every e2e run.
+    chainId: "test-13",
     rpcUrl,
     // Deliberately no indexerGraphqlUrl/explorerUrl/gnockpitUrl: features
     // that need those should render their real "not available on this

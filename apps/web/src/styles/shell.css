@@ -398,6 +398,21 @@
   color: var(--danger);
 }
 
+/* A misconfiguration rather than an outage: the chain is answering fine, the
+   app is just pointed at it under the wrong name. Warning rather than danger
+   for that reason, and it keeps the offline hint the only red thing here. */
+.island-menu__hint--warning {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--warning-bg);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+}
+
+.island-menu__hint--warning code {
+  font-family: var(--font-mono);
+}
+
 .command-palette {
   position: fixed;
   inset: 0;
