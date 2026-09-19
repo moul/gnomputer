@@ -1,0 +1,372 @@
+.desktop {
+  position: relative;
+  /* Establishes its own stacking context (position + an explicit z-index,
+     not "auto") so a window's own zIndex — unbounded, it just keeps
+     incrementing every time any window is focused over a long session —
+     can never escape above the island bar, its hover popovers, the
+     command palette, or the update banner. Without this, enough focus
+     clicks in one session eventually push a window's zIndex past those
+     fixed-position elements' own (e.g. 200-300), painting it on top of
+     chrome that's meant to always float above the desktop. */
+  z-index: 0;
+  flex: 1;
+  min-height: 320px;
+  /* Windows are always kept in bounds (window-store.ts's clampWindowOrigin
+     + reclampAll on browser resize), so the desktop itself never needs to
+     scroll — a real desktop doesn't, and stray scroll from a window
+     temporarily exceeding the viewport (e.g. mid-drag) reads as broken. */
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  /* Clears the floating island bar (position:fixed, ~52px tall including
+     its own top offset) so a window's y:0 doesn't render underneath it. */
+  padding-top: 56px;
+}
+
+/* Overview/expose mode: click the desktop background to see every open
+   window at once, click one to bring it back and focus it. Window
+   x/y/width/height in the store are untouched — overview-layout.ts computes
+   a separate grid target and window.tsx renders THAT instead while active,
+   so entering/exiting is just this same .window animating its real
+   left/top/width/height to/from the grid position (see the transition
+   below), no restore step needed either way. */
+.desktop[data-overview="true"] {
+  background: color-mix(in srgb, var(--bg) 85%, black 15%);
+}
+
+.desktop[data-overview="true"] .window {
+  cursor: pointer;
+}
+
+.desktop[data-overview="true"] .window__titlebar,
+.desktop[data-overview="true"] .window__body {
+  pointer-events: none;
+}
+
+.desktop[data-overview="true"] .window__body {
+  overflow: hidden;
+}
+
+/* Titlebar controls and the resize handle don't just no-op in overview mode,
+   they'd be actively misleading (a visible close/maximize/resize affordance
+   that does nothing when clicked) — hide them outright rather than merely
+   disabling. */
+.desktop[data-overview="true"] .window__controls,
+.desktop[data-overview="true"] .window__resize-handle {
+  display: none;
+}
+
+.window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-elevated);
+  border: 2px solid var(--window-accent, var(--accent-cyan));
+  border-radius: 0;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4);
+  font-family: var(--ui-font);
+  /* Animates entering/exiting overview mode (window.tsx switches left/top/
+     width/height to a computed grid target while it's active, see
+     use-overview-geometry.ts) as a real move+resize instead of a snap.
+     Overridden to "none" via inline style while the user is actively
+     dragging/resizing (window.tsx) so per-pixel pointer updates aren't
+     laggily eased too. */
+  transition: left 260ms ease, top 260ms ease, width 260ms ease, height 260ms ease;
+  /* window.tsx unmounts a closed window entirely (returns null) and mounts
+     a fresh one on reopen — unlike `transition` above (which only reacts to
+     a property changing on an already-mounted element), `animation` plays
+     once on every mount, so this runs each time a window opens with no
+     component-level "is it opening" state needed. Respects
+     prefers-reduced-motion via the global `* { animation: none }` override
+     in theme.css. */
+  animation: window-open 160ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes window-open {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.window::before,
+.window::after,
+.window__titlebar::before,
+.window__resize-handle::before {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  pointer-events: none;
+  border: 2px solid var(--window-accent, var(--accent-cyan));
+}
+
+/* top-left corner: window's own box */
+.window::before {
+  top: -2px;
+  left: -2px;
+  border-right: none;
+  border-bottom: none;
+}
+
+/* bottom-left corner: also the window's own box — ::before/::after are both
+   anchored to .window itself regardless of what its children look like. */
+.window::after {
+  bottom: -2px;
+  left: -2px;
+  border-right: none;
+  border-top: none;
+}
+
+/* top-right corner: the titlebar spans the window's full width flush against
+   its top edge, so titlebar's top/right coincide with the window's. */
+.window__titlebar::before {
+  top: -2px;
+  right: -2px;
+  border-left: none;
+  border-bottom: none;
+}
+
+/* bottom-right corner: the resize handle sits flush at the window's own
+   bottom-right (right:0; bottom:0 relative to .window), so its own
+   ::before coincides with the window's true corner too. */
+.window__resize-handle::before {
+  right: -2px;
+  bottom: -2px;
+  border-left: none;
+  border-top: none;
+}
+
+.window--focused {
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+/* .window is position:absolute inside .desktop — for an absolutely
+   positioned box, top/left are measured from the PADDING edge of the
+   containing block, which sits flush with .desktop's own border, not
+   inside its padding. .desktop's padding-top (for the island's clearance)
+   is therefore invisible to top:0 here; it has to be repeated explicitly. */
+.window--maximized {
+  left: 0 !important;
+  top: var(--island-clearance) !important;
+  width: 100% !important;
+  height: calc(100% - var(--island-clearance)) !important;
+}
+
+/* Hovering an island icon highlights the window(s) it points at — a ring
+   distinct from the focus box-shadow so both can show at once. */
+.window--island-hover {
+  outline: 2px solid var(--window-accent, var(--accent-cyan));
+  outline-offset: 2px;
+}
+
+/* Wraps titlebar+body so overview mode (window.tsx) can zoom just this
+   part down to a real live thumbnail — explicit width/height at the
+   window's actual real size plus a zoom factor, rather than the outer
+   .window box (which is already sized/positioned to the shrunk target by
+   overview-layout.ts) also being asked to somehow scale its own content.
+   flex-basis:auto (not the flex:1 shorthand's implicit 0%) is what lets
+   that inline height act as this item's size instead of being overridden
+   by flex-grow starting from a zero basis. */
+.window__content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.window__titlebar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-inset);
+  border-bottom: 2px solid var(--window-accent, var(--accent-cyan));
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--window-accent, var(--accent-cyan));
+  cursor: move;
+  user-select: none;
+  touch-action: none;
+  touch-action: none;
+}
+
+.window__title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  flex: 1;
+  min-width: 0;
+}
+
+.window__title-icon {
+  margin-right: var(--space-1);
+  text-transform: none;
+}
+
+.window__controls {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.window__control {
+  background: transparent;
+  border: none;
+  padding: 0 var(--space-1);
+  font-family: var(--ui-font);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.window__control:hover {
+  background: transparent;
+  border: none;
+  color: var(--text);
+}
+
+.window__control--close:hover {
+  color: var(--danger);
+}
+
+/* Overview mode's per-window close affordance — sits just below the window
+   thumbnail (rather than inside it, where .window__controls is hidden and
+   .window__body has pointer-events:none) so a window can be dismissed
+   without leaving overview mode. */
+.window__overview-close {
+  position: absolute;
+  left: 50%;
+  bottom: -28px;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.window__overview-close:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.window__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-4);
+  font-family: var(--font-sans);
+}
+
+.window__body:has(.validator-monitor) {
+  padding: 0;
+}
+
+.window__body:has(.validator-monitor) .state-line {
+  padding: var(--space-4) var(--space-4) var(--space-2);
+}
+
+.window__resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  color: var(--window-accent, var(--accent-cyan));
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px;
+}
+
+.window__resize-handle::after {
+  content: "◢";
+}
+
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panel__header {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.panel__header span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel__notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  font-size: 11.5px;
+  color: var(--text-faint);
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-error-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--bg);
+}
+
+/* A crash contained to one piece of chrome (island bar, command palette) —
+   the rest of the app is still alive underneath, so this sits where the
+   island normally would (fixed, top-center) instead of taking over the
+   viewport and shoving the still-working desktop out of view. */
+.app-error-inline {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  width: min(560px, calc(100vw - var(--space-6)));
+}
+
+.app-error-inline .app-error {
+  max-width: none;
+}
+

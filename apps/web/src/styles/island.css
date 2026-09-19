@@ -1,0 +1,415 @@
+/* Island bar — replaces the old full-width status bar + taskbar with one
+   floating, centered, icon-only pill (root.tsx renders it fixed-position,
+   so it overlays the desktop instead of reserving a layout row). */
+.island {
+  position: fixed;
+  top: var(--space-3);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--shadow-modal);
+  font-family: var(--ui-font);
+  transition: opacity 150ms ease;
+  /* On a narrow (phone-width) viewport the full icon row is wider than the
+     screen — previously that meant the pill just overflowed off both edges
+     equally, leaving the search icon and the clock genuinely unreachable
+     past the viewport's own edge. Capping width and scrolling internally
+     keeps every icon reachable (via a horizontal swipe) instead. No effect
+     at any width wide enough to fit everything, which is every desktop
+     width this was designed for. */
+  max-width: calc(100vw - 2 * var(--space-3));
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.island::-webkit-scrollbar {
+  display: none;
+}
+
+/* Overview mode (island-bar.tsx): the whole island becomes one button
+   showing the mode's own hint instead of the normal icon row — clicking it
+   exits overview, same as clicking the desktop background. */
+.island--overview {
+  padding: var(--space-1) var(--space-2);
+  gap: var(--space-3);
+}
+
+.island__overview-hint {
+  background: transparent;
+  border: none;
+  padding: var(--space-1) var(--space-2);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.island__overview-hint:hover {
+  background: transparent;
+  color: var(--text);
+}
+
+.island__overview-close-all {
+  font-family: var(--ui-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.island__overview-close-all:hover {
+  background: var(--danger-bg);
+}
+
+/* New-version banner (use-version-check.ts) — sits just below the island,
+   in the same spot the old overview hint used to occupy, so it doesn't
+   compete with the island's own fixed position at the top of the screen. */
+/* Same placement as the update banner, but this one reports a problem
+   rather than an offer, so it borrows the danger colour. */
+.network-recovery-banner {
+  border-color: var(--danger);
+}
+
+.network-recovery-banner code {
+  font-family: var(--font-mono);
+}
+
+.update-banner {
+  position: fixed;
+  top: calc(var(--island-clearance) + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 190;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.island__divider {
+  flex: 0 0 auto;
+  width: 1px;
+  align-self: stretch;
+  margin: var(--space-1) 2px;
+  background: var(--border);
+}
+
+.island__icon {
+  position: relative;
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-2);
+  font-size: 14px;
+}
+
+.island__icon:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.island__icon-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.island__zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--bg-inset);
+  padding: 2px;
+}
+
+.island__zoom button {
+  min-width: 24px;
+  padding: var(--space-1);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  border-radius: 999px;
+}
+
+.island__zoom button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--bg-elevated);
+}
+
+.island__zoom button:disabled {
+  opacity: 0.35;
+}
+
+.island__clock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  /* Now a real <button> (it was a non-focusable <div>, which made the
+     connection panel keyboard-unreachable) — strip the default button
+     chrome so it still reads as plain island text. */
+  background: none;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Wraps every hoverable island trigger + its popover (island-popover.tsx) —
+   just a relative-positioning anchor, sized to its trigger since the
+   popover itself is absolutely positioned and out of flow. */
+.island__popover-host {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+}
+
+/* Positioned via an inline style (position: fixed + computed top/left/
+   right) from island-popover.tsx, not here — it's portaled to <body> so
+   .island's own horizontal scrolling (a narrow-viewport fix, see .island
+   below) can't clip it, and a portaled element needs its real screen
+   position computed from its trigger's actual bounding rect rather than a
+   plain CSS top/left/right relative to a parent it's no longer inside. */
+.island__popover {
+  z-index: 210;
+  min-width: 200px;
+  max-width: 280px;
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  text-align: left;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.island-menu__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.island-menu__title--sub {
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+
+.island-menu__hint {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.island-menu__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+.island-menu__row-label {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.island-menu__list {
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.island-menu__list button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  text-align: left;
+}
+
+.island-menu__list-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.island-menu__list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.island-menu__action {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: left;
+  background: transparent;
+  border: none;
+}
+
+.island-menu__action:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+.island-menu__inline-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.island-menu__inline-link:hover {
+  background: transparent;
+  color: var(--accent);
+  text-decoration-style: solid;
+}
+
+.island__clock-popover-time {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.island__clock-popover-date {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.island__clock-popover-stats {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px var(--space-2);
+  font-size: 11px;
+}
+
+.island__clock-popover-stats dt {
+  color: var(--text-faint);
+}
+
+.island__clock-popover-stats dd {
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.island__clock-popover-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+
+.status-dot[data-state="connected"] {
+  background: var(--accent-green);
+}
+
+.status-dot[data-state="connecting"] {
+  background: var(--warning);
+}
+
+.status-dot[data-state="error"],
+.status-dot[data-state="offline"] {
+  background: var(--danger);
+  animation: status-dot-offline-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes status-dot-offline-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.island-menu__hint--offline {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--danger-bg);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+}
+
+/* A misconfiguration rather than an outage: the chain is answering fine, the
+   app is just pointed at it under the wrong name. Warning rather than danger
+   for that reason, and it keeps the offline hint the only red thing here. */
+.island-menu__hint--warning {
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  background: var(--warning-bg);
+  border-radius: var(--radius-sm);
+  color: var(--warning);
+}
+
+.island-menu__hint--warning code {
+  font-family: var(--font-mono);
+}
+

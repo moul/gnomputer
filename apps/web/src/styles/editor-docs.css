@@ -1,0 +1,286 @@
+.source-explorer,
+.editor-window {
+  display: flex;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.editor-window__sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-window__new {
+  margin-top: var(--space-2);
+  font-size: 12px;
+}
+
+.editor-window__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-window__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  flex: 0 0 auto;
+}
+
+.editor-window__name {
+  font-weight: 700;
+  margin-right: var(--space-2);
+}
+
+.editor-window__spacer {
+  flex: 1;
+}
+
+.editor-window__code {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.editor-window__empty,
+.editor-window__templates {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.editor-window__templates {
+  width: 100%;
+}
+
+.editor-window__templates-cancel {
+  align-self: flex-start;
+}
+
+.file-tree {
+  flex: 0 0 180px;
+  border-right: 1px solid var(--border);
+  padding: var(--space-2);
+  height: 100%;
+  overflow-y: auto;
+}
+
+.file-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.file-tree button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  color: var(--text-dim);
+}
+
+.file-tree button:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.file-tree button[aria-current="true"] {
+  background: var(--bg-inset);
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+/* The docs tree renders one flat list of role="treeitem" rows rather than
+   nested <ul>s, so depth comes from an inline padding-left keyed to
+   aria-level rather than from nesting. */
+.doc-tree__row {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-tree__row:hover {
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* The whole tree is a single tab stop, so the focused row is the only way to
+   see where the arrow keys are — it must be unmistakable. */
+.doc-tree__row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  color: var(--text);
+}
+
+.doc-tree__row--folder {
+  font-weight: 700;
+}
+
+.doc-tree__row[data-selected="true"] {
+  background: var(--bg-inset);
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.markdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  line-height: 1.6;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin: var(--space-2) 0 0;
+  line-height: 1.3;
+}
+
+.markdown-body h1 {
+  font-size: 20px;
+}
+
+.markdown-body h2 {
+  font-size: 17px;
+}
+
+.markdown-body h3 {
+  font-size: 15px;
+}
+
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-size: 14px;
+}
+
+.markdown-body p {
+  margin: 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.markdown-body blockquote {
+  margin: 0;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--border-strong);
+  color: var(--text-dim);
+}
+
+.markdown-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-inset);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--border);
+  padding: var(--space-1) var(--space-2);
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--bg-inset);
+}
+
+.markdown-body img {
+  max-width: 100%;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-2) 0;
+}
+
+.source-viewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+}
+
+.source-viewer__toolbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.source-viewer__filename {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-editor {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.code-editor .cm-editor,
+.code-editor .cm-scroller {
+  height: 100%;
+}
+
+.render-code-block {
+  margin: var(--space-3) 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* A realm decides its own column count, so the table scrolls inside this
+   wrapper instead of widening the window — the shell has to stay free of
+   horizontal scroll down to 320px. */
+.render-table-scroll {
+  margin: var(--space-3) 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
