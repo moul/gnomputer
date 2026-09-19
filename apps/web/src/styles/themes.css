@@ -1,0 +1,359 @@
+/* "Modern" theme: a normal-looking desktop instead of the ASCII-art chrome —
+   rounded windows, no corner brackets, no all-caps titlebars. Only the shell
+   chrome changes; --ui-font (theme.css) already swaps window/island text to
+   a sans face for this theme. */
+:root[data-theme^="modern"] .window {
+  border-width: 1px;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14);
+  overflow: hidden;
+}
+
+:root[data-theme^="modern"] .window--focused {
+  box-shadow: 0 10px 30px rgba(30, 41, 59, 0.14), 0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+:root[data-theme^="modern"] .window::before,
+:root[data-theme^="modern"] .window::after,
+:root[data-theme^="modern"] .window__titlebar::before,
+:root[data-theme^="modern"] .window__resize-handle::before {
+  display: none;
+}
+
+:root[data-theme^="modern"] .window__titlebar {
+  border-bottom-width: 1px;
+}
+
+:root[data-theme^="modern"] .window__title {
+  text-transform: none;
+  font-weight: 600;
+}
+
+:root[data-theme^="modern"] .window-tab {
+  text-transform: none;
+}
+
+/* Cypherpunk: distinct from ascii-dark by more than color — a CRT/terminal
+   feel via a scanline texture across the desktop and a phosphor glow on
+   windows and on-brand text. Layered on top of the ascii family's existing
+   bracket chrome (kept — brackets and monospace already suit a terminal
+   aesthetic), not a replacement for it. */
+:root[data-theme="ascii-cypherpunk"] .desktop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* Two layers: the original green scanline texture (static), plus a
+     magenta horizon grid drifting slowly downward — a synthwave floor
+     scrolling toward the viewer, without an actual 3D transform (which
+     would also skew .desktop's absolutely-positioned window children). */
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(51, 255, 51, 0) 0px,
+      rgba(51, 255, 51, 0) 2px,
+      rgba(51, 255, 51, 0.04) 3px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 51, 204, 0.14) 0px,
+      rgba(255, 51, 204, 0.14) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+  background-position:
+    0 0,
+    0 0;
+  animation:
+    cypherpunk-flicker 6s linear infinite,
+    cypherpunk-grid-drift 3s linear infinite;
+}
+
+/* A CRT vignette darkening the desktop's corners, a synthwave "sun" glow
+   low on the horizon, and a bright scan-band sweeping top-to-bottom on its
+   own slow loop — separate from the scanline/grid layer so all the
+   textures can animate independently. */
+:root[data-theme="ascii-cypherpunk"] .desktop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to bottom, rgba(51, 255, 51, 0) 0%, rgba(51, 255, 51, 0.4) 50%, rgba(51, 255, 51, 0) 100%),
+    radial-gradient(ellipse 55% 35% at 50% 100%, rgba(255, 51, 204, 0.3) 0%, rgba(255, 51, 204, 0) 70%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 0.35) 100%);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 100% 8px, auto, auto;
+  background-position: 0 -8px, 0 0, 0 0;
+  animation: cypherpunk-scan-sweep 7s linear infinite;
+}
+
+@keyframes cypherpunk-scan-sweep {
+  from {
+    background-position: 0 -8px, 0 0, 0 0;
+  }
+  to {
+    background-position: 0 calc(100% + 8px), 0 0, 0 0;
+  }
+}
+
+@keyframes cypherpunk-grid-drift {
+  from {
+    background-position:
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 0,
+      0 40px;
+  }
+}
+
+@keyframes cypherpunk-flicker {
+  0%,
+  96%,
+  100% {
+    opacity: 1;
+  }
+  97% {
+    opacity: 0.85;
+  }
+  98% {
+    opacity: 1;
+  }
+  99% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes cypherpunk-caret {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+:root[data-theme="ascii-cypherpunk"] .window {
+  box-shadow: 0 0 24px rgba(51, 255, 51, 0.15), 0 14px 36px rgba(0, 0, 0, 0.7);
+}
+
+:root[data-theme="ascii-cypherpunk"] .window--focused {
+  box-shadow:
+    0 0 32px rgba(51, 255, 51, 0.3),
+    0 14px 36px rgba(0, 0, 0, 0.7),
+    0 0 0 1px var(--window-accent, var(--accent-cyan));
+}
+
+:root[data-theme="ascii-cypherpunk"] .window__title,
+:root[data-theme="ascii-cypherpunk"] .island__clock,
+:root[data-theme="ascii-cypherpunk"] .island__icon-dot {
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* A brief RGB-split "signal glitch" on the focused window's own title,
+   every ~9s — reinforces the CRT/signal-instability feel established by
+   the scanline/flicker/scan-sweep layers above, without being constant or
+   distracting (only the focused window, only a fraction of a second). */
+:root[data-theme="ascii-cypherpunk"] .window--focused .window__title {
+  animation: cypherpunk-title-glitch 9s linear infinite;
+}
+
+@keyframes cypherpunk-title-glitch {
+  0%,
+  97%,
+  100% {
+    text-shadow: 0 0 6px currentColor;
+  }
+  97.5% {
+    text-shadow:
+      -2px 0 rgba(255, 51, 204, 0.8),
+      2px 0 rgba(51, 255, 51, 0.8);
+  }
+  98.5% {
+    text-shadow: 0 0 6px currentColor;
+  }
+}
+
+/* A phosphor glow on hover, matching the existing focus-visible treatment
+   below — interactive elements should feel "lit" the moment you're about
+   to use them, not only once they're already focused. */
+:root[data-theme="ascii-cypherpunk"] button:hover:not(:disabled) {
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* A terminal-prompt "> " before every window title, with a blinking block
+   caret after the island clock — the two spots this theme reads most like
+   an actual terminal rather than a recolored window manager. */
+:root[data-theme="ascii-cypherpunk"] .window__title::before {
+  content: "> ";
+  opacity: 0.7;
+}
+
+:root[data-theme="ascii-cypherpunk"] .island__clock::after {
+  content: "▋";
+  margin-left: 2px;
+  animation: cypherpunk-caret 1s step-end infinite;
+}
+
+:root[data-theme="ascii-cypherpunk"] .island {
+  box-shadow: var(--shadow-modal), 0 0 0 1px rgba(51, 255, 51, 0.2);
+}
+
+:root[data-theme="ascii-cypherpunk"] button:focus-visible,
+:root[data-theme="ascii-cypherpunk"] input:focus-visible,
+:root[data-theme="ascii-cypherpunk"] textarea:focus-visible,
+:root[data-theme="ascii-cypherpunk"] select:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 12px 2px var(--accent);
+}
+
+/* Minimal: distinct from modern-dark/light by being quieter, not just
+   desaturated — flatten the chrome the modern family otherwise adds
+   (shadows, borders, a differentiated titlebar) rather than reusing it at
+   lower contrast. */
+:root[data-theme="modern-minimal"] .window {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-color: var(--border);
+  /* Every other theme colors each window's titlebar/border/tab-underline
+     by app (--window-accent, set inline per Window instance) — minimal
+     drops that instead of just muting it, so windows read as identical
+     quiet chrome distinguished only by title and content. The !important
+     is load-bearing: --window-accent is set via inline style, which
+     otherwise always wins over an author rule at any selector specificity. */
+  --window-accent: var(--text-dim) !important;
+}
+
+/* No accent-colored per-window ring — every window reads the same quiet
+   neutral, distinguished by title and content alone rather than color. */
+:root[data-theme="modern-minimal"] .window--focused {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--border-strong);
+}
+
+:root[data-theme="modern-minimal"] .window__titlebar {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+:root[data-theme="modern-minimal"] .window__title-icon {
+  filter: grayscale(1) opacity(0.7);
+}
+
+:root[data-theme="modern-minimal"] .island {
+  box-shadow: none;
+  border-color: var(--border);
+}
+
+/* Square off the pill-shaped island icons (hard-coded 999px, so the
+   theme's --radius: 0 override doesn't reach them) and drain their color —
+   minimal reads as quiet everywhere, not just in window chrome. */
+:root[data-theme="modern-minimal"] .island__icon {
+  border-radius: 0;
+  filter: grayscale(1);
+}
+
+:root[data-theme="modern-minimal"] .island__icon:hover {
+  filter: grayscale(0.4);
+}
+
+:root[data-theme="modern-minimal"] .island__icon-dot {
+  background: var(--text-dim);
+}
+
+.entity-link {
+  display: inline;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+}
+
+.entity-link:hover {
+  background: transparent;
+  color: var(--text);
+  text-decoration-style: solid;
+}
+
+.settings-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+.settings-theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  text-align: left;
+  padding: var(--space-3);
+}
+
+.settings-theme-option[data-active="true"] {
+  border-color: var(--accent);
+  background: var(--bg-inset);
+}
+
+.settings-theme-option__glyph {
+  font-size: 20px;
+}
+
+.settings-theme-option__label {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.settings-theme-option__description {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ASCII themes: a real terminal doesn't vary type size per element — it
+   differentiates through bold/color/underline instead, at one uniform
+   size. The 50-odd font-size rules elsewhere in this file exist for
+   normal UI hierarchy (chrome stays as-is, it's not "content"), so
+   content inside a window body is force-reset here rather than by
+   hunting down every rule's specificity individually. */
+:root[data-theme^="ascii"] .window__body,
+:root[data-theme^="ascii"] .window__body * {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+/* A small terminal-like flourish for the focused window: a blinking
+   block cursor after the title, like a shell prompt waiting for input. */
+:root[data-theme^="ascii"] .window--focused .window__title::after {
+  content: "▊";
+  margin-left: var(--space-1);
+  animation: ascii-cursor-blink 1s steps(1) infinite;
+}
+
+@keyframes ascii-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.event-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+

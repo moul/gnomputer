@@ -1,0 +1,189 @@
+/* Covers the desktop while it is rebuilt for another chain. Switching network
+   unmounts every window and remounts it, which without this reads as the app
+   glitching at the exact moment the user is least sure what happened. */
+.network-switch {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.network-switch__panel {
+  min-width: min(320px, calc(100vw - var(--space-4) * 2));
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+  font-family: var(--ui-font);
+  text-align: center;
+}
+
+.network-switch__label {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.network-switch__bar {
+  margin: var(--space-3) 0 var(--space-2);
+  height: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+  border-radius: 999px;
+}
+
+/* Indeterminate: the work is a teardown and a restore, with no measurable
+   progress to report, and inventing a percentage would be a lie. The fill
+   keeps a real width so that under prefers-reduced-motion — where theme.css
+   turns every animation off — this is still a bar rather than an empty
+   groove. */
+.network-switch__bar-fill {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  animation: network-switch-sweep 900ms ease-in-out infinite;
+}
+
+@keyframes network-switch-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.network-switch__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* Identifies a network by its gemstone's colour — Sapphire blue, Topaz gold —
+   so "which chain am I on" is answerable without reading. `color` is set
+   inline from the network config and inherited by both the fill and the ring,
+   which is why this uses currentColor rather than a variable.
+
+   Never the only cue: the name is always beside it, and active/inactive is
+   carried by the fill rather than by hue, so nothing here depends on telling
+   two blues apart. Falls back to the theme accent for a network with no
+   colour of its own, i.e. any custom one. */
+.network-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 0.45em;
+  border-radius: 50%;
+  color: var(--accent);
+  border: 1.5px solid currentColor;
+  vertical-align: baseline;
+}
+
+.network-dot[data-active="true"] {
+  background: currentColor;
+}
+
+/* An ARIA combobox's listbox, replacing the four `<datalist>` popups. A
+   datalist's popup is drawn by the browser outside the page: its text cannot
+   be controlled or inspected, which is why a long realm path was cut off at
+   the right edge with no way to fix or verify a fix (#197). These are real
+   elements, so they can be elided and asserted. */
+.combobox {
+  position: relative;
+  display: contents;
+}
+
+.combobox__list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 60;
+  width: 100%;
+  max-height: 15rem;
+  overflow-y: auto;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-modal);
+}
+
+.combobox__list[data-open="false"] {
+  display: none;
+}
+
+.combobox__list li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  font-family: var(--mono-font);
+  font-size: 12px;
+  color: var(--text);
+}
+
+.combobox__list li[data-active="true"] {
+  background: var(--accent-dim);
+}
+
+/* The label is the elided path and must not be the thing that shrinks; the
+   hint is supporting detail and gives up its space first. */
+.combobox__label {
+  flex: none;
+  white-space: nowrap;
+}
+
+.combobox__hint {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+/* Lists in realm Render() output. Realms use them heavily — the GRC20
+   registry renders every token as one — and before the parser understood
+   them the items were joined into a single line. */
+/* A realm's own "---" separator. Quiet on purpose: it divides sections of one
+   realm's output, and a full-strength rule competes with the window chrome
+   around it. */
+.render-hr {
+  margin: var(--space-3) 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+.render-list {
+  margin: var(--space-2) 0;
+  padding-left: var(--space-4);
+  list-style: disc;
+}
+
+.render-list li {
+  margin: 0.15em 0;
+  line-height: 1.6;
+}
+
+/* A code span, distinct from a fenced block: inline, so it must not break
+   the line box it sits in. */
+.render-code-inline {
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  font-family: var(--mono-font);
+  font-size: 0.92em;
+}

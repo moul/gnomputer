@@ -1,0 +1,375 @@
+.realm-state__form {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.realm-state__form input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.realm-state__log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.realm-state__entry {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+.realm-state__expr {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: var(--space-1);
+}
+
+.realm-state__result,
+.realm-state__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.realm-state__error {
+  color: var(--danger);
+}
+
+.state-explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.state-explorer__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.state-explorer__decl-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.state-explorer__scalar {
+  color: var(--accent);
+}
+
+.state-explorer__unsupported {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.state-explorer__node {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.state-explorer__toggle {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.state-explorer__toggle:hover {
+  background: transparent;
+  text-decoration: underline;
+}
+
+.state-explorer__fields {
+  margin: var(--space-1) 0 0 var(--space-4);
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+  border-left: 1px solid var(--border);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.state-explorer__field-name {
+  color: var(--text-dim);
+}
+
+.shell-app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0;
+  margin: calc(-1 * var(--space-4));
+  background: var(--bg-inset);
+  cursor: text;
+}
+
+.shell-app__scrollback {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.shell-app__hint {
+  margin: 0 0 var(--space-2);
+  color: var(--text-dim);
+}
+
+.shell-app__hint code {
+  color: var(--text);
+}
+
+.shell-app__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shell-app__line {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.shell-app__prompt {
+  color: var(--accent);
+  flex: 0 0 auto;
+  white-space: pre;
+}
+
+.shell-app__output,
+.shell-app__error {
+  margin: 0 0 0 calc(var(--space-2) * -1);
+  padding-left: var(--space-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+}
+
+.shell-app__error {
+  color: var(--danger);
+}
+
+.shell-app__input-line {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.shell-app__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.shell-app__input:focus-visible {
+  box-shadow: none;
+}
+
+.realm-raw__body {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+.realm-browser-home__list button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3);
+}
+
+.realm-browser-home__list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.realm-browser-home__path {
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A favourite that moved recently. Brighter than the path it sits after,
+   because it is the thing you opened the list to find out — but still quieter
+   than the label, since the realm's name is what you are scanning for. */
+.realm-browser-home__active {
+  color: var(--text-dim);
+}
+
+/* A favourite with nothing in the scanned window. Deliberately the faintest
+   thing in the row: "quiet" is the absence of news, and news is what the
+   annotation exists to carry. Not an error colour — nothing is wrong. */
+.realm-browser-home__quiet {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* Wraps rather than clips. At 320px this row ran the "Home" button off the
+   edge mid-word with nothing to scroll — the button was there, styled, and
+   half of it unreachable. The star made a tight row tighter, so the fix is
+   to let the controls fall to a second line instead of pretending they fit. */
+.open-package-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Keeps the input from collapsing to nothing before the row wraps: without
+   a floor, flex shrinks the field first and you get three buttons beside a
+   sliver of text box. */
+.open-package-form label {
+  min-width: 12ch;
+}
+
+.realm-browser__favorite {
+  flex: 0 0 auto;
+  /* Icon-only buttons are the hardest things on this row to hit: the
+     labelled ones are 59-81px wide, these measured 31 and 34 on a phone.
+     Both clear the WCAG 2.2 AA minimum of 24px either way — this is for
+     thumbs, not for the gate. Height stays at the row's 38px so they still
+     line up with Open and Home. */
+  min-width: 44px;
+  font-size: 15px;
+  line-height: 1;
+  padding: var(--space-2);
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.realm-browser__favorite[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.realm-browser__favorite:hover {
+  color: var(--accent);
+}
+
+/* The row owns the layout so the remove button can sit outside the main
+   button — nesting it would make a button inside a button. */
+.realm-browser-home__list li:has(.realm-browser-home__unfavorite) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* width:100% on the shared list button is not enough once the row is a flex
+   container — the button shrinks to its content and the × lands mid-row
+   instead of at the edge, which reads as part of the label. */
+.realm-browser-home__list li:has(.realm-browser-home__unfavorite) > button:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Scoped under the list on purpose: `.realm-browser-home__list button` sets
+   width:100% and outranks a bare `.realm-browser-home__unfavorite`
+   (0,1,1 beats 0,1,0). With flex-basis:auto that width won the whole row —
+   the × measured 924px and squeezed the realm button to 26, hiding the
+   path. Two classes (0,2,0) take it back. */
+.realm-browser-home__list .realm-browser-home__unfavorite {
+  flex: 0 0 auto;
+  width: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-faint);
+  font-size: 14px;
+  line-height: 1;
+  padding: var(--space-1) var(--space-2);
+}
+
+.realm-browser-home__unfavorite:hover,
+.realm-browser-home__unfavorite:focus-visible {
+  color: var(--danger);
+  border-color: var(--border);
+}
+
+.open-package-form label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: 12px;
+  color: var(--text-dim);
+  flex: 1;
+}
+
+.open-package-form input {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.network-monitor__external-links {
+  display: flex;
+  gap: var(--space-4);
+  margin: var(--space-3) 0 0;
+}
+
+.realm-browser__gnoweb-link,
+.address-window__gnoweb-link {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.realm-browser__gnoweb-link:hover,
+.address-window__gnoweb-link:hover {
+  color: var(--accent);
+}
+
+.gnockpit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.gnockpit__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.gnockpit__links button {
+  font-size: 11px;
+  padding: 2px var(--space-2);
+}
+

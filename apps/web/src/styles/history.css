@@ -1,0 +1,214 @@
+.address-window {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.address-window__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.address-window__emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.address-window__identity-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.address-window__username {
+  margin: 0;
+  font-weight: 700;
+}
+
+.address-window__address {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+.address-window__identity button {
+  flex: 0 0 auto;
+}
+
+.address-window__lookup {
+  flex: 0 0 auto;
+}
+
+.address-window__external-links {
+  display: flex;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.history-window {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.history-window__header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.history-window__trail-name {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-1) var(--space-2);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.history-window__trail-name:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
+.history-window__rename-form input {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.history-window__new-trail {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.history-window__trail-list {
+  flex: 0 0 auto;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  max-height: 90px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-window__trail-list button {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-left: 2px solid transparent;
+  padding: var(--space-1) var(--space-2);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.history-window__trail-list button[data-active="true"] {
+  color: var(--text);
+  border-left-color: var(--window-accent, var(--accent-green));
+  background: var(--bg-inset);
+}
+
+.history-window__trail-list button:hover {
+  background: var(--bg-inset);
+}
+
+.history-window__trail-steps {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: var(--text-faint);
+}
+
+.history-window__trail-list li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Two classes (0,2,0) to beat `.history-window__trail-list button` (0,1,1),
+   which sets width:100%. With flex-basis:auto that width takes the whole
+   row and squeezes the Trail name to nothing — the same trap the favorites
+   row fell into (#171). */
+.history-window__trail-list .history-window__trail-action {
+  flex: 0 0 auto;
+  width: auto;
+  padding: var(--space-1);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-faint);
+}
+
+.history-window__trail-list .history-window__trail-action:hover,
+.history-window__trail-list .history-window__trail-action:focus-visible {
+  color: var(--text);
+  background: var(--bg-inset);
+}
+
+.history-window__trail-list .history-window__trail-delete:hover,
+.history-window__trail-list .history-window__trail-delete:focus-visible {
+  color: var(--danger);
+}
+
+.history-window__scope {
+  margin-top: auto;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* A subtle breadcrumb feel (spec §4.2) — each step reads as a link in a
+   path, not just a bare list row. */
+.history-list li {
+  border-left: 2px solid var(--border);
+}
+
+.history-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  color: var(--text);
+}
+
+.history-list__icon {
+  flex: 0 0 auto;
+}
+
+.history-list button:hover {
+  background: var(--bg-inset);
+  border-color: var(--border);
+}
+
