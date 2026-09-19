@@ -33,7 +33,7 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
   const sdk = useSdk();
   const account = useWalletStore((s) => s.account);
   const trailVersion = useShellStore((s) => s.trailVersion);
-  const { data, state } = useNetworkStatus();
+  const { data, state, chainIdMismatch } = useNetworkStatus();
   const online = useOnlineStatus();
   const lowData = useLiveUpdatesStore((s) => s.lowData);
   const setLowData = useLiveUpdatesStore((s) => s.setLowData);
@@ -174,6 +174,24 @@ export function IslandClock({ disabled = false }: { disabled?: boolean }) {
               </button>
             </dd>
           </dl>
+          {chainIdMismatch && (
+            /* The node's own id is what the Chain row above shows, so the
+               value a user can see is the correct one and the wrong one is
+               invisible. Name both, and say what it costs: signing compares
+               the wallet against the configured id, so every signature is
+               refused while these disagree. */
+            <p className="island-menu__hint island-menu__hint--warning">
+              ⚠ Configured as <code>{chainIdMismatch.configured}</code>, but this node calls itself{" "}
+              <code>{chainIdMismatch.reported}</code>. Signing is refused until they match.{" "}
+              <button
+                type="button"
+                className="island-menu__inline-link"
+                onClick={() => openSettings("network")}
+              >
+                Check the chain ID
+              </button>
+            </p>
+          )}
           <p className="island-menu__title island-menu__title--sub">History</p>
           {recentSteps.length === 0 ? (
             <p className="island-menu__hint">Nothing visited yet on this Trail.</p>
