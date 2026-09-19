@@ -24,7 +24,7 @@ function fakeSdk(): GnomputerSDK {
       getActive: () => ({
         id: "mainnet",
         name: "Mainnet",
-        chainId: "gnoland1",
+        chainId: "gnoland-1",
         rpcUrl: "https://rpc.example",
         environment: "mainnet",
         persistence: "persistent",

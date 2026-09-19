@@ -47,8 +47,12 @@ describe("DEFAULT_NETWORKS", () => {
     expect(DEFAULT_NETWORK_ID).toBe("mainnet");
     const active = DEFAULT_NETWORKS.find((n) => n.id === DEFAULT_NETWORK_ID);
     expect(active).toMatchObject({
-      chainId: "gnoland1",
+      // Hyphenated, matching what the live node reports. This assertion is
+      // why the typo survived review: it pinned the wrong value, so CI went
+      // green while every mainnet signing attempt was refused.
+      chainId: "gnoland-1",
       rpcUrl: "https://rpc.gno.land",
+      indexerGraphqlUrl: "https://indexer.gno.land/graphql/query",
       environment: "mainnet",
       trust: "official",
       persistence: "persistent",
