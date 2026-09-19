@@ -27,10 +27,26 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     // Not a gemstone: gno.land's own green, so it reads as the odd one out
     // among the gemstone-named networks rather than as one of them.
     color: "#2f9e6f",
-    chainId: "gnoland1",
+    // `gnoland-1`, with the hyphen: that is what the live node reports as
+    // its network, and what the release notes use. It shipped here as
+    // "gnoland1", which is not cosmetic: assertChainMatch compares the
+    // wallet's chain id against this one with strict equality (AUD-002), so
+    // a wallet on the real chain had every mainnet signing attempt refused
+    // with ChainMismatchError. The `gnoland1` in the companion hostnames
+    // below is a host label, not a chain id, and is correct as written.
+    chainId: "gnoland-1",
     rpcUrl: "https://rpc.gno.land",
     websocketUrl: withWebsocket("https://rpc.gno.land"),
     gnowebUrl: "https://gno.land",
+    // `/graphql/query`, not `/graphql`: the same trap as Pearl below, and
+    // confirmed again here, `/graphql` serves the playground as HTML.
+    // Verified live at height 168,622: `{ latestBlockHeight }` answers,
+    // `access-control-allow-origin: *` is present on the POST response, and
+    // the full getTransactions message union the Block Explorer needs
+    // (MsgCall.pkg_path, MsgAddPackage.package.path, GnoEvent) resolves
+    // with no errors. The public RPC runs with `tx_index: off`, so this is
+    // the only source of history on mainnet.
+    indexerGraphqlUrl: "https://indexer.gno.land/graphql/query",
     // Community-run (moul), not an official gno.land subdomain like the
     // testnets' — confirmed reachable live, kept separate from `trust`
     // below which describes the network itself, not these companion tools.
@@ -39,7 +55,7 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     environment: "mainnet",
     persistence: "persistent",
     trust: "official",
-    capabilities: ["network.read"],
+    capabilities: ["network.read", "indexer.read"],
   },
   {
     id: "pearl",
