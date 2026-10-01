@@ -95,8 +95,10 @@ export const APP_REGISTRY: AppDescriptor[] = [
   // Real external apps whose realm is confirmed live on the active network
   // (island-discover-menu.tsx, use-available-dedicated-apps.ts) — one entry
   // per DEDICATED_APPS member so ⌘K and window bookkeeping know about them,
-  // same hidden-from-island shape as Explorer/Gnockpit above.
-  ...DEDICATED_APPS.map(
+  // same hidden-from-island shape as Explorer/Gnockpit above. `external`
+  // ones are left out: they have no window, so the command palette must not
+  // offer to focus one that was never mounted.
+  ...DEDICATED_APPS.filter((app) => !app.external).map(
     (app): AppDescriptor => ({
       id: app.id,
       label: app.label,

@@ -36,8 +36,22 @@ export function gnowebTxLink(
   return `${gnowebUrl}/${pathAfterDomain}$help&${params.toString()}`;
 }
 
-// mygnoscan's address-page convention — confirmed live against the deployed
-// topaz instance (network-config.ts's explorerUrl).
-export function mygnoscanAddressUrl(explorerUrl: string, address: string): string {
-  return `${explorerUrl}/address/${address}`;
+/** The explorer's address page (gnoscope, formerly mygnoscan).
+ *
+ * `networkId` is only passed when the explorer serves several chains from one
+ * origin (network-config.ts's `explorerNetworkId`). Without it gnoscope
+ * answers in all-networks mode, which for an address means one page merging
+ * that address's activity on every chain it has synced: a number that looks
+ * like data and is not. A per-network deployment has no such mode, so it is
+ * omitted there rather than guessed at.
+ *
+ * Route shape confirmed against gnoscope's own end-to-end suite, which drives
+ * both `/address/<addr>` and `/address/<addr>?network=<id>`. */
+export function mygnoscanAddressUrl(
+  explorerUrl: string,
+  address: string,
+  networkId?: string
+): string {
+  const base = `${explorerUrl}/address/${address}`;
+  return networkId ? `${base}?network=${encodeURIComponent(networkId)}` : base;
 }
