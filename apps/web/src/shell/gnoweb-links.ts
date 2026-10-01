@@ -38,20 +38,11 @@ export function gnowebTxLink(
 
 /** The explorer's address page (gnoscope, formerly mygnoscan).
  *
- * `networkId` is only passed when the explorer serves several chains from one
- * origin (network-config.ts's `explorerNetworkId`). Without it gnoscope
- * answers in all-networks mode, which for an address means one page merging
- * that address's activity on every chain it has synced: a number that looks
- * like data and is not. A per-network deployment has no such mode, so it is
- * omitted there rather than guessed at.
- *
- * Route shape confirmed against gnoscope's own end-to-end suite, which drives
- * both `/address/<addr>` and `/address/<addr>?network=<id>`. */
-export function mygnoscanAddressUrl(
-  explorerUrl: string,
-  address: string,
-  networkId?: string
-): string {
-  const base = `${explorerUrl}/address/${address}`;
-  return networkId ? `${base}?network=${encodeURIComponent(networkId)}` : base;
+ * Deliberately unscoped. gnoscope.com serves several chains from one origin,
+ * so scoping this with the `?network=` its HTTP API documents is the obvious
+ * next step, and it makes the page worse: measured in a browser, the address
+ * page renders strictly less with the parameter than without it. Confirm
+ * against the real site before adding it back. */
+export function mygnoscanAddressUrl(explorerUrl: string, address: string): string {
+  return `${explorerUrl}/address/${address}`;
 }

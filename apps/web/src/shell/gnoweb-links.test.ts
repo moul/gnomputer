@@ -30,19 +30,11 @@ describe("mygnoscanAddressUrl", () => {
     );
   });
 
-  it("names the network when the explorer serves several from one origin", () => {
-    // Without this gnoscope answers in all-networks mode and merges the same
-    // address's activity across every chain it has synced.
-    expect(mygnoscanAddressUrl("https://gnoscope.com", "g1abc", "mainnet")).toBe(
-      "https://gnoscope.com/address/g1abc?network=mainnet"
-    );
-  });
-
-  it("leaves a per-network explorer alone", () => {
-    // A single-chain deployment has no all-networks mode to disambiguate, so
-    // adding a ?network= it does not know would only 404.
-    expect(mygnoscanAddressUrl("https://explorer.pearl.testnets.gno.land", "g1abc")).toBe(
-      "https://explorer.pearl.testnets.gno.land/address/g1abc"
+  it("leaves the URL unscoped, which is what gnoscope.com actually renders", () => {
+    // Adding `?network=` here is the obvious next step and it is wrong: the
+    // address page renders less with it than without, measured live.
+    expect(mygnoscanAddressUrl("https://gnoscope.com", "g1abc")).toBe(
+      "https://gnoscope.com/address/g1abc"
     );
   });
 });

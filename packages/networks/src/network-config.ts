@@ -34,11 +34,6 @@ export const NetworkConfigSchema = z.object({
   indexerGraphqlUrl: z.string().url().optional(),
   gnockpitUrl: z.string().url().optional(),
   explorerUrl: z.string().url().optional(),
-  /** Which network to ask `explorerUrl` for, when that explorer serves
-   * several chains from one instance (gnoscope.com does: mainnet, pearl and
-   * staging behind one origin). Omitted for a per-network deployment, where
-   * the host already decides the chain and a `?network=` would be wrong. */
-  explorerNetworkId: z.string().optional(),
   statusUrl: z.string().url().optional(),
   environment: z.enum(["mainnet", "betanet", "staging", "testnet", "local", "custom"]),
   persistence: z.enum(["persistent", "rolling", "ephemeral", "unknown"]),

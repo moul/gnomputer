@@ -228,15 +228,7 @@ function AddressContent({ address }: { address: string }) {
           {network.explorerUrl && (
             <button
               type="button"
-              onClick={() =>
-                openExplorer(
-                  mygnoscanAddressUrl(
-                    network.explorerUrl as string,
-                    address,
-                    network.explorerNetworkId
-                  )
-                )
-              }
+              onClick={() => openExplorer(mygnoscanAddressUrl(network.explorerUrl as string, address))}
             >
               Open the explorer
             </button>
