@@ -36,8 +36,13 @@ export function gnowebTxLink(
   return `${gnowebUrl}/${pathAfterDomain}$help&${params.toString()}`;
 }
 
-// mygnoscan's address-page convention — confirmed live against the deployed
-// topaz instance (network-config.ts's explorerUrl).
+/** The explorer's address page (gnoscope, formerly mygnoscan).
+ *
+ * Deliberately unscoped. gnoscope.com serves several chains from one origin,
+ * so scoping this with the `?network=` its HTTP API documents is the obvious
+ * next step, and it makes the page worse: measured in a browser, the address
+ * page renders strictly less with the parameter than without it. Confirm
+ * against the real site before adding it back. */
 export function mygnoscanAddressUrl(explorerUrl: string, address: string): string {
   return `${explorerUrl}/address/${address}`;
 }

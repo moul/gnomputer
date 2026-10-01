@@ -85,9 +85,13 @@ export function IslandDiscoverMenu() {
           key={app.id}
           type="button"
           className="island-menu__action"
-          onClick={() => openDedicatedApp(app.id)}
+          onClick={() =>
+            app.external
+              ? window.open(app.url, "_blank", "noopener,noreferrer")
+              : openDedicatedApp(app.id)
+          }
         >
-          {app.icon} {app.label} →
+          {app.icon} {app.label} {app.external ? "↗" : "→"}
         </button>
       ))}
     </div>

@@ -53,6 +53,9 @@ describe("DEFAULT_NETWORKS", () => {
       chainId: "gnoland-1",
       rpcUrl: "https://rpc.gno.land",
       indexerGraphqlUrl: "https://indexer.gno.land/graphql/query",
+      // mygnoscan became gnoscope: the old moul.p2p.team host answers 301
+      // now, so pointing here again would be pointing at a redirect.
+      explorerUrl: "https://gnoscope.com",
       environment: "mainnet",
       trust: "official",
       persistence: "persistent",

@@ -51,7 +51,16 @@ export const DEFAULT_NETWORKS: NetworkConfig[] = [
     // testnets' — confirmed reachable live, kept separate from `trust`
     // below which describes the network itself, not these companion tools.
     gnockpitUrl: "https://gnockpit.gnoland1.moul.p2p.team",
-    explorerUrl: "https://mygnoscan.gnoland1.moul.p2p.team",
+    // mygnoscan became gnoscope and moved to its own domain: the old
+    // `mygnoscan.gnoland1.moul.p2p.team` now answers 301 to gnoscope.com, so
+    // this pointed at a redirect.
+    //
+    // Unlike the old per-network deployments it serves mainnet, pearl and
+    // staging from one origin, so an address link is not chain-scoped. Adding
+    // `?network=mainnet` looked like the fix and is not: its own HTTP API
+    // takes that parameter, but the address *page* renders less with it than
+    // without, measured in a browser. The unscoped link is what works today.
+    explorerUrl: "https://gnoscope.com",
     environment: "mainnet",
     persistence: "persistent",
     trust: "official",

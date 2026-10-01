@@ -29,6 +29,14 @@ describe("mygnoscanAddressUrl", () => {
       "https://explorer.topaz.testnets.gno.land/address/g1abc"
     );
   });
+
+  it("leaves the URL unscoped, which is what gnoscope.com actually renders", () => {
+    // Adding `?network=` here is the obvious next step and it is wrong: the
+    // address page renders less with it than without, measured live.
+    expect(mygnoscanAddressUrl("https://gnoscope.com", "g1abc")).toBe(
+      "https://gnoscope.com/address/g1abc"
+    );
+  });
 });
 
 describe("gnowebTxLink", () => {
