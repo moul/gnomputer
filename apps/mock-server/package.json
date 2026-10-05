@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/ws": "^8.5.13",
-    "vitest": "^3.2.7",
+    "vitest": "^4.0.0",
     "typescript": "^5.7.0"
   }
 }
